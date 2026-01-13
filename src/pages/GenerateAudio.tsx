@@ -1,13 +1,13 @@
 import { useState, useMemo } from "react";
-import { Music, Sparkles } from "lucide-react";
+import { Volume2, Sparkles, Zap, Music, Mic, Radio, Headphones } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { ModelSelector } from "@/components/ModelSelector";
 import { PromptEditor } from "@/components/PromptEditor";
 import { GenerationCanvas } from "@/components/GenerationCanvas";
 import { GenerationOptions, GenerationSettings } from "@/components/GenerationOptions";
-import { ModelGrid } from "@/components/ModelGrid";
 import { AIModel, getModelsByCategory } from "@/data/aiModels";
 import { useAPIStatus } from "@/hooks/useAPIStatus";
+import { Button } from "@/components/ui/button";
 
 const GenerateAudio = () => {
   const { getModelsWithStatus } = useAPIStatus();
@@ -15,7 +15,6 @@ const GenerateAudio = () => {
   const [prompt, setPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedContent, setGeneratedContent] = useState<string | null>(null);
-  const [favorites, setFavorites] = useState<string[]>([]);
   const [options, setOptions] = useState<GenerationSettings>({
     mode: "text-to-content",
     aspectRatio: "1:1",
@@ -37,103 +36,116 @@ const GenerateAudio = () => {
     }, 5000);
   };
 
-  const toggleFavorite = (modelId: string) => {
-    setFavorites((prev) =>
-      prev.includes(modelId)
-        ? prev.filter((id) => id !== modelId)
-        : [...prev, modelId]
-    );
-  };
-
   const canGenerate = Boolean(selectedModel) && prompt.trim().length > 0;
 
   return (
     <div className="min-h-screen bg-background">
       <Sidebar />
 
-      <main className="ml-40 min-h-screen">
-        <div className="container mx-auto max-w-7xl px-4 py-8">
-          {/* Header */}
-          <div className="mb-8">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[hsl(45,100%,55%)]/20">
-                <Music className="h-5 w-5 text-[hsl(45,100%,55%)]" />
-              </div>
-              <div>
-                <h1 className="font-display text-2xl font-bold" style={{
-                  background: "linear-gradient(135deg, hsl(45,100%,55%), hsl(25,100%,55%))",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent"
-                }}>
-                  Génération Audio & Voix
-                </h1>
-                <p className="text-sm text-muted-foreground">
-                  Créez de la musique et des voix avec l'IA • <span className="text-[hsl(var(--primary))]">{models.length} modèles</span> disponibles
-                </p>
-              </div>
-            </div>
+      <main className="ml-[200px] min-h-screen p-6">
+        {/* Header */}
+        <div className="flex items-center gap-4 mb-6">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[hsl(25,100%,55%)] to-[hsl(45,100%,55%)] glow-orange">
+            <Volume2 className="h-8 w-8 text-white" />
+          </div>
+          <div>
+            <h1 className="font-display text-3xl font-black tracking-wider" style={{
+              background: "linear-gradient(135deg, hsl(25,100%,55%), hsl(45,100%,55%))",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent"
+            }}>
+              GÉNÉRATION AUDIO & VOIX
+            </h1>
+            <p className="text-lg text-muted-foreground">
+              <span className="text-[hsl(25,100%,55%)] font-bold">{models.length}</span> MODÈLES DISPONIBLES
+            </p>
+          </div>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="flex gap-3 mb-6">
+          <Button className="btn-3d-orange gap-2 text-base hover:scale-105 transition-transform">
+            <Music className="h-5 w-5" />
+            TEXT TO MUSIC
+          </Button>
+          <Button className="btn-3d gap-2 text-base hover:scale-105 transition-transform">
+            <Mic className="h-5 w-5" />
+            TEXT TO SPEECH
+          </Button>
+          <Button className="btn-3d gap-2 text-base hover:scale-105 transition-transform">
+            <Radio className="h-5 w-5" />
+            VOICE CLONING
+          </Button>
+          <Button className="btn-3d gap-2 text-base hover:scale-105 transition-transform">
+            <Headphones className="h-5 w-5" />
+            SOUND EFFECTS
+          </Button>
+        </div>
+
+        {/* Main Grid */}
+        <div className="grid grid-cols-1 xl:grid-cols-[1fr_420px] gap-6 h-[calc(100vh-280px)]">
+          {/* Left: Canvas */}
+          <div className="min-h-0">
+            <GenerationCanvas
+              selectedModel={selectedModel}
+              generatedContent={generatedContent}
+              isGenerating={isGenerating}
+              contentType="audio"
+            />
           </div>
 
-          {/* Generation Interface */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-            {/* Left: Canvas */}
-            <div className="space-y-4">
-              <GenerationCanvas
+          {/* Right: Controls */}
+          <div className="flex flex-col gap-4 min-h-0 overflow-y-auto">
+            {/* Model Selector */}
+            <div className="panel-3d p-4 space-y-3">
+              <label className="font-display text-sm text-[hsl(25,100%,55%)] tracking-wider flex items-center gap-2">
+                <Sparkles className="h-4 w-4" />
+                MODÈLE IA
+              </label>
+              <ModelSelector
+                models={models}
                 selectedModel={selectedModel}
-                generatedContent={generatedContent}
-                isGenerating={isGenerating}
-                contentType="audio"
+                onSelectModel={setSelectedModel}
+                category="audio"
               />
             </div>
 
-            {/* Right: Controls */}
-            <div className="space-y-4">
-              {/* Model Selector */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">Modèle</label>
-                <ModelSelector
-                  models={models}
-                  selectedModel={selectedModel}
-                  onSelectModel={setSelectedModel}
-                  category="audio"
-                  className="w-full"
-                />
-              </div>
+            {/* Prompt Editor */}
+            <PromptEditor
+              prompt={prompt}
+              onPromptChange={setPrompt}
+              onGenerate={handleGenerate}
+              isGenerating={isGenerating}
+              canGenerate={canGenerate}
+              placeholder="Ex: Une musique épique orchestrale avec des choeurs, style Hans Zimmer, tempo rapide..."
+            />
 
-              {/* Prompt Editor */}
-              <PromptEditor
-                prompt={prompt}
-                onPromptChange={setPrompt}
-                onGenerate={handleGenerate}
-                isGenerating={isGenerating}
-                canGenerate={canGenerate}
-                placeholder="Ex: Une musique épique orchestrale avec des choeurs, style Hans Zimmer, tempo rapide"
-              />
+            {/* Options */}
+            <GenerationOptions
+              contentType="audio"
+              options={options}
+              onOptionsChange={setOptions}
+            />
 
-              {/* Generation Options */}
-              <GenerationOptions
-                contentType="audio"
-                options={options}
-                onOptionsChange={setOptions}
-              />
-            </div>
+            {/* Generate Button */}
+            <Button 
+              onClick={handleGenerate}
+              disabled={!canGenerate || isGenerating}
+              className="btn-3d-orange h-14 text-xl font-bold gap-3 hover:scale-105 transition-transform disabled:opacity-50"
+            >
+              {isGenerating ? (
+                <>
+                  <div className="h-6 w-6 border-3 border-white/30 border-t-white rounded-full animate-spin" />
+                  GÉNÉRATION...
+                </>
+              ) : (
+                <>
+                  <Zap className="h-6 w-6" />
+                  GÉNÉRER
+                </>
+              )}
+            </Button>
           </div>
-
-          {/* Models Section Title */}
-          <div className="flex items-center gap-3 mb-6">
-            <Sparkles className="h-5 w-5 text-[hsl(var(--primary))]" />
-            <h2 className="font-display text-xl font-semibold">Tous les modèles audio</h2>
-            <span className="text-sm text-muted-foreground">({models.length})</span>
-          </div>
-
-          {/* Model Grid */}
-          <ModelGrid
-            models={models}
-            category="audio"
-            favorites={favorites}
-            onToggleFavorite={toggleFavorite}
-            onSelectModel={setSelectedModel}
-          />
         </div>
       </main>
     </div>
