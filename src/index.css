@@ -102,29 +102,42 @@
 @layer base {
   * {
     @apply border-border;
+    font-family: 'Orbitron', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+  }
+
+  html {
+    font-size: 16px;
+    font-family: 'Orbitron', 'Inter', sans-serif !important;
   }
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Orbitron', sans-serif;
+    font-family: 'Orbitron', 'Inter', sans-serif !important;
     overflow-x: hidden;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.03em;
   }
 
-  h1, h2, h3, h4, h5, h6, .font-display, p, span, label, button, input, a {
-    font-family: 'Orbitron', sans-serif;
-    letter-spacing: 0.05em;
+  h1, h2, h3, h4, h5, h6, .font-display {
+    font-family: 'Orbitron', sans-serif !important;
+    font-weight: 700;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
   }
 
-  /* Larger base text */
-  html {
-    font-size: 16px;
+  p, span, label, button, input, textarea, a, div, li, th, td {
+    font-family: 'Orbitron', 'Inter', sans-serif !important;
+    letter-spacing: 0.04em;
   }
 
-  h1 { font-size: 2.5rem; }
-  h2 { font-size: 2rem; }
-  h3 { font-size: 1.5rem; }
+  /* Force uppercase on interactive elements */
+  button, a, label {
+    text-transform: uppercase;
+  }
+
+  h1 { font-size: 2.5rem; font-weight: 900; }
+  h2 { font-size: 2rem; font-weight: 800; }
+  h3 { font-size: 1.5rem; font-weight: 700; }
+  h4 { font-size: 1.25rem; font-weight: 600; }
 }
 
 @layer utilities {
