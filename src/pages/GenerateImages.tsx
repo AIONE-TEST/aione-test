@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Image } from "lucide-react";
+import { ImageIcon, Sparkles, Zap, Upload, Palette, Maximize2 } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { ModelSelector } from "@/components/ModelSelector";
 import { PromptEditor } from "@/components/PromptEditor";
@@ -7,6 +7,7 @@ import { GenerationCanvas } from "@/components/GenerationCanvas";
 import { GenerationOptions, GenerationSettings } from "@/components/GenerationOptions";
 import { AIModel, getModelsByCategory } from "@/data/aiModels";
 import { useAPIStatus } from "@/hooks/useAPIStatus";
+import { Button } from "@/components/ui/button";
 
 const GenerateImages = () => {
   const { getModelsWithStatus } = useAPIStatus();
@@ -41,22 +42,44 @@ const GenerateImages = () => {
     <div className="min-h-screen bg-background">
       <Sidebar />
 
-      <main className="ml-[140px] min-h-screen p-4">
+      <main className="ml-[200px] min-h-screen p-6">
         {/* Header */}
-        <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 rounded-lg bg-[hsl(320,100%,60%)/0.2]">
-            <Image className="h-5 w-5 text-[hsl(320,100%,60%)]" />
+        <div className="flex items-center gap-4 mb-6">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[hsl(320,100%,60%)] to-[hsl(280,100%,65%)] glow-pink">
+            <ImageIcon className="h-8 w-8 text-white" />
           </div>
-          <h1 className="font-display text-xl font-bold text-foreground">
-            GÉNÉRATION D'IMAGES
-          </h1>
-          <span className="font-display text-xs text-[hsl(174,100%,50%)]">
-            {models.length} MODÈLES
-          </span>
+          <div>
+            <h1 className="font-display text-3xl font-black gradient-text-pink tracking-wider">
+              GÉNÉRATION D'IMAGES
+            </h1>
+            <p className="text-lg text-muted-foreground">
+              <span className="text-[hsl(320,100%,60%)] font-bold">{models.length}</span> MODÈLES DISPONIBLES
+            </p>
+          </div>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="flex gap-3 mb-6">
+          <Button className="btn-3d-pink gap-2 text-base hover:scale-105 transition-transform">
+            <ImageIcon className="h-5 w-5" />
+            TEXT TO IMAGE
+          </Button>
+          <Button className="btn-3d gap-2 text-base hover:scale-105 transition-transform">
+            <Upload className="h-5 w-5" />
+            IMAGE TO IMAGE
+          </Button>
+          <Button className="btn-3d gap-2 text-base hover:scale-105 transition-transform">
+            <Palette className="h-5 w-5" />
+            INPAINTING
+          </Button>
+          <Button className="btn-3d gap-2 text-base hover:scale-105 transition-transform">
+            <Maximize2 className="h-5 w-5" />
+            UPSCALE
+          </Button>
         </div>
 
         {/* Main Grid - Large Canvas */}
-        <div className="grid grid-cols-1 xl:grid-cols-[1fr_380px] gap-4 h-[calc(100vh-120px)]">
+        <div className="grid grid-cols-1 xl:grid-cols-[1fr_420px] gap-6 h-[calc(100vh-280px)]">
           {/* Left: Canvas (maximized) */}
           <div className="min-h-0">
             <GenerationCanvas
@@ -70,9 +93,10 @@ const GenerateImages = () => {
           {/* Right: Controls */}
           <div className="flex flex-col gap-4 min-h-0 overflow-y-auto">
             {/* Model Selector */}
-            <div className="space-y-2">
-              <label className="font-display text-xs text-[hsl(215,20%,60%)] tracking-wider">
-                MODÈLE
+            <div className="panel-3d p-4 space-y-3">
+              <label className="font-display text-sm text-[hsl(320,100%,60%)] tracking-wider flex items-center gap-2">
+                <Sparkles className="h-4 w-4" />
+                MODÈLE IA
               </label>
               <ModelSelector
                 models={models}
@@ -89,7 +113,7 @@ const GenerateImages = () => {
               onGenerate={handleGenerate}
               isGenerating={isGenerating}
               canGenerate={canGenerate}
-              placeholder="Ex: Un paysage fantastique avec des montagnes de cristal au coucher du soleil, style Ghibli"
+              placeholder="Ex: Un paysage fantastique avec des montagnes de cristal au coucher du soleil, style Ghibli..."
             />
 
             {/* Options */}
@@ -98,6 +122,25 @@ const GenerateImages = () => {
               options={options}
               onOptionsChange={setOptions}
             />
+
+            {/* Generate Button */}
+            <Button 
+              onClick={handleGenerate}
+              disabled={!canGenerate || isGenerating}
+              className="btn-3d-pink h-14 text-xl font-bold gap-3 hover:scale-105 transition-transform disabled:opacity-50"
+            >
+              {isGenerating ? (
+                <>
+                  <div className="h-6 w-6 border-3 border-white/30 border-t-white rounded-full animate-spin" />
+                  GÉNÉRATION...
+                </>
+              ) : (
+                <>
+                  <Zap className="h-6 w-6" />
+                  GÉNÉRER
+                </>
+              )}
+            </Button>
           </div>
         </div>
       </main>

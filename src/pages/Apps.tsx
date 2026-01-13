@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { AppWindow, Sparkles, ExternalLink, Key, Check, Zap, X, Flame, Search, LayoutGrid, List, Image, Video, MessageSquare, Music, Wand2, Box, Code } from "lucide-react";
+import { AppWindow, Sparkles, ExternalLink, Key, Check, Zap, Flame, Search, LayoutGrid, List, Image, Video, MessageSquare, Music, Wand2, Box, Code, ImageIcon, Volume2, Film, Palette, Cpu, Bot } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { AIModel, aiModels, apiConfigs, AICategory } from "@/data/aiModels";
 import { useAPIStatus } from "@/hooks/useAPIStatus";
@@ -281,7 +281,8 @@ const Apps = () => {
       <AdultDisclaimerModal
         isOpen={adultModalOpen}
         onClose={() => setAdultModalOpen(false)}
-        onConfirm={handleAdultConfirm}
+        onAccept={handleAdultConfirm}
+        serviceName={pendingAdultModel?.name || ""}
       />
     </div>
   );
@@ -392,7 +393,7 @@ function AppModelCard({ model, viewMode, onOpenAPIKeyModal, onClick }: AppModelC
       {/* Vintage Stamp for active */}
       {isActive && (
         <div className="absolute top-2 right-2">
-          <VintageStamp size="sm" />
+          <VintageStamp />
         </div>
       )}
 
@@ -442,36 +443,47 @@ function AppModelCard({ model, viewMode, onOpenAPIKeyModal, onClick }: AppModelC
         )}
       </div>
 
-      {/* API Key Button for inactive models */}
-      {!isActive && model.apiKeyName && (
-        <div className="pt-2 border-t border-border/30 flex gap-1">
+      {/* Action Button - Ajouter (free) or Acheter (paid) */}
+      <div className="pt-2 border-t border-border/30 flex gap-1">
+        {model.isFree ? (
           <Button
-            variant="ghost"
             size="sm"
-            className="flex-1 h-8 text-xs gap-1 text-[hsl(174,100%,50%)] hover:bg-[hsl(174,100%,50%)]/10"
+            className="flex-1 h-9 text-sm font-bold btn-3d-orange gap-2 hover:scale-105 transition-transform"
             onClick={(e) => {
               e.stopPropagation();
-              onOpenAPIKeyModal(model.apiKeyName!);
+              if (model.apiKeyName) onOpenAPIKeyModal(model.apiKeyName);
             }}
           >
-            <Key className="h-3 w-3" />
-            Ajouter clé
+            <Zap className="h-4 w-4" />
+            AJOUTER
           </Button>
-          {config && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              asChild
-              onClick={(e) => e.stopPropagation()}
-            >
-              <a href={config.apiUrl} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="h-3 w-3" />
-              </a>
-            </Button>
-          )}
-        </div>
-      )}
+        ) : (
+          <Button
+            size="sm"
+            className="flex-1 h-9 text-sm font-bold btn-3d-purple gap-2 hover:scale-105 transition-transform"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (model.apiKeyName) onOpenAPIKeyModal(model.apiKeyName);
+            }}
+          >
+            <Key className="h-4 w-4" />
+            ACHETER
+          </Button>
+        )}
+        {config && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 btn-3d hover:scale-110 transition-transform"
+            asChild
+            onClick={(e) => e.stopPropagation()}
+          >
+            <a href={config.apiUrl} target="_blank" rel="noopener noreferrer">
+              <ExternalLink className="h-4 w-4" />
+            </a>
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
