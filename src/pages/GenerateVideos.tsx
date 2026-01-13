@@ -1,13 +1,15 @@
 import { useState, useMemo } from "react";
-import { Video, Sparkles } from "lucide-react";
+import { Video, Sparkles, Camera, Film, Type, Upload } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { ModelSelector } from "@/components/ModelSelector";
-import { PromptEditor } from "@/components/PromptEditor";
 import { GenerationCanvas } from "@/components/GenerationCanvas";
-import { GenerationOptions, GenerationSettings } from "@/components/GenerationOptions";
 import { ModelGrid } from "@/components/ModelGrid";
 import { AIModel, getModelsByCategory } from "@/data/aiModels";
 import { useAPIStatus } from "@/hooks/useAPIStatus";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { StatusLED } from "@/components/StatusLED";
 
 const GenerateVideos = () => {
   const { getModelsWithStatus } = useAPIStatus();
@@ -16,17 +18,17 @@ const GenerateVideos = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedContent, setGeneratedContent] = useState<string | null>(null);
   const [favorites, setFavorites] = useState<string[]>([]);
-  const [options, setOptions] = useState<GenerationSettings>({
-    mode: "text-to-content",
-    aspectRatio: "16:9",
-    quality: "standard",
-    duration: 5,
-  });
+  const [mode, setMode] = useState<"text-to-video" | "image-to-video">("text-to-video");
+  const [aspectRatio, setAspectRatio] = useState("16:9");
+  const [quality, setQuality] = useState("1080p");
+  const [duration, setDuration] = useState(5);
 
   const models = useMemo(() => {
     const categoryModels = getModelsByCategory("videos");
     return getModelsWithStatus(categoryModels);
   }, [getModelsWithStatus]);
+
+  const freeModelsCount = models.filter(m => m.isFree).length;
 
   const handleGenerate = async () => {
     if (!selectedModel || !prompt.trim()) return;
@@ -47,33 +49,50 @@ const GenerateVideos = () => {
 
   const canGenerate = Boolean(selectedModel) && prompt.trim().length > 0;
 
+  const aspectRatios = ["1:1", "4:3", "3:4", "9:16", "16:9", "21:9"];
+  const qualities = ["480p", "720p", "1080p", "4K", "8K"];
+
   return (
     <div className="min-h-screen bg-background">
       <Sidebar />
 
-      <main className="ml-40 min-h-screen">
-        <div className="container mx-auto max-w-7xl px-4 py-8">
-          {/* Header */}
-          <div className="mb-8">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[hsl(280,100%,65%)]/20">
-                <Video className="h-5 w-5 text-[hsl(280,100%,65%)]" />
-              </div>
-              <div>
-                <h1 className="font-display text-2xl font-bold gradient-text-pink">
-                  Génération de Photos & Vidéos
-                </h1>
-                <p className="text-sm text-muted-foreground">
-                  Créez des contenus visuels avec l'IA • <span className="text-[hsl(var(--primary))]">{models.length} modèles</span> disponibles
-                </p>
-              </div>
+      <main className="ml-[200px] min-h-screen p-6">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center gap-4 mb-2">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[hsl(280,100%,65%)] to-[hsl(320,100%,60%)] glow-purple">
+              <Camera className="h-7 w-7 text-white" />
+            </div>
+            <div>
+              <h1 className="font-display text-3xl font-black gradient-text-pink tracking-wider">
+                GÉNÉRATION DE PHOTOS
+              </h1>
+              <p className="text-lg text-muted-foreground tracking-wide">
+                Créez des images uniques avec l'IA • <span className="text-[hsl(var(--primary))] font-bold">{models.length} modèles</span> disponibles
+              </p>
             </div>
           </div>
+        </div>
 
-          {/* Generation Interface */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-            {/* Left: Canvas */}
-            <div className="space-y-4">
+        {/* Main Generation Interface - Full Width */}
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-10">
+          {/* Left: Canvas - Takes 2 columns */}
+          <div className="xl:col-span-2 space-y-4">
+            <div className="panel-3d p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <StatusLED isActive={!!selectedModel} size="lg" />
+                  <span className="font-display text-xl font-bold text-foreground">
+                    {selectedModel ? "PRÊT À GÉNÉRER" : "SÉLECTIONNEZ UN MODÈLE"}
+                  </span>
+                </div>
+                {selectedModel && (
+                  <Badge className="bg-[hsl(var(--primary))]/20 text-[hsl(var(--primary))] border-[hsl(var(--primary))]/30 text-sm px-4 py-1">
+                    {selectedModel.name}
+                  </Badge>
+                )}
+              </div>
+              
               <GenerationCanvas
                 selectedModel={selectedModel}
                 generatedContent={generatedContent}
@@ -82,47 +101,152 @@ const GenerateVideos = () => {
               />
             </div>
 
-            {/* Right: Controls */}
-            <div className="space-y-4">
-              {/* Model Selector */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">Modèle</label>
-                <ModelSelector
-                  models={models}
-                  selectedModel={selectedModel}
-                  onSelectModel={setSelectedModel}
-                  category="videos"
-                  className="w-full"
-                />
+            {/* Prompt Editor */}
+            <div className="panel-3d p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Type className="h-5 w-5 text-[hsl(var(--primary))]" />
+                <span className="font-display text-lg font-bold">ÉDITEUR DE PROMPT</span>
               </div>
-
-              {/* Prompt Editor */}
-              <PromptEditor
-                prompt={prompt}
-                onPromptChange={setPrompt}
-                onGenerate={handleGenerate}
-                isGenerating={isGenerating}
-                canGenerate={canGenerate}
-                placeholder="Ex: Un dragon mécanique survolant une ville steampunk au coucher du soleil, mouvement fluide et cinématographique"
+              
+              <Textarea
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                placeholder="Décrivez l'image que vous souhaitez créer... Ex: Un château steampunk avec des engrenages dorés, 8K hyperréaliste"
+                className="input-3d min-h-[120px] text-lg resize-none mb-4"
               />
 
-              {/* Generation Options */}
-              <GenerationOptions
-                contentType="video"
-                options={options}
-                onOptionsChange={setOptions}
-              />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Badge className="bg-[hsl(142,76%,50%)]/20 text-[hsl(142,76%,50%)] border-[hsl(142,76%,50%)]/30 text-base px-3 py-1">
+                    {freeModelsCount} GRATUITS
+                  </Badge>
+                  {canGenerate && (
+                    <span className="text-[hsl(142,76%,50%)] font-display text-sm">
+                      50 générations restantes
+                    </span>
+                  )}
+                </div>
+                
+                <Button
+                  onClick={handleGenerate}
+                  disabled={!canGenerate || isGenerating}
+                  className="btn-3d-cyan text-lg px-8 py-6 font-display font-bold tracking-wider"
+                >
+                  {isGenerating ? "GÉNÉRATION..." : "GÉNÉRER"}
+                </Button>
+              </div>
             </div>
           </div>
 
-          {/* Models Section Title */}
+          {/* Right: Controls */}
+          <div className="space-y-4">
+            {/* Model Selector */}
+            <div className="panel-3d p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Sparkles className="h-5 w-5 text-[hsl(var(--secondary))]" />
+                <span className="font-display text-lg font-bold">MOTEUR DE GÉNÉRATION & OPTIONS</span>
+              </div>
+
+              <ModelSelector
+                models={models}
+                selectedModel={selectedModel}
+                onSelectModel={setSelectedModel}
+                category="videos"
+                className="w-full mb-6"
+              />
+
+              {/* Mode Selection */}
+              <div className="space-y-4">
+                <div>
+                  <label className="font-display text-sm text-muted-foreground mb-2 block">
+                    MODE DE GÉNÉRATION
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      variant={mode === "text-to-video" ? "default" : "outline"}
+                      onClick={() => setMode("text-to-video")}
+                      className={mode === "text-to-video" ? "btn-3d-cyan" : "btn-3d"}
+                    >
+                      <Type className="h-4 w-4 mr-2" />
+                      Texte → Image
+                    </Button>
+                    <Button
+                      variant={mode === "image-to-video" ? "default" : "outline"}
+                      onClick={() => setMode("image-to-video")}
+                      className={mode === "image-to-video" ? "btn-3d-purple" : "btn-3d"}
+                    >
+                      <Upload className="h-4 w-4 mr-2" />
+                      Image → Image
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Aspect Ratio */}
+                <div>
+                  <label className="font-display text-sm text-muted-foreground mb-2 block">
+                    FORMATS
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {aspectRatios.map((ratio) => (
+                      <Button
+                        key={ratio}
+                        size="sm"
+                        variant={aspectRatio === ratio ? "default" : "outline"}
+                        onClick={() => setAspectRatio(ratio)}
+                        className={aspectRatio === ratio ? "btn-3d-pink" : "btn-3d"}
+                      >
+                        {ratio}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Quality */}
+                <div>
+                  <label className="font-display text-sm text-muted-foreground mb-2 block">
+                    QUALITÉ
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {qualities.map((q) => (
+                      <Button
+                        key={q}
+                        size="sm"
+                        variant={quality === q ? "default" : "outline"}
+                        onClick={() => setQuality(q)}
+                        className={quality === q ? "btn-3d-green" : "btn-3d"}
+                      >
+                        {q}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Info */}
+                <div className="pt-4 border-t border-border/50 space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Résolution max</span>
+                    <span className="font-bold text-foreground">1024x1024</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Types d'entrée</span>
+                    <span className="font-bold text-foreground">TEXT</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Models Section */}
+        <div className="mb-6">
           <div className="flex items-center gap-3 mb-6">
-            <Sparkles className="h-5 w-5 text-[hsl(var(--primary))]" />
-            <h2 className="font-display text-xl font-semibold">Tous les modèles vidéo</h2>
-            <span className="text-sm text-muted-foreground">({models.length})</span>
+            <Film className="h-6 w-6 text-[hsl(var(--primary))]" />
+            <h2 className="font-display text-2xl font-bold">TOUS LES MODÈLES</h2>
+            <Badge variant="outline" className="text-base px-3">
+              {models.length}
+            </Badge>
           </div>
 
-          {/* Model Grid */}
           <ModelGrid
             models={models}
             category="videos"

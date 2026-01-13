@@ -54,7 +54,7 @@ const navItems: NavItem[] = [
   },
   { 
     id: "retouch", 
-    label: "RETOUCH", 
+    label: "RETOUCHE", 
     icon: <Wand2 className="h-6 w-6" />, 
     path: "/retouch",
     colorClass: "text-[hsl(174,100%,50%)]",
@@ -72,7 +72,7 @@ const navItems: NavItem[] = [
   },
   { 
     id: "apps", 
-    label: "APPS", 
+    label: "APPLIS IA", 
     icon: <AppWindow className="h-6 w-6" />, 
     path: "/apps",
     colorClass: "text-[hsl(174,100%,50%)]",
@@ -90,7 +90,7 @@ const navItems: NavItem[] = [
   },
   { 
     id: "account", 
-    label: "ACCOUNT", 
+    label: "COMPTE", 
     icon: <User className="h-6 w-6" />, 
     path: "/account",
     colorClass: "text-[hsl(210,100%,60%)]",
