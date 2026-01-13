@@ -2,11 +2,15 @@ import { useState, useMemo } from "react";
 import { 
   Key, ExternalLink, Check, X, Search, Plus, RefreshCw, 
   List, Grid3X3, Flame, Zap, Globe, ExternalLinkIcon,
-  ChevronDown, ChevronUp
+  ChevronDown, ChevronUp, Image, Video, Music, Wand2, Box,
+  MessageSquare, Sparkles
 } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { APIKeyValidationModal } from "@/components/APIKeyValidationModal";
 import { AdultDisclaimerModal } from "@/components/AdultDisclaimerModal";
+import { StatusLED } from "@/components/StatusLED";
+import { VintageStamp } from "@/components/VintageStamp";
+import { MultiCategoryIcons } from "@/components/CategoryIcon";
 import { apiConfigs, aiModels, APIConfig, AIModel } from "@/data/aiModels";
 import { useAPIStatus } from "@/hooks/useAPIStatus";
 import { Button } from "@/components/ui/button";
@@ -20,98 +24,83 @@ const allInOnePlatforms = [
   {
     id: "openrouter",
     name: "OpenRouter",
-    description: "Accès à 100+ modèles avec une seule clé API. GPT-4, Claude, Llama, etc.",
+    description: "Accès à 100+ modèles avec une seule clé API",
     apiUrl: "https://openrouter.ai/keys",
     docsUrl: "https://openrouter.ai/docs",
     officialUrl: "https://openrouter.ai",
     modelsCount: "100+",
-    badges: ["ALL-IN-ONE", "🔥", "RECOMMENDED"]
-  },
-  {
-    id: "together",
-    name: "Together AI",
-    description: "Infrastructure IA avec accès à des dizaines de modèles open source.",
-    apiUrl: "https://api.together.xyz/settings/api-keys",
-    docsUrl: "https://docs.together.ai",
-    officialUrl: "https://together.ai",
-    modelsCount: "50+",
-    badges: ["ALL-IN-ONE", "FAST"]
+    badges: ["ALL-IN-ONE", "🔥"]
   },
   {
     id: "replicate",
     name: "Replicate",
-    description: "Plateforme de modèles ML. Images, vidéos, audio, LLMs.",
+    description: "Images, vidéos, audio, LLMs",
     apiUrl: "https://replicate.com/account/api-tokens",
     docsUrl: "https://replicate.com/docs",
     officialUrl: "https://replicate.com",
     modelsCount: "1000+",
-    badges: ["ALL-IN-ONE", "VERSATILE"]
+    badges: ["ALL-IN-ONE"]
   },
   {
     id: "huggingface",
     name: "Hugging Face",
-    description: "Hub de modèles AI. Accès API à des milliers de modèles.",
+    description: "Hub de modèles AI",
     apiUrl: "https://huggingface.co/settings/tokens",
     docsUrl: "https://huggingface.co/docs/api-inference",
     officialUrl: "https://huggingface.co",
     modelsCount: "10000+",
-    badges: ["ALL-IN-ONE", "OPEN SOURCE"]
+    badges: ["OPEN SOURCE"]
   },
   {
     id: "fal",
     name: "fal.ai",
-    description: "Génération d'images et vidéos rapide. FLUX, SD, vidéo.",
+    description: "Génération rapide FLUX, SD",
     apiUrl: "https://fal.ai/dashboard/keys",
     docsUrl: "https://fal.ai/docs",
     officialUrl: "https://fal.ai",
     modelsCount: "30+",
-    badges: ["ALL-IN-ONE", "FAST", "MEDIA"]
+    badges: ["FAST"]
   },
   {
     id: "lmarena",
-    name: "LM Arena (Chatbot Arena)",
-    description: "Comparez les LLMs en temps réel. Benchmark communautaire.",
+    name: "LM Arena",
+    description: "Comparez les LLMs",
     apiUrl: "https://chat.lmsys.org",
     docsUrl: "https://lmsys.org",
     officialUrl: "https://chat.lmsys.org",
     modelsCount: "40+",
-    badges: ["BENCHMARK", "FREE", "COMPARE"]
-  },
-  {
-    id: "mammouth",
-    name: "Mammouth AI",
-    description: "Plateforme française multi-modèles. Interface unifiée.",
-    apiUrl: "https://mammouth.ai",
-    docsUrl: "https://mammouth.ai/docs",
-    officialUrl: "https://mammouth.ai",
-    modelsCount: "20+",
-    badges: ["FRENCH", "🇫🇷", "ALL-IN-ONE"]
-  },
-  {
-    id: "poe",
-    name: "Poe (Quora)",
-    description: "Accès à GPT-4, Claude, Gemini et plus via une interface unique.",
-    apiUrl: "https://poe.com",
-    docsUrl: "https://poe.com/about",
-    officialUrl: "https://poe.com",
-    modelsCount: "15+",
-    badges: ["CHAT", "MULTI-MODEL"]
+    badges: ["FREE", "BENCHMARK"]
   },
 ];
 
+// Category definitions with colors
+const categories = [
+  { id: "activated", label: "APPLIS ACTIVÉES", icon: <Check className="h-6 w-6" />, color: "hsl(142,76%,50%)", bgClass: "bg-[hsl(142,76%,50%)]/20", textClass: "text-[hsl(142,76%,50%)]" },
+  { id: "free", label: "GRATUITS", icon: <Sparkles className="h-6 w-6" />, color: "hsl(45,100%,55%)", bgClass: "bg-[hsl(45,100%,55%)]/20", textClass: "text-[hsl(45,100%,55%)]" },
+  { id: "image-video", label: "IMAGE & VIDÉO", icon: <Video className="h-6 w-6" />, color: "hsl(280,100%,65%)", bgClass: "bg-[hsl(280,100%,65%)]/20", textClass: "text-[hsl(280,100%,65%)]" },
+  { id: "images", label: "IMAGES", icon: <Image className="h-6 w-6" />, color: "hsl(320,100%,60%)", bgClass: "bg-[hsl(320,100%,60%)]/20", textClass: "text-[hsl(320,100%,60%)]" },
+  { id: "retouch", label: "RETOUCHE", icon: <Wand2 className="h-6 w-6" />, color: "hsl(174,100%,50%)", bgClass: "bg-[hsl(174,100%,50%)]/20", textClass: "text-[hsl(174,100%,50%)]" },
+  { id: "audio", label: "AUDIO", icon: <Music className="h-6 w-6" />, color: "hsl(45,100%,55%)", bgClass: "bg-[hsl(45,100%,55%)]/20", textClass: "text-[hsl(45,100%,55%)]" },
+  { id: "3d", label: "3D", icon: <Box className="h-6 w-6" />, color: "hsl(142,76%,50%)", bgClass: "bg-[hsl(142,76%,50%)]/20", textClass: "text-[hsl(142,76%,50%)]" },
+  { id: "llms", label: "LLMS", icon: <MessageSquare className="h-6 w-6" />, color: "hsl(174,100%,50%)", bgClass: "bg-[hsl(174,100%,50%)]/20", textClass: "text-[hsl(174,100%,50%)]" },
+  { id: "uncensored", label: "ADULTES +18", icon: <Flame className="h-6 w-6" />, color: "hsl(25,100%,55%)", bgClass: "bg-[hsl(25,100%,55%)]/20", textClass: "text-[hsl(25,100%,55%)]" },
+];
+
 type ViewMode = "list" | "grid";
+type CategoryFilter = string;
 
 const APIKeys = () => {
   const { configuredAPIs, refetch } = useAPIStatus();
   const [searchQuery, setSearchQuery] = useState("");
   const [apiKeyModalOpen, setApiKeyModalOpen] = useState(false);
   const [selectedApiKeyName, setSelectedApiKeyName] = useState<string>("");
-  const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [adultDisclaimerOpen, setAdultDisclaimerOpen] = useState(false);
   const [pendingAdultService, setPendingAdultService] = useState<string>("");
   const [showAllInOne, setShowAllInOne] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>("all");
 
-  // Get all unique API services from models - INCLUDING ALL of them
+  // Get all unique API services from models
   const apiServices = useMemo(() => {
     const servicesMap = new Map<string, { 
       config: APIConfig; 
@@ -120,18 +109,20 @@ const APIKeys = () => {
       models: AIModel[];
       isAdult: boolean;
       categories: string[];
+      isFree: boolean;
     }>();
 
-    // Go through ALL models and collect their API requirements
     aiModels.forEach((model) => {
       const apiKeyName = model.apiKeyName || model.provider.toLowerCase().replace(/\s+/g, '');
       const isAdult = model.category === 'uncensored' || model.badges.includes('+18') || model.badges.includes('🔓');
+      const isFree = model.isFree || model.apiStatus === 'free';
       
       const existing = servicesMap.get(apiKeyName);
       if (existing) {
         existing.modelsCount++;
         existing.models.push(model);
         if (isAdult) existing.isAdult = true;
+        if (isFree) existing.isFree = true;
         if (!existing.categories.includes(model.category)) {
           existing.categories.push(model.category);
         }
@@ -142,7 +133,7 @@ const APIKeys = () => {
           apiUrl: model.apiUrl,
           docsUrl: model.docsUrl,
           apiKeyPlaceholder: "Votre clé API...",
-          instructions: `1. Visitez ${model.officialUrl}\n2. Créez un compte\n3. Générez une clé API\n4. Collez-la ici`
+          instructions: `1. Visitez ${model.officialUrl}\n2. Créez un compte\n3. Générez une clé API`
         };
         
         servicesMap.set(apiKeyName, {
@@ -152,11 +143,11 @@ const APIKeys = () => {
           models: [model],
           isAdult,
           categories: [model.category],
+          isFree,
         });
       }
     });
 
-    // Sort: configured first, then alphabetically
     return Array.from(servicesMap.entries())
       .map(([key, value]) => ({
         key,
@@ -164,34 +155,55 @@ const APIKeys = () => {
         isConfigured: configuredAPIs.includes(key.toLowerCase()),
       }))
       .sort((a, b) => {
-        // Configured first
         if (a.isConfigured && !b.isConfigured) return -1;
         if (!a.isConfigured && b.isConfigured) return 1;
-        // Then by name
         return a.config.serviceName.localeCompare(b.config.serviceName);
       });
   }, [configuredAPIs]);
 
-  // Filter by search
+  // Filter by category and search
   const filteredServices = useMemo(() => {
-    if (!searchQuery.trim()) return apiServices;
-    const query = searchQuery.toLowerCase();
-    return apiServices.filter(
-      (s) =>
-        s.config.serviceName.toLowerCase().includes(query) ||
-        s.key.toLowerCase().includes(query) ||
-        s.models.some((m) => m.name.toLowerCase().includes(query)) ||
-        s.categories.some((c) => c.toLowerCase().includes(query))
-    );
-  }, [apiServices, searchQuery]);
+    let filtered = apiServices;
+    
+    // Category filter
+    if (selectedCategory !== "all") {
+      filtered = filtered.filter((s) => {
+        switch (selectedCategory) {
+          case "activated": return s.isConfigured;
+          case "free": return s.isFree;
+          case "image-video": return s.categories.includes("images") || s.categories.includes("videos");
+          case "images": return s.categories.includes("images");
+          case "retouch": return s.categories.includes("retouch");
+          case "audio": return s.categories.includes("audio");
+          case "3d": return s.categories.includes("3d");
+          case "llms": return s.categories.includes("llms");
+          case "uncensored": return s.isAdult;
+          default: return true;
+        }
+      });
+    }
+    
+    // Search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        (s) =>
+          s.config.serviceName.toLowerCase().includes(query) ||
+          s.key.toLowerCase().includes(query) ||
+          s.models.some((m) => m.name.toLowerCase().includes(query))
+      );
+    }
+    
+    return filtered;
+  }, [apiServices, selectedCategory, searchQuery]);
 
   // Stats
   const stats = useMemo(() => {
     const total = apiServices.length;
     const configured = apiServices.filter((s) => s.isConfigured).length;
-    const notConfigured = total - configured;
+    const free = apiServices.filter((s) => s.isFree).length;
     const adult = apiServices.filter((s) => s.isAdult).length;
-    return { total, configured, notConfigured, adult };
+    return { total, configured, free, adult };
   }, [apiServices]);
 
   const handleOpenAPIKeyModal = (apiKeyName: string, isAdult: boolean = false) => {
@@ -211,193 +223,190 @@ const APIKeys = () => {
     setPendingAdultService("");
   };
 
-  const getCategoryColor = (category: string) => {
-    const colors: Record<string, string> = {
-      images: "text-[hsl(320,100%,60%)]",
-      videos: "text-[hsl(280,100%,65%)]",
-      llms: "text-[hsl(174,100%,50%)]",
-      audio: "text-[hsl(45,100%,55%)]",
-      retouch: "text-[hsl(320,100%,60%)]",
-      "3d": "text-[hsl(142,76%,50%)]",
-      code: "text-[hsl(215,100%,60%)]",
-      uncensored: "text-[hsl(25,100%,55%)]",
-    };
-    return colors[category] || "text-muted-foreground";
-  };
-
   return (
     <div className="min-h-screen bg-background">
       <Sidebar />
 
-      <main className="ml-[160px] min-h-screen p-6">
+      <main className="ml-[200px] min-h-screen p-8">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-4">
-              <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-[hsl(45,100%,55%)] to-[hsl(25,100%,55%)] glow-yellow">
-                <Key className="h-7 w-7 text-black" />
+        <div className="mb-10">
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-6">
+              <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-[hsl(45,100%,55%)] to-[hsl(25,100%,55%)] glow-yellow">
+                <Key className="h-10 w-10 text-black" />
               </div>
               <div>
-                <h1 className="font-display text-3xl font-black gradient-text-yellow text-glow-yellow tracking-wide">
+                <h1 className="font-display text-4xl font-black gradient-text-yellow text-glow-yellow tracking-wider">
                   GESTION DES CLÉS API
                 </h1>
-                <p className="text-sm text-muted-foreground">
-                  Configurez vos clés pour activer toutes les applications IA
+                <p className="text-lg text-muted-foreground font-display tracking-wide mt-2">
+                  CONFIGUREZ VOS CLÉS POUR ACTIVER LES APPLICATIONS IA
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4">
               {/* View Mode Toggle */}
-              <div className="flex items-center rounded-lg border border-[hsl(220,15%,25%)] overflow-hidden">
+              <div className="flex items-center rounded-xl border-2 border-[hsl(220,15%,25%)] overflow-hidden">
                 <Button
                   variant="ghost"
-                  size="sm"
+                  size="lg"
                   className={cn(
-                    "rounded-none px-3",
+                    "rounded-none px-5 py-3",
                     viewMode === "list" && "bg-[hsl(174,100%,50%)]/20 text-[hsl(174,100%,50%)]"
                   )}
                   onClick={() => setViewMode("list")}
                 >
-                  <List className="h-4 w-4" />
+                  <List className="h-6 w-6" />
                 </Button>
                 <Button
                   variant="ghost"
-                  size="sm"
+                  size="lg"
                   className={cn(
-                    "rounded-none px-3",
+                    "rounded-none px-5 py-3",
                     viewMode === "grid" && "bg-[hsl(174,100%,50%)]/20 text-[hsl(174,100%,50%)]"
                   )}
                   onClick={() => setViewMode("grid")}
                 >
-                  <Grid3X3 className="h-4 w-4" />
+                  <Grid3X3 className="h-6 w-6" />
                 </Button>
               </div>
 
               <Button
                 onClick={() => refetch()}
-                className="gap-2 btn-3d font-display text-xs"
+                className="gap-3 btn-3d-cyan font-display text-base px-6 py-3 h-auto"
               >
-                <RefreshCw className="h-4 w-4" />
-                Actualiser
+                <RefreshCw className="h-5 w-5" />
+                ACTUALISER
               </Button>
             </div>
           </div>
 
           {/* Stats */}
-          <div className="flex flex-wrap gap-4 mb-6">
-            <Card className="px-4 py-3 panel-3d border-[hsl(174,100%,50%)]/30">
-              <div className="flex items-center gap-2">
-                <Globe className="h-5 w-5 text-[hsl(174,100%,50%)]" />
-                <span className="font-display text-lg font-bold text-[hsl(174,100%,50%)]">{stats.total}</span>
-                <span className="text-xs text-muted-foreground">Services</span>
+          <div className="flex flex-wrap gap-6 mb-8">
+            <Card className="px-6 py-4 panel-3d border-[hsl(174,100%,50%)]/30">
+              <div className="flex items-center gap-3">
+                <Globe className="h-7 w-7 text-[hsl(174,100%,50%)]" />
+                <span className="font-display text-3xl font-black text-[hsl(174,100%,50%)]">{stats.total}</span>
+                <span className="text-base text-muted-foreground font-display">SERVICES</span>
               </div>
             </Card>
-            <Card className="px-4 py-3 panel-3d border-[hsl(142,76%,50%)]/30">
-              <div className="flex items-center gap-2">
-                <Check className="h-5 w-5 text-[hsl(142,76%,50%)]" />
-                <span className="font-display text-lg font-bold text-[hsl(142,76%,50%)]">{stats.configured}</span>
-                <span className="text-xs text-muted-foreground">Activées</span>
+            <Card className="px-6 py-4 panel-3d border-[hsl(142,76%,50%)]/30">
+              <div className="flex items-center gap-3">
+                <StatusLED isActive={true} size="lg" />
+                <span className="font-display text-3xl font-black text-[hsl(142,76%,50%)]">{stats.configured}</span>
+                <span className="text-base text-muted-foreground font-display">ACTIVÉES</span>
               </div>
             </Card>
-            <Card className="px-4 py-3 panel-3d border-[hsl(215,20%,50%)]/30">
-              <div className="flex items-center gap-2">
-                <X className="h-5 w-5 text-muted-foreground" />
-                <span className="font-display text-lg font-bold">{stats.notConfigured}</span>
-                <span className="text-xs text-muted-foreground">Non configurées</span>
+            <Card className="px-6 py-4 panel-3d border-[hsl(45,100%,55%)]/30">
+              <div className="flex items-center gap-3">
+                <Sparkles className="h-7 w-7 text-[hsl(45,100%,55%)]" />
+                <span className="font-display text-3xl font-black text-[hsl(45,100%,55%)]">{stats.free}</span>
+                <span className="text-base text-muted-foreground font-display">GRATUITS</span>
               </div>
             </Card>
-            <Card className="px-4 py-3 panel-3d border-[hsl(25,100%,55%)]/30">
-              <div className="flex items-center gap-2">
-                <Flame className="h-5 w-5 text-[hsl(25,100%,55%)]" />
-                <span className="font-display text-lg font-bold text-[hsl(25,100%,55%)]">{stats.adult}</span>
-                <span className="text-xs text-muted-foreground">Adultes</span>
+            <Card className="px-6 py-4 panel-3d border-[hsl(25,100%,55%)]/30">
+              <div className="flex items-center gap-3">
+                <Flame className="h-7 w-7 text-[hsl(25,100%,55%)]" />
+                <span className="font-display text-3xl font-black text-[hsl(25,100%,55%)]">{stats.adult}</span>
+                <span className="text-base text-muted-foreground font-display">ADULTES</span>
               </div>
             </Card>
           </div>
 
           {/* Search */}
-          <div className="relative max-w-md">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+          <div className="relative max-w-lg mb-6">
+            <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-6 w-6 text-muted-foreground" />
             <Input
-              placeholder="Rechercher un service, modèle, catégorie..."
+              placeholder="RECHERCHER UN SERVICE, MODÈLE..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="input-3d pl-12 font-display"
+              className="input-3d pl-14 py-4 h-auto text-lg font-display tracking-wide"
             />
+          </div>
+
+          {/* Category Filters */}
+          <div className="flex flex-wrap gap-3 mb-8">
+            <Button
+              onClick={() => setSelectedCategory("all")}
+              className={cn(
+                "font-display text-base tracking-wider px-5 py-3 h-auto gap-2",
+                selectedCategory === "all" ? "btn-3d-cyan" : "btn-3d"
+              )}
+            >
+              <Globe className="h-5 w-5" />
+              TOUS
+            </Button>
+            {categories.map((cat) => (
+              <Button
+                key={cat.id}
+                onClick={() => setSelectedCategory(cat.id)}
+                className={cn(
+                  "font-display text-sm tracking-wider px-4 py-3 h-auto gap-2",
+                  selectedCategory === cat.id 
+                    ? `bg-[${cat.color}]/30 border-[${cat.color}] ${cat.textClass}` 
+                    : "btn-3d"
+                )}
+                style={selectedCategory === cat.id ? {
+                  background: `linear-gradient(180deg, ${cat.color}40 0%, ${cat.color}20 100%)`,
+                  borderColor: cat.color,
+                  boxShadow: `0 0 20px ${cat.color}40`
+                } : undefined}
+              >
+                {cat.icon}
+                {cat.label}
+              </Button>
+            ))}
           </div>
         </div>
 
         {/* All-in-One Platforms Section */}
-        <div className="mb-8">
+        <div className="mb-10">
           <button
             onClick={() => setShowAllInOne(!showAllInOne)}
-            className="flex items-center gap-3 mb-4 group"
+            className="flex items-center gap-4 mb-6 group"
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[hsl(280,100%,65%)]/20">
-              <Zap className="h-4 w-4 text-[hsl(280,100%,65%)]" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[hsl(280,100%,65%)]/20">
+              <Zap className="h-6 w-6 text-[hsl(280,100%,65%)]" />
             </div>
-            <h2 className="font-display text-lg font-bold gradient-text-purple">
+            <h2 className="font-display text-2xl font-bold gradient-text-purple tracking-wider">
               PLATEFORMES ALL-IN-ONE
             </h2>
-            <Badge variant="secondary" className="text-xs">
-              {allInOnePlatforms.length} plateformes
+            <Badge variant="secondary" className="text-base px-3 py-1 font-display">
+              {allInOnePlatforms.length}
             </Badge>
             {showAllInOne ? (
-              <ChevronUp className="h-4 w-4 text-muted-foreground" />
+              <ChevronUp className="h-6 w-6 text-muted-foreground" />
             ) : (
-              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              <ChevronDown className="h-6 w-6 text-muted-foreground" />
             )}
           </button>
 
           {showAllInOne && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-8">
               {allInOnePlatforms.map((platform) => (
                 <Card
                   key={platform.id}
-                  className="panel-3d p-4 border-[hsl(280,100%,65%)]/20 hover:border-[hsl(280,100%,65%)]/50 transition-all duration-300"
+                  className="panel-3d p-5 border-[hsl(280,100%,65%)]/20 hover:border-[hsl(280,100%,65%)]/50 transition-all duration-300"
                 >
-                  <div className="flex items-start justify-between mb-3">
-                    <h3 className="font-display text-sm font-bold gradient-text-purple">
-                      {platform.name}
-                    </h3>
-                    <Badge variant="secondary" className="text-[10px]">
-                      {platform.modelsCount}
-                    </Badge>
-                  </div>
-                  <p className="text-xs text-muted-foreground mb-3 line-clamp-2">
+                  <h3 className="font-display text-lg font-bold gradient-text-purple mb-2">
+                    {platform.name}
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
                     {platform.description}
                   </p>
-                  <div className="flex flex-wrap gap-1 mb-3">
-                    {platform.badges.map((badge) => (
-                      <Badge
-                        key={badge}
-                        variant="outline"
-                        className="text-[9px] px-1.5 py-0 border-[hsl(280,100%,65%)]/30 text-[hsl(280,100%,65%)]"
-                      >
-                        {badge}
-                      </Badge>
-                    ))}
-                  </div>
+                  <Badge variant="secondary" className="text-sm mb-3 font-display">
+                    {platform.modelsCount}
+                  </Badge>
                   <div className="flex gap-2">
                     <Button
                       size="sm"
-                      className="flex-1 btn-3d-purple text-[10px] h-7 gap-1"
+                      className="flex-1 btn-3d-purple text-sm h-10 gap-2 font-display"
                       asChild
                     >
                       <a href={platform.apiUrl} target="_blank" rel="noopener noreferrer">
-                        <Key className="h-3 w-3" />
-                        Obtenir
-                      </a>
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="btn-3d text-[10px] h-7"
-                      asChild
-                    >
-                      <a href={platform.officialUrl} target="_blank" rel="noopener noreferrer">
-                        <ExternalLinkIcon className="h-3 w-3" />
+                        <Key className="h-4 w-4" />
+                        OBTENIR
                       </a>
                     </Button>
                   </div>
@@ -407,215 +416,96 @@ const APIKeys = () => {
           )}
         </div>
 
-        {/* API Services */}
-        {viewMode === "list" ? (
-          <div className="space-y-2">
-            {filteredServices.map((service) => (
-              <Card
-                key={service.key}
-                className={cn(
-                  "panel-3d p-4 flex items-center justify-between gap-4 transition-all duration-300",
-                  service.isConfigured 
-                    ? "border-[hsl(142,76%,50%)]/30" 
-                    : "border-[hsl(220,15%,25%)]",
-                  service.isAdult && "border-[hsl(25,100%,55%)]/30"
-                )}
-              >
-                <div className="flex items-center gap-4 flex-1">
-                  {/* Status Indicator */}
-                  <div className={cn(
-                    "flex h-10 w-10 items-center justify-center rounded-lg",
-                    service.isConfigured 
-                      ? "bg-[hsl(142,76%,50%)]/20" 
-                      : "bg-[hsl(220,15%,20%)]"
-                  )}>
-                    {service.isAdult ? (
-                      <Flame className="h-5 w-5 text-[hsl(25,100%,55%)]" />
-                    ) : service.isConfigured ? (
-                      <Check className="h-5 w-5 text-[hsl(142,76%,50%)]" />
-                    ) : (
-                      <Key className="h-5 w-5 text-muted-foreground" />
-                    )}
-                  </div>
+        {/* API Services Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+          {filteredServices.map((service) => (
+            <Card
+              key={service.key}
+              className={cn(
+                "panel-3d p-5 flex flex-col transition-all duration-300 hover:scale-[1.02] relative",
+                service.isConfigured 
+                  ? "border-[hsl(142,76%,50%)]/40" 
+                  : "border-[hsl(220,15%,25%)]",
+                service.isAdult && "border-[hsl(25,100%,55%)]/40"
+              )}
+            >
+              {/* LED Indicator - Top Right */}
+              <div className="absolute top-3 right-3">
+                <StatusLED isActive={service.isConfigured} size="md" />
+              </div>
 
-                  {/* Service Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-display text-sm font-bold truncate">
-                        {service.config.serviceName}
-                      </h3>
-                      {service.isConfigured && (
-                        <Badge className="bg-[hsl(142,76%,50%)]/20 text-[hsl(142,76%,50%)] border-[hsl(142,76%,50%)]/30 text-[10px]">
-                          ACTIVE
-                        </Badge>
-                      )}
-                      {service.isAdult && (
-                        <Badge className="bg-[hsl(25,100%,55%)]/20 text-[hsl(25,100%,55%)] border-[hsl(25,100%,55%)]/30 text-[10px] gap-1">
-                          <Flame className="h-3 w-3" />
-                          +18
-                        </Badge>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <span>{service.modelsCount} modèle{service.modelsCount > 1 ? "s" : ""}</span>
-                      <span>•</span>
-                      <span className="flex gap-1">
-                        {service.categories.slice(0, 3).map((cat) => (
-                          <span key={cat} className={getCategoryColor(cat)}>
-                            {cat}
-                          </span>
-                        ))}
-                        {service.categories.length > 3 && (
-                          <span>+{service.categories.length - 3}</span>
-                        )}
-                      </span>
-                    </div>
-                  </div>
+              {/* Vintage Stamp for activated */}
+              {service.isConfigured && (
+                <div className="absolute -top-2 -left-2 transform -rotate-12">
+                  <VintageStamp text="OK" />
                 </div>
+              )}
 
-                {/* Actions */}
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="btn-3d text-xs h-8 gap-1"
-                    asChild
-                  >
-                    <a href={service.config.apiUrl} target="_blank" rel="noopener noreferrer">
-                      <Key className="h-3.5 w-3.5" />
-                      Clé
-                      <ExternalLink className="h-3 w-3" />
-                    </a>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="btn-3d text-xs h-8"
-                    asChild
-                  >
-                    <a href={service.config.docsUrl} target="_blank" rel="noopener noreferrer">
-                      Docs
-                    </a>
-                  </Button>
-                  <Button
-                    size="sm"
-                    className={cn(
-                      "font-display text-xs h-8 gap-1",
-                      service.isConfigured ? "btn-3d-green" : "btn-3d-cyan"
-                    )}
-                    onClick={() => handleOpenAPIKeyModal(service.key, service.isAdult)}
-                  >
-                    <Plus className="h-3.5 w-3.5" />
-                    {service.isConfigured ? "Modifier" : "Ajouter"}
-                  </Button>
+              {/* Adult flame icon */}
+              {service.isAdult && (
+                <div className="absolute top-3 left-3">
+                  <Flame className="h-6 w-6 text-[hsl(25,100%,55%)] animate-pulse" />
                 </div>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          /* Grid View */
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            {filteredServices.map((service) => (
-              <Card
-                key={service.key}
-                className={cn(
-                  "panel-3d p-4 flex flex-col transition-all duration-300 hover:scale-[1.02]",
-                  service.isConfigured 
-                    ? "border-[hsl(142,76%,50%)]/30" 
-                    : "border-[hsl(220,15%,25%)]",
-                  service.isAdult && "border-[hsl(25,100%,55%)]/30"
-                )}
-              >
-                {/* Header */}
-                <div className="flex items-center justify-between mb-3">
-                  <div className={cn(
-                    "flex h-10 w-10 items-center justify-center rounded-lg",
-                    service.isConfigured 
-                      ? "bg-[hsl(142,76%,50%)]/20" 
-                      : "bg-[hsl(220,15%,20%)]"
-                  )}>
-                    {service.isAdult ? (
-                      <Flame className="h-5 w-5 text-[hsl(25,100%,55%)]" />
-                    ) : service.isConfigured ? (
-                      <Check className="h-5 w-5 text-[hsl(142,76%,50%)]" />
-                    ) : (
-                      <Key className="h-5 w-5 text-muted-foreground" />
-                    )}
-                  </div>
-                  <Badge variant="secondary" className="text-[10px]">
-                    {service.modelsCount}
-                  </Badge>
-                </div>
+              )}
 
-                {/* Name */}
-                <h3 className="font-display text-sm font-bold mb-1 truncate">
-                  {service.config.serviceName}
-                </h3>
+              {/* Service Name */}
+              <h3 className="font-display text-lg font-bold mt-8 mb-2 truncate">
+                {service.config.serviceName}
+              </h3>
 
-                {/* Categories */}
-                <div className="flex flex-wrap gap-1 mb-3">
-                  {service.categories.slice(0, 2).map((cat) => (
-                    <span
-                      key={cat}
-                      className={cn("text-[10px]", getCategoryColor(cat))}
-                    >
-                      {cat}
-                    </span>
-                  ))}
-                </div>
+              {/* Models Count */}
+              <div className="flex items-center gap-2 mb-3">
+                <Badge variant="secondary" className="text-sm font-display">
+                  {service.modelsCount} MODÈLES
+                </Badge>
+              </div>
 
-                {/* Status Badge */}
-                {service.isConfigured ? (
-                  <Badge className="bg-[hsl(142,76%,50%)]/20 text-[hsl(142,76%,50%)] border-[hsl(142,76%,50%)]/30 text-[10px] mb-3">
-                    ✓ ACTIVE
-                  </Badge>
-                ) : service.isAdult ? (
-                  <Badge className="bg-[hsl(25,100%,55%)]/20 text-[hsl(25,100%,55%)] border-[hsl(25,100%,55%)]/30 text-[10px] mb-3 gap-1">
-                    <Flame className="h-3 w-3" /> +18
-                  </Badge>
-                ) : (
-                  <Badge variant="outline" className="text-[10px] mb-3 text-muted-foreground">
-                    Non configurée
-                  </Badge>
-                )}
+              {/* Category Icons */}
+              <div className="mb-4">
+                <MultiCategoryIcons categories={service.categories} size="sm" />
+              </div>
 
-                {/* Actions */}
-                <div className="flex gap-1 mt-auto">
-                  <Button
-                    size="sm"
-                    className="flex-1 btn-3d-cyan text-[10px] h-7 gap-1"
-                    onClick={() => handleOpenAPIKeyModal(service.key, service.isAdult)}
-                  >
-                    <Plus className="h-3 w-3" />
-                    {service.isConfigured ? "Edit" : "Add"}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="btn-3d text-[10px] h-7"
-                    asChild
-                  >
-                    <a href={service.config.apiUrl} target="_blank" rel="noopener noreferrer">
-                      <ExternalLink className="h-3 w-3" />
-                    </a>
-                  </Button>
-                </div>
-              </Card>
-            ))}
-          </div>
-        )}
+              {/* Free badge */}
+              {service.isFree && (
+                <Badge className="bg-[hsl(45,100%,55%)]/20 text-[hsl(45,100%,55%)] border-[hsl(45,100%,55%)]/30 text-sm mb-3 font-display self-start">
+                  ✨ GRATUIT
+                </Badge>
+              )}
+
+              {/* Actions */}
+              <div className="flex gap-2 mt-auto pt-3">
+                <Button
+                  className={cn(
+                    "flex-1 font-display text-sm h-12 gap-2",
+                    service.isConfigured ? "btn-3d-green" : "btn-3d-cyan"
+                  )}
+                  onClick={() => handleOpenAPIKeyModal(service.key, service.isAdult)}
+                >
+                  <Plus className="h-5 w-5" />
+                  {service.isConfigured ? "MODIFIER" : "AJOUTER"}
+                </Button>
+                <Button
+                  variant="outline"
+                  className="btn-3d h-12 w-12 p-0"
+                  asChild
+                >
+                  <a href={service.config.apiUrl} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="h-5 w-5" />
+                  </a>
+                </Button>
+              </div>
+            </Card>
+          ))}
+        </div>
 
         {/* Empty State */}
         {filteredServices.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-16">
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-muted/50 mb-4">
-              <Search className="h-10 w-10 text-muted-foreground" />
+          <div className="flex flex-col items-center justify-center py-20">
+            <div className="flex h-24 w-24 items-center justify-center rounded-full bg-muted/50 mb-6">
+              <Search className="h-12 w-12 text-muted-foreground" />
             </div>
-            <p className="font-display text-lg text-muted-foreground">
-              Aucun service trouvé
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Essayez un autre terme de recherche
+            <p className="font-display text-2xl text-muted-foreground">
+              AUCUN SERVICE TROUVÉ
             </p>
           </div>
         )}
