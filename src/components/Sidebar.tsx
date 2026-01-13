@@ -30,7 +30,7 @@ const navItems: NavItem[] = [
     id: "llms", 
     label: "LLMS", 
     icon: <MessageSquare className="h-5 w-5" />, 
-    path: "/chat",
+    path: "/llms",
     color: "text-[hsl(320,100%,60%)]",
     bgColor: "bg-[hsl(320,100%,60%)]"
   },
@@ -38,7 +38,7 @@ const navItems: NavItem[] = [
     id: "video", 
     label: "VIDÉO", 
     icon: <Video className="h-5 w-5" />, 
-    path: "/?category=videos",
+    path: "/videos",
     color: "text-[hsl(280,100%,65%)]",
     bgColor: "bg-[hsl(280,100%,65%)]"
   },
@@ -46,7 +46,7 @@ const navItems: NavItem[] = [
     id: "image", 
     label: "IMAGE", 
     icon: <Image className="h-5 w-5" />, 
-    path: "/?category=images",
+    path: "/images",
     color: "text-[hsl(320,100%,60%)]",
     bgColor: "bg-[hsl(320,100%,60%)]"
   },
@@ -54,7 +54,7 @@ const navItems: NavItem[] = [
     id: "retouch", 
     label: "RETOUCH", 
     icon: <Wand2 className="h-5 w-5" />, 
-    path: "/?category=retouch",
+    path: "/retouch",
     color: "text-[hsl(174,100%,50%)]",
     bgColor: "bg-[hsl(174,100%,50%)]"
   },
@@ -62,7 +62,7 @@ const navItems: NavItem[] = [
     id: "audio", 
     label: "AUDIO", 
     icon: <Music className="h-5 w-5" />, 
-    path: "/?category=audio",
+    path: "/audio",
     color: "text-[hsl(45,100%,55%)]",
     bgColor: "bg-[hsl(45,100%,55%)]"
   },
@@ -70,7 +70,7 @@ const navItems: NavItem[] = [
     id: "3d", 
     label: "3D", 
     icon: <Box className="h-5 w-5" />, 
-    path: "/?category=3d",
+    path: "/3d",
     color: "text-[hsl(142,76%,50%)]",
     bgColor: "bg-[hsl(142,76%,50%)]"
   },
