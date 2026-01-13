@@ -7,13 +7,9 @@ import {
   Music, 
   Box, 
   Key, 
-  LayoutGrid, 
   AppWindow, 
-  User,
-  Zap,
-  ChevronLeft
+  Zap
 } from "lucide-react";
-import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 interface NavItem {
@@ -21,164 +17,128 @@ interface NavItem {
   label: string;
   icon: React.ReactNode;
   path: string;
-  color: string;
-  bgColor: string;
+  colorClass: string;
+  btn3dClass: string;
 }
 
 const navItems: NavItem[] = [
   { 
     id: "llms", 
     label: "LLMS", 
-    icon: <MessageSquare className="h-5 w-5" />, 
+    icon: <MessageSquare className="h-4 w-4" />, 
     path: "/llms",
-    color: "text-[hsl(320,100%,60%)]",
-    bgColor: "bg-[hsl(320,100%,60%)]"
+    colorClass: "text-[hsl(320,100%,60%)]",
+    btn3dClass: "btn-3d-pink"
   },
   { 
     id: "video", 
     label: "VIDÉO", 
-    icon: <Video className="h-5 w-5" />, 
+    icon: <Video className="h-4 w-4" />, 
     path: "/videos",
-    color: "text-[hsl(280,100%,65%)]",
-    bgColor: "bg-[hsl(280,100%,65%)]"
+    colorClass: "text-[hsl(280,100%,65%)]",
+    btn3dClass: "btn-3d-purple"
   },
   { 
     id: "image", 
     label: "IMAGE", 
-    icon: <Image className="h-5 w-5" />, 
+    icon: <Image className="h-4 w-4" />, 
     path: "/images",
-    color: "text-[hsl(320,100%,60%)]",
-    bgColor: "bg-[hsl(320,100%,60%)]"
+    colorClass: "text-[hsl(320,100%,60%)]",
+    btn3dClass: "btn-3d-pink"
   },
   { 
     id: "retouch", 
     label: "RETOUCH", 
-    icon: <Wand2 className="h-5 w-5" />, 
+    icon: <Wand2 className="h-4 w-4" />, 
     path: "/retouch",
-    color: "text-[hsl(174,100%,50%)]",
-    bgColor: "bg-[hsl(174,100%,50%)]"
+    colorClass: "text-[hsl(174,100%,50%)]",
+    btn3dClass: "btn-3d-cyan"
   },
   { 
     id: "audio", 
     label: "AUDIO", 
-    icon: <Music className="h-5 w-5" />, 
+    icon: <Music className="h-4 w-4" />, 
     path: "/audio",
-    color: "text-[hsl(45,100%,55%)]",
-    bgColor: "bg-[hsl(45,100%,55%)]"
+    colorClass: "text-[hsl(45,100%,55%)]",
+    btn3dClass: "btn-3d-yellow"
   },
   { 
     id: "3d", 
     label: "3D", 
-    icon: <Box className="h-5 w-5" />, 
+    icon: <Box className="h-4 w-4" />, 
     path: "/3d",
-    color: "text-[hsl(142,76%,50%)]",
-    bgColor: "bg-[hsl(142,76%,50%)]"
-  },
-  { 
-    id: "cles", 
-    label: "CLÉS", 
-    icon: <Key className="h-5 w-5" />, 
-    path: "/keys",
-    color: "text-[hsl(45,100%,55%)]",
-    bgColor: "bg-[hsl(45,100%,55%)]"
-  },
-  { 
-    id: "apis", 
-    label: "APIS", 
-    icon: <LayoutGrid className="h-5 w-5" />, 
-    path: "/apis",
-    color: "text-[hsl(210,100%,60%)]",
-    bgColor: "bg-[hsl(210,100%,60%)]"
+    colorClass: "text-[hsl(142,76%,50%)]",
+    btn3dClass: "btn-3d-green"
   },
   { 
     id: "apps", 
     label: "APPS", 
-    icon: <AppWindow className="h-5 w-5" />, 
+    icon: <AppWindow className="h-4 w-4" />, 
     path: "/apps",
-    color: "text-[hsl(174,100%,50%)]",
-    bgColor: "bg-[hsl(174,100%,50%)]"
+    colorClass: "text-[hsl(174,100%,50%)]",
+    btn3dClass: "btn-3d-cyan"
   },
   { 
-    id: "perso", 
-    label: "PERSO", 
-    icon: <User className="h-5 w-5" />, 
-    path: "/profile",
-    color: "text-[hsl(25,100%,55%)]",
-    bgColor: "bg-[hsl(25,100%,55%)]"
+    id: "api", 
+    label: "API", 
+    icon: <Key className="h-4 w-4" />, 
+    path: "/keys",
+    colorClass: "text-[hsl(25,100%,55%)]",
+    btn3dClass: "btn-3d-orange"
   },
 ];
 
 export function Sidebar() {
   const location = useLocation();
-  const [isCollapsed, setIsCollapsed] = useState(false);
 
   return (
-    <aside 
-      className={cn(
-        "fixed left-0 top-0 z-50 flex h-full flex-col border-r border-border/50 bg-sidebar-background transition-all duration-300",
-        isCollapsed ? "w-16" : "w-40"
-      )}
-    >
-      {/* Logo */}
-      <div className="flex items-center gap-2 border-b border-border/50 p-4">
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[hsl(280,100%,65%)] to-[hsl(320,100%,60%)] glow-purple">
-          <Zap className="h-4 w-4 text-white" />
+    <aside className="fixed left-0 top-0 z-50 flex h-full w-[140px] flex-col bg-[hsl(220,20%,8%)] border-r border-[hsl(220,15%,20%)]">
+      {/* Logo AIONE */}
+      <Link 
+        to="/" 
+        className="flex flex-col items-center gap-1 py-6 px-3 border-b border-[hsl(220,15%,20%)] hover:bg-[hsl(220,15%,12%)] transition-colors"
+      >
+        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[hsl(280,100%,65%)] to-[hsl(320,100%,60%)] glow-purple">
+          <Zap className="h-6 w-6 text-white" />
         </div>
-        {!isCollapsed && (
-          <div>
-            <span className="font-display text-lg font-bold gradient-text-pink">AIONE</span>
-            <p className="text-[10px] text-muted-foreground">AI GATEWAY</p>
-          </div>
-        )}
-      </div>
+        <span className="font-display text-2xl font-black gradient-text-pink text-glow-pink tracking-wider">
+          AIONE
+        </span>
+        <span className="font-display text-[8px] text-[hsl(174,100%,50%)] tracking-[0.2em]">
+          AI GATEWAY
+        </span>
+      </Link>
 
-      {/* Navigation */}
-      <nav className="flex-1 space-y-1 p-2 overflow-y-auto">
+      {/* Navigation Buttons */}
+      <nav className="flex-1 flex flex-col gap-2 p-3 overflow-y-auto">
         {navItems.map((item) => {
-          const isActive = location.pathname === item.path || 
-            (item.path.includes('category') && location.search.includes(item.id));
+          const isActive = location.pathname === item.path;
           
           return (
             <Link
               key={item.id}
               to={item.path}
               className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
-                "hover:bg-muted/50",
-                isActive ? "bg-muted/70" : ""
+                "flex items-center gap-2 px-3 py-2.5 rounded-lg font-display text-xs font-bold tracking-wide transition-all duration-200",
+                isActive 
+                  ? cn(item.btn3dClass, "text-white") 
+                  : "btn-3d text-[hsl(215,20%,65%)] hover:text-white"
               )}
             >
-              <span className={cn(
-                "flex h-7 w-7 items-center justify-center rounded-md",
-                item.bgColor + "/20",
-                item.color
-              )}>
+              <span className={cn(isActive ? "text-white" : item.colorClass)}>
                 {item.icon}
               </span>
-              {!isCollapsed && (
-                <span className={cn("font-display text-xs tracking-wider", item.color)}>
-                  {item.label}
-                </span>
-              )}
+              <span>{item.label}</span>
             </Link>
           );
         })}
       </nav>
 
-      {/* Collapse Button */}
-      <div className="border-t border-border/50 p-2">
-        <button
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-muted/50 transition-colors"
-        >
-          <ChevronLeft className={cn("h-4 w-4 transition-transform", isCollapsed && "rotate-180")} />
-          {!isCollapsed && <span>Réduire</span>}
-        </button>
-        {!isCollapsed && (
-          <p className="mt-2 px-3 text-[10px] text-muted-foreground">
-            v2.0 <span className="text-[hsl(174,100%,50%)]">Neo</span>
-          </p>
-        )}
+      {/* Version */}
+      <div className="border-t border-[hsl(220,15%,20%)] p-3">
+        <p className="text-center font-display text-[8px] text-[hsl(215,20%,45%)] tracking-wider">
+          V2.0 <span className="text-[hsl(174,100%,50%)]">NEO</span>
+        </p>
       </div>
     </aside>
   );
