@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { AppWindow, Sparkles, ExternalLink, Key, Check, Zap, Flame, Search, LayoutGrid, List, Image, Video, MessageSquare, Music, Wand2, Box, Code, ImageIcon, Volume2, Film, Palette, Cpu, Bot } from "lucide-react";
+import { useState, useMemo, useCallback } from "react";
+import { AppWindow, Sparkles, ExternalLink, Key, Check, Zap, Flame, Search, LayoutGrid, List, Image, Video, MessageSquare, Music, Wand2, Box, Code } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { AIModel, aiModels, apiConfigs, AICategory } from "@/data/aiModels";
 import { useAPIStatus } from "@/hooks/useAPIStatus";
@@ -35,8 +35,7 @@ const categoryConfigs: CategoryConfig[] = [
 ];
 
 const Apps = () => {
-  const { getModelsWithStatus } = useAPIStatus();
-  const [favorites, setFavorites] = useState<string[]>([]);
+  const { getModelsWithStatus, refetch } = useAPIStatus();
   const [apiKeyModalOpen, setApiKeyModalOpen] = useState(false);
   const [selectedApiKeyName, setSelectedApiKeyName] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -101,18 +100,16 @@ const Apps = () => {
     return counts;
   }, [allModels]);
 
-  const toggleFavorite = (modelId: string) => {
-    setFavorites((prev) =>
-      prev.includes(modelId)
-        ? prev.filter((id) => id !== modelId)
-        : [...prev, modelId]
-    );
-  };
-
-  const handleOpenAPIKeyModal = (apiKeyName: string) => {
+  const handleOpenAPIKeyModal = useCallback((apiKeyName: string) => {
     setSelectedApiKeyName(apiKeyName);
     setApiKeyModalOpen(true);
-  };
+  }, []);
+
+  // Callback pour rafraîchir instantanément après activation
+  const handleAPIKeySuccess = useCallback(() => {
+    // Refetch immédiatement les APIs configurées
+    refetch();
+  }, [refetch]);
 
   const handleModelClick = (model: AIModel) => {
     if (model.category === "uncensored") {
@@ -124,10 +121,6 @@ const Apps = () => {
   const handleAdultConfirm = () => {
     setAdultModalOpen(false);
     setPendingAdultModel(null);
-  };
-
-  const getCategoryConfig = (categoryId: string) => {
-    return categoryConfigs.find(c => c.id === categoryId) || categoryConfigs[0];
   };
 
   return (
@@ -146,36 +139,36 @@ const Apps = () => {
                 MEGA API COLLECTION
               </h1>
               <p className="text-lg text-muted-foreground tracking-wide">
-                <span className="text-[hsl(var(--primary))] font-bold">{stats.total}</span> Services
+                <span className="text-[hsl(var(--primary))] font-bold">{stats.total}</span> SERVICES
               </p>
             </div>
           </div>
 
           <div className="panel-3d p-6 mb-6">
-            <h2 className="font-display text-2xl font-bold text-center mb-4 gradient-text-pink">
+            <h2 className="font-display text-2xl font-bold text-center mb-4 gradient-text-pink tracking-wider">
               LA PLUS GRANDE BIBLIOTHÈQUE AI
             </h2>
             <p className="text-center text-lg text-muted-foreground mb-6">
-              Accédez à <span className="text-[hsl(var(--primary))] font-bold">{stats.total}+</span> générateurs AI du monde entier. <span className="text-[hsl(142,76%,50%)] font-bold">{stats.free}+</span> gratuits.
+              Accédez à <span className="text-[hsl(var(--primary))] font-bold">{stats.total}+</span> générateurs AI. <span className="text-[hsl(142,76%,50%)] font-bold">{stats.free}+</span> gratuits.
             </p>
 
             {/* Stats Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="panel-3d p-4 text-center">
                 <span className="font-display text-3xl font-black text-[hsl(var(--primary))]">{stats.total}</span>
-                <p className="text-sm text-muted-foreground mt-1">SERVICES</p>
+                <p className="text-sm text-muted-foreground mt-1 font-display tracking-wider">SERVICES</p>
               </div>
               <div className="panel-3d p-4 text-center">
                 <span className="font-display text-3xl font-black text-[hsl(142,76%,50%)]">{stats.free}+</span>
-                <p className="text-sm text-muted-foreground mt-1">GRATUITS</p>
+                <p className="text-sm text-muted-foreground mt-1 font-display tracking-wider">GRATUITS</p>
               </div>
               <div className="panel-3d p-4 text-center">
                 <span className="font-display text-3xl font-black text-[hsl(25,100%,55%)]">{stats.uncensored}</span>
-                <p className="text-sm text-muted-foreground mt-1">SANS CENSURE</p>
+                <p className="text-sm text-muted-foreground mt-1 font-display tracking-wider">SANS CENSURE</p>
               </div>
               <div className="panel-3d p-4 text-center">
                 <span className="font-display text-3xl font-black text-[hsl(280,100%,65%)]">{categoryConfigs.length - 2}</span>
-                <p className="text-sm text-muted-foreground mt-1">CATÉGORIES</p>
+                <p className="text-sm text-muted-foreground mt-1 font-display tracking-wider">CATÉGORIES</p>
               </div>
             </div>
           </div>
@@ -185,10 +178,10 @@ const Apps = () => {
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input
-                placeholder="Rechercher un service, provider..."
+                placeholder="RECHERCHER UN SERVICE..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="input-3d pl-10 text-lg"
+                className="input-3d pl-10 text-base font-display tracking-wider"
               />
             </div>
             
@@ -211,8 +204,8 @@ const Apps = () => {
               </Button>
             </div>
 
-            <Badge className="bg-muted text-muted-foreground border-border text-base px-4 py-2">
-              {filteredModels.length} résultats
+            <Badge className="bg-muted text-muted-foreground border-border text-base px-4 py-2 font-display tracking-wider">
+              {filteredModels.length} RÉSULTATS
             </Badge>
           </div>
 
@@ -228,15 +221,15 @@ const Apps = () => {
                   variant={isSelected ? "default" : "outline"}
                   onClick={() => setSelectedCategory(cat.id)}
                   className={cn(
-                    "gap-2 transition-all duration-300",
+                    "gap-2 transition-all duration-300 font-display tracking-wider",
                     isSelected 
                       ? cn("scale-105", cat.bgColor, cat.color, cat.borderColor)
                       : "btn-3d hover:scale-102"
                   )}
                 >
                   <span className={isSelected ? "" : cat.color}>{cat.icon}</span>
-                  <span className="font-display">{cat.label}</span>
-                  <Badge variant="secondary" className="ml-1 h-6 px-2">
+                  <span>{cat.label}</span>
+                  <Badge variant="secondary" className="ml-1 h-6 px-2 font-display">
                     {count}
                   </Badge>
                 </Button>
@@ -249,7 +242,7 @@ const Apps = () => {
         <div className={cn(
           "gap-4",
           viewMode === "grid" 
-            ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5" 
+            ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6" 
             : "flex flex-col"
         )}>
           {filteredModels.map((model) => (
@@ -265,8 +258,8 @@ const Apps = () => {
 
         {filteredModels.length === 0 && (
           <div className="text-center py-20">
-            <p className="font-display text-2xl text-muted-foreground">
-              Aucun résultat trouvé
+            <p className="font-display text-2xl text-muted-foreground tracking-wider">
+              AUCUN RÉSULTAT TROUVÉ
             </p>
           </div>
         )}
@@ -276,6 +269,7 @@ const Apps = () => {
         isOpen={apiKeyModalOpen}
         onClose={() => setApiKeyModalOpen(false)}
         apiKeyName={selectedApiKeyName}
+        onSuccess={handleAPIKeySuccess}
       />
 
       <AdultDisclaimerModal
@@ -341,37 +335,37 @@ function AppModelCard({ model, viewMode, onOpenAPIKeyModal, onClick }: AppModelC
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <h3 className="font-display text-lg font-bold truncate">{model.name}</h3>
+            <h3 className="font-display text-lg font-bold truncate tracking-wider">{model.name}</h3>
             {isUncensored && <Flame className="h-4 w-4 text-[hsl(0,100%,60%)]" />}
           </div>
-          <p className="text-sm text-muted-foreground truncate">{model.provider}</p>
+          <p className="text-sm text-muted-foreground truncate font-display">{model.provider}</p>
         </div>
 
         <div className="flex items-center gap-2">
           {model.isFree && (
-            <Badge className="bg-[hsl(142,76%,50%)]/20 text-[hsl(142,76%,50%)] border-[hsl(142,76%,50%)]/30">
+            <Badge className="bg-[hsl(142,76%,50%)]/20 text-[hsl(142,76%,50%)] border-[hsl(142,76%,50%)]/30 font-display">
               FREE
             </Badge>
           )}
-          <Badge variant="outline" className={getCategoryColor(model.category)}>
+          <Badge variant="outline" className={cn("font-display", getCategoryColor(model.category))}>
             {model.category.toUpperCase()}
           </Badge>
           {model.price && !model.isFree && (
-            <span className="text-sm text-[hsl(45,100%,55%)]">{model.price}</span>
+            <span className="text-sm text-[hsl(45,100%,55%)] font-display">{model.price}</span>
           )}
         </div>
 
         {!isActive && model.apiKeyName && (
           <Button
             size="sm"
-            className="btn-3d-cyan gap-2"
+            className="btn-3d-orange gap-2 font-display tracking-wider"
             onClick={(e) => {
               e.stopPropagation();
               onOpenAPIKeyModal(model.apiKeyName!);
             }}
           >
             <Key className="h-4 w-4" />
-            Ajouter clé
+            {model.isFree ? "AJOUTER" : "ACHETER"}
           </Button>
         )}
 
@@ -380,107 +374,99 @@ function AppModelCard({ model, viewMode, onOpenAPIKeyModal, onClick }: AppModelC
     );
   }
 
+  // GRID VIEW - Cartes réduites avec logo en haut à droite
   return (
     <div 
-      className="panel-3d p-4 flex flex-col cursor-pointer hover:scale-[1.02] transition-all duration-300 relative overflow-hidden"
+      className={cn(
+        "panel-3d p-3 flex flex-col cursor-pointer hover:scale-[1.02] transition-all duration-300 relative overflow-hidden",
+        !isActive && "opacity-80"
+      )}
       onClick={onClick}
+      style={{ minHeight: "180px" }}
     >
-      {/* Status LED */}
-      <div className="absolute top-3 left-3">
+      {/* Status LED - Top left */}
+      <div className="absolute top-2 left-2">
         <StatusLED isActive={isActive} />
       </div>
 
+      {/* Logo - Top right */}
+      <div className="absolute top-2 right-2 h-10 w-10 rounded-lg bg-muted/70 border border-border/50 overflow-hidden">
+        {!imageError ? (
+          <img
+            src={logoUrl}
+            alt={model.provider}
+            className="h-full w-full object-contain p-1"
+            onError={() => setImageError(true)}
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center text-sm font-bold text-muted-foreground font-display">
+            {model.provider.charAt(0)}
+          </div>
+        )}
+      </div>
+
+      {/* Flame for uncensored */}
+      {isUncensored && (
+        <div className="absolute top-14 right-2">
+          <Flame className="h-4 w-4 text-[hsl(0,100%,60%)] animate-pulse" />
+        </div>
+      )}
+
       {/* Vintage Stamp for active */}
       {isActive && (
-        <div className="absolute top-2 right-2">
+        <div className="absolute bottom-12 right-1">
           <VintageStamp />
         </div>
       )}
 
-      {/* Flame for uncensored */}
-      {isUncensored && (
-        <div className="absolute top-3 right-3">
-          <Flame className="h-5 w-5 text-[hsl(0,100%,60%)] animate-pulse" />
-        </div>
-      )}
-
-      {/* Content */}
-      <div className="pt-6 pb-2 flex flex-col items-center text-center flex-1">
-        {/* Logo */}
-        <div className="h-16 w-16 rounded-xl bg-muted/50 border border-border/50 overflow-hidden mb-3">
-          {!imageError ? (
-            <img
-              src={logoUrl}
-              alt={model.provider}
-              className="h-full w-full object-contain p-2"
-              onError={() => setImageError(true)}
-            />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center text-2xl font-bold text-muted-foreground font-display">
-              {model.provider.charAt(0)}
-            </div>
-          )}
-        </div>
-
+      {/* Content - Centered */}
+      <div className="pt-10 flex flex-col items-center text-center flex-1">
         {/* Name */}
-        <h3 className="font-display text-base font-bold text-foreground mb-1 line-clamp-1">
+        <h3 className="font-display text-sm font-bold text-foreground mb-1 line-clamp-2 tracking-wider leading-tight">
           {model.name}
         </h3>
-        <p className="text-xs text-muted-foreground mb-2">{model.provider}</p>
+        <p className="text-xs text-muted-foreground mb-2 font-display">{model.provider}</p>
 
         {/* Category Badge */}
-        <Badge variant="outline" className={cn("text-xs mb-2", getCategoryColor(model.category))}>
+        <Badge variant="outline" className={cn("text-[10px] mb-2 font-display", getCategoryColor(model.category))}>
           {model.category.toUpperCase()}
         </Badge>
 
         {/* Free/Price Badge */}
         {model.isFree ? (
-          <Badge className="bg-[hsl(142,76%,50%)]/20 text-[hsl(142,76%,50%)] border-[hsl(142,76%,50%)]/30 text-xs">
+          <Badge className="bg-[hsl(142,76%,50%)]/20 text-[hsl(142,76%,50%)] border-[hsl(142,76%,50%)]/30 text-[10px] font-display">
             FREE
           </Badge>
         ) : model.price && (
-          <span className="text-xs text-[hsl(45,100%,55%)]">{model.price}</span>
+          <span className="text-[10px] text-[hsl(45,100%,55%)] font-display">{model.price}</span>
         )}
       </div>
 
-      {/* Action Button - Ajouter (free) or Acheter (paid) */}
-      <div className="pt-2 border-t border-border/30 flex gap-1">
+      {/* Action Button */}
+      <div className="pt-2 border-t border-border/30">
         {model.isFree ? (
           <Button
             size="sm"
-            className="flex-1 h-9 text-sm font-bold btn-3d-orange gap-2 hover:scale-105 transition-transform"
+            className="w-full h-8 text-xs font-bold btn-3d-orange gap-1.5 hover:scale-105 transition-transform font-display tracking-wider"
             onClick={(e) => {
               e.stopPropagation();
               if (model.apiKeyName) onOpenAPIKeyModal(model.apiKeyName);
             }}
           >
-            <Zap className="h-4 w-4" />
+            <Zap className="h-3 w-3" />
             AJOUTER
           </Button>
         ) : (
           <Button
             size="sm"
-            className="flex-1 h-9 text-sm font-bold btn-3d-purple gap-2 hover:scale-105 transition-transform"
+            className="w-full h-8 text-xs font-bold btn-3d-purple gap-1.5 hover:scale-105 transition-transform font-display tracking-wider"
             onClick={(e) => {
               e.stopPropagation();
               if (model.apiKeyName) onOpenAPIKeyModal(model.apiKeyName);
             }}
           >
-            <Key className="h-4 w-4" />
+            <Key className="h-3 w-3" />
             ACHETER
-          </Button>
-        )}
-        {config && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-9 w-9 btn-3d hover:scale-110 transition-transform"
-            asChild
-            onClick={(e) => e.stopPropagation()}
-          >
-            <a href={config.apiUrl} target="_blank" rel="noopener noreferrer">
-              <ExternalLink className="h-4 w-4" />
-            </a>
           </Button>
         )}
       </div>

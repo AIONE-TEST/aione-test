@@ -21,6 +21,7 @@ interface ModelSelectorProps {
   onSelectModel: (model: AIModel) => void;
   category: AICategory;
   className?: string;
+  onRefresh?: () => void;
 }
 
 export function ModelSelector({
@@ -29,13 +30,14 @@ export function ModelSelector({
   onSelectModel,
   category,
   className,
+  onRefresh,
 }: ModelSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [apiKeyModalOpen, setApiKeyModalOpen] = useState(false);
   const [selectedApiKeyName, setSelectedApiKeyName] = useState<string>("");
 
-  // Group models by status
+  // Group models by status - activated and free models FIRST
   const groupedModels = useMemo(() => {
     const filtered = models.filter(
       (m) =>
@@ -59,14 +61,19 @@ export function ModelSelector({
     setApiKeyModalOpen(true);
   };
 
+  const handleAPIKeySuccess = () => {
+    // Rafraîchir la liste des modèles
+    onRefresh?.();
+  };
+
   const getStatusIcon = (model: AIModel) => {
     if (model.isFree || model.apiStatus === "free") {
-      return <Zap className="h-3.5 w-3.5 text-[hsl(142,76%,50%)]" />;
+      return <Zap className="h-4 w-4 text-[hsl(142,76%,50%)]" />;
     }
     if (model.apiStatus === "active") {
-      return <Check className="h-3.5 w-3.5 text-[hsl(174,100%,50%)]" />;
+      return <Check className="h-4 w-4 text-[hsl(174,100%,50%)]" />;
     }
-    return <X className="h-3.5 w-3.5 text-muted-foreground" />;
+    return <X className="h-4 w-4 text-muted-foreground" />;
   };
 
   const ModelItem = ({ model }: { model: AIModel }) => {
@@ -77,10 +84,10 @@ export function ModelSelector({
     return (
       <div
         className={cn(
-          "flex items-center justify-between gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors",
+          "flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200",
           "hover:bg-muted/50",
-          selectedModel?.id === model.id && "bg-muted/70 border border-[hsl(174,100%,50%)]/30",
-          isInactive && "opacity-70"
+          selectedModel?.id === model.id && "bg-muted/70 border border-[hsl(174,100%,50%)]/30 glow-cyan",
+          isInactive && "opacity-60 grayscale"
         )}
         onClick={() => {
           if (!isInactive) {
@@ -94,7 +101,7 @@ export function ModelSelector({
           <div className="shrink-0">{getStatusIcon(model)}</div>
 
           {/* Logo */}
-          <div className="h-8 w-8 rounded-md bg-muted/50 border border-border/50 overflow-hidden shrink-0">
+          <div className="h-9 w-9 rounded-lg bg-muted/50 border border-border/50 overflow-hidden shrink-0">
             <img
               src={logoUrl}
               alt={model.provider}
@@ -108,23 +115,18 @@ export function ModelSelector({
           {/* Info */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <span className="font-medium text-sm truncate">{model.name}</span>
+              <span className="font-display font-bold text-sm truncate tracking-wider">{model.name}</span>
               {model.isFree && (
-                <Badge className="h-4 px-1 text-[10px] bg-[hsl(142,76%,50%)]/20 text-[hsl(142,76%,50%)] border-0">
+                <Badge className="h-5 px-1.5 text-[10px] bg-[hsl(142,76%,50%)]/20 text-[hsl(142,76%,50%)] border-0 font-display">
                   FREE
                 </Badge>
               )}
-              {model.price && !model.isFree && (
-                <span className="text-xs text-muted-foreground">{model.price}</span>
-              )}
             </div>
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-display">
               <span>{model.provider}</span>
-              {model.badges.slice(0, 1).map((badge, i) => (
-                <Badge key={i} variant="outline" className="h-4 px-1 text-[9px]">
-                  {badge}
-                </Badge>
-              ))}
+              {model.price && !model.isFree && (
+                <span className="text-[hsl(45,100%,55%)]">{model.price}</span>
+              )}
             </div>
           </div>
         </div>
@@ -133,16 +135,15 @@ export function ModelSelector({
         {isInactive && model.apiKeyName && (
           <div className="flex items-center gap-1 shrink-0">
             <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 text-[hsl(174,100%,50%)]"
+              size="sm"
+              className="h-7 px-2 btn-3d-orange text-[10px] font-display gap-1"
               onClick={(e) => {
                 e.stopPropagation();
                 handleOpenAPIKeyModal(model.apiKeyName!);
               }}
-              title="Ajouter clé API"
             >
-              <Key className="h-3.5 w-3.5" />
+              <Key className="h-3 w-3" />
+              {model.isFree ? "AJOUTER" : "ACTIVER"}
             </Button>
             {config && (
               <Button
@@ -159,6 +160,11 @@ export function ModelSelector({
             )}
           </div>
         )}
+
+        {/* Check mark for selected */}
+        {selectedModel?.id === model.id && !isInactive && (
+          <Check className="h-4 w-4 text-[hsl(174,100%,50%)] shrink-0" />
+        )}
       </div>
     );
   };
@@ -172,71 +178,75 @@ export function ModelSelector({
             role="combobox"
             aria-expanded={isOpen}
             className={cn(
-              "justify-between border-border/50 bg-muted/30 hover:bg-muted/50 h-12",
+              "justify-between btn-3d h-14 text-base",
               className
             )}
           >
             {selectedModel ? (
               <div className="flex items-center gap-3">
-                <div className="h-7 w-7 rounded-md bg-muted/50 border border-border/50 overflow-hidden">
+                <div className="h-9 w-9 rounded-lg bg-muted/50 border border-border/50 overflow-hidden">
                   <img
                     src={getModelLogo(selectedModel.id, selectedModel.provider)}
                     alt={selectedModel.provider}
-                    className="h-full w-full object-contain p-0.5"
+                    className="h-full w-full object-contain p-1"
                   />
                 </div>
                 <div className="text-left">
-                  <div className="font-medium text-sm">{selectedModel.name}</div>
-                  <div className="text-xs text-muted-foreground">{selectedModel.provider}</div>
+                  <div className="font-display font-bold text-sm tracking-wider">{selectedModel.name}</div>
+                  <div className="text-xs text-muted-foreground font-display">{selectedModel.provider}</div>
                 </div>
               </div>
             ) : (
-              <span className="text-muted-foreground">Sélectionner un modèle...</span>
+              <span className="text-muted-foreground font-display tracking-wider">SÉLECTIONNER UN MODÈLE...</span>
             )}
-            <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            <ChevronDown className="ml-2 h-5 w-5 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
 
-        <PopoverContent className="w-[400px] p-0 bg-card border-border/50" align="start">
+        <PopoverContent className="w-[420px] p-0 panel-3d border-2 border-[hsl(var(--primary))]/30" align="start">
           {/* Search */}
           <div className="p-3 border-b border-border/50">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Rechercher un modèle..."
+                placeholder="RECHERCHER UN MODÈLE..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 bg-muted/30"
+                className="pl-9 input-3d font-display tracking-wider"
               />
             </div>
           </div>
 
           <ScrollArea className="h-[400px]">
-            <div className="p-2 space-y-4">
-              {/* Free & Active Models */}
-              {groupedModels.freeActive.length > 0 && (
+            <div className="p-2 space-y-3">
+              {/* Configured Models FIRST */}
+              {groupedModels.configured.length > 0 && (
                 <div>
-                  <div className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-[hsl(142,76%,50%)]">
-                    <Zap className="h-3.5 w-3.5" />
-                    GRATUITS & ACTIFS
-                    <span className="text-muted-foreground">({groupedModels.freeActive.length})</span>
+                  <div className="flex items-center gap-2 px-3 py-2 text-xs font-display font-bold text-[hsl(174,100%,50%)] tracking-wider">
+                    <Check className="h-4 w-4" />
+                    CONFIGURÉS - PRÊTS À L'EMPLOI
+                    <Badge className="ml-auto bg-[hsl(174,100%,50%)]/20 text-[hsl(174,100%,50%)] font-display">
+                      {groupedModels.configured.length}
+                    </Badge>
                   </div>
-                  {groupedModels.freeActive.map((model) => (
+                  {groupedModels.configured.map((model) => (
                     <ModelItem key={model.id} model={model} />
                   ))}
                 </div>
               )}
 
-              {/* Configured Models */}
-              {groupedModels.configured.length > 0 && (
+              {/* Free & Active Models */}
+              {groupedModels.freeActive.length > 0 && (
                 <div>
-                  <Separator className="my-2" />
-                  <div className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-[hsl(174,100%,50%)]">
-                    <Check className="h-3.5 w-3.5" />
-                    CONFIGURÉS
-                    <span className="text-muted-foreground">({groupedModels.configured.length})</span>
+                  {groupedModels.configured.length > 0 && <Separator className="my-2" />}
+                  <div className="flex items-center gap-2 px-3 py-2 text-xs font-display font-bold text-[hsl(142,76%,50%)] tracking-wider">
+                    <Zap className="h-4 w-4" />
+                    GRATUITS
+                    <Badge className="ml-auto bg-[hsl(142,76%,50%)]/20 text-[hsl(142,76%,50%)] font-display">
+                      {groupedModels.freeActive.length}
+                    </Badge>
                   </div>
-                  {groupedModels.configured.map((model) => (
+                  {groupedModels.freeActive.map((model) => (
                     <ModelItem key={model.id} model={model} />
                   ))}
                 </div>
@@ -246,10 +256,12 @@ export function ModelSelector({
               {groupedModels.inactive.length > 0 && (
                 <div>
                   <Separator className="my-2" />
-                  <div className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-muted-foreground">
-                    <X className="h-3.5 w-3.5" />
-                    API NON CONFIGURÉES - Cliquez pour obtenir votre clé
-                    <span className="text-muted-foreground">({groupedModels.inactive.length})</span>
+                  <div className="flex items-center gap-2 px-3 py-2 text-xs font-display font-bold text-muted-foreground tracking-wider">
+                    <X className="h-4 w-4" />
+                    API NON CONFIGURÉES
+                    <Badge className="ml-auto bg-muted text-muted-foreground font-display">
+                      {groupedModels.inactive.length}
+                    </Badge>
                   </div>
                   {groupedModels.inactive.map((model) => (
                     <ModelItem key={model.id} model={model} />
@@ -261,8 +273,8 @@ export function ModelSelector({
               {groupedModels.freeActive.length === 0 &&
                 groupedModels.configured.length === 0 &&
                 groupedModels.inactive.length === 0 && (
-                  <div className="text-center py-8 text-muted-foreground">
-                    Aucun modèle trouvé
+                  <div className="text-center py-8 text-muted-foreground font-display tracking-wider">
+                    AUCUN MODÈLE TROUVÉ
                   </div>
                 )}
             </div>
@@ -275,6 +287,7 @@ export function ModelSelector({
         isOpen={apiKeyModalOpen}
         onClose={() => setApiKeyModalOpen(false)}
         apiKeyName={selectedApiKeyName}
+        onSuccess={handleAPIKeySuccess}
       />
     </>
   );
