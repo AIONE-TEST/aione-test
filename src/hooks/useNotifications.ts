@@ -8,9 +8,9 @@ interface Notification {
   message: string;
   type: string;
   created_at: string;
-  metadata: unknown;
-  priority: number;
-  expires_at: string | null;
+  metadata?: unknown;
+  priority?: number;
+  expires_at?: string | null;
   is_read?: boolean;
 }
 
