@@ -364,20 +364,31 @@ export function AppTileCard({ model, onOpenAPIKeyModal, onClick, viewMode = "gri
       )}
       onClick={onClick}
       style={{ 
-        minHeight: "160px",
+        minHeight: "200px",
         display: "flex",
         flexDirection: "column"
       }}
     >
-      {/* TOP ZONE - App Name (dedicated zone, 40px height) */}
+      {/* TOP ZONE - App Name + LED + Flame (dedicated zone) */}
       <div className={cn(
-        "px-3 py-2 border-b shrink-0",
+        "px-3 py-3 border-b shrink-0 flex items-center justify-between gap-2",
         style.borderColor,
         "bg-black/20"
       )}>
-        <h3 className="font-display text-sm font-bold text-foreground tracking-wider truncate text-center">
+        {/* LED Status - Always visible */}
+        <StatusLED isActive={isActive} size="md" />
+        
+        <h3 className="font-display text-sm font-bold text-foreground tracking-wider truncate text-center flex-1">
           {model.name}
         </h3>
+        
+        {/* Flame + Hot for uncensored - Always visible */}
+        <div className="flex items-center gap-1">
+          {isUncensored && <AnimatedFlame size="md" />}
+          {isHotVideoGenerator && (
+            <span className="text-sm font-display font-black text-[hsl(30,100%,50%)] animate-pulse">🔥</span>
+          )}
+        </div>
       </div>
 
       {/* MIDDLE ZONE - Logo + Info */}
@@ -443,19 +454,17 @@ export function AppTileCard({ model, onOpenAPIKeyModal, onClick, viewMode = "gri
           )}
         </div>
 
-        {/* Right Side - Status indicators */}
+        {/* Right Side - Price display */}
         <div className="flex flex-col items-end gap-1 shrink-0">
-          {/* LED */}
-          <StatusLED isActive={isActive} size="sm" />
-          
-          {/* Flame for uncensored */}
-          {isUncensored && (
-            <AnimatedFlame size="md" />
-          )}
-          
-          {/* Hot badge */}
-          {isHotVideoGenerator && (
-            <span className="text-xs font-display font-black text-[hsl(30,100%,50%)] animate-pulse">🔥</span>
+          {priceDisplay && (
+            <span className={cn(
+              "font-display text-xs font-bold",
+              priceDisplay === "GRATUIT" 
+                ? "text-[hsl(142,76%,50%)]"
+                : "text-[hsl(45,100%,55%)]"
+            )}>
+              {priceDisplay}
+            </span>
           )}
         </div>
       </div>

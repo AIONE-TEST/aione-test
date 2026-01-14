@@ -250,12 +250,15 @@ const APIKeys = () => {
   };
 
   const handleCopyKey = (key: string, isFullKey: boolean = false) => {
-    if (!isUnlocked && isFullKey) {
-      toast.error("Déverrouillez d'abord pour copier la clé complète");
+    if (!isUnlocked) {
+      setPendingAction({ type: "view", key: key });
+      setShowPasswordModal(true);
+      toast.error("Entrez le mot de passe pour copier la clé");
       return;
     }
-    navigator.clipboard.writeText(key);
-    toast.success(isFullKey ? "Clé API copiée" : "Nom de la clé copié");
+    const service = configuredServices.find(s => s.key === key);
+    navigator.clipboard.writeText(service?.fullKey || key);
+    toast.success("Clé API copiée avec succès");
   };
 
   const handleSaveEdit = async () => {
@@ -491,11 +494,11 @@ const APIKeys = () => {
                       className="flex-1 btn-3d gap-2 font-display"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleCopyKey(service.key, false);
+                        handleCopyKey(service.key, true);
                       }}
                     >
                       <Copy className="h-4 w-4" />
-                      COPIER NOM
+                      COPIER LA CLÉ
                     </Button>
                     <Button
                       size="sm"
