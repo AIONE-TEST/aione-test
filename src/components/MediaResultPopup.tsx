@@ -1,12 +1,14 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { 
   Download, X, Play, Pause, Volume2, VolumeX, 
   Maximize2, SkipBack, SkipForward, RotateCcw,
-  ZoomIn, ZoomOut, Move
+  ZoomIn, ZoomOut, Copy, Camera, Expand, Image as ImageIcon,
+  Film, Scissors
 } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 
 interface MediaResultPopupProps {
   isOpen: boolean;
@@ -15,6 +17,8 @@ interface MediaResultPopupProps {
   mediaType: "image" | "video" | "audio";
   prompt?: string;
   model?: string;
+  onExtendVideo?: () => void;
+  canExtend?: boolean;
 }
 
 export function MediaResultPopup({ 
@@ -23,13 +27,18 @@ export function MediaResultPopup({
   mediaUrl, 
   mediaType,
   prompt,
-  model 
+  model,
+  onExtendVideo,
+  canExtend = false
 }: MediaResultPopupProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [progress, setProgress] = useState(0);
   const [volume, setVolume] = useState(80);
   const [zoom, setZoom] = useState(100);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const handleDownload = () => {
     if (!mediaUrl) return;
@@ -37,6 +46,58 @@ export function MediaResultPopup({
     link.href = mediaUrl;
     link.download = `generated-${mediaType}-${Date.now()}.${mediaType === 'video' ? 'mp4' : mediaType === 'audio' ? 'mp3' : 'png'}`;
     link.click();
+    toast({ title: "Téléchargement lancé !" });
+  };
+
+  const handleCopyToClipboard = async () => {
+    if (!mediaUrl) return;
+    try {
+      await navigator.clipboard.writeText(mediaUrl);
+      toast({ title: "Lien copié !" });
+    } catch {
+      toast({ title: "Erreur de copie", variant: "destructive" });
+    }
+  };
+
+  const handleScreenshot = async () => {
+    if (mediaType === "video" && videoRef.current) {
+      const canvas = document.createElement("canvas");
+      canvas.width = videoRef.current.videoWidth;
+      canvas.height = videoRef.current.videoHeight;
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.drawImage(videoRef.current, 0, 0);
+        const link = document.createElement("a");
+        link.download = `screenshot-${Date.now()}.png`;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+        toast({ title: "Capture d'écran sauvegardée !" });
+      }
+    } else if (mediaType === "image" && mediaUrl) {
+      handleDownload();
+    }
+  };
+
+  const handleCaptureLastFrame = async () => {
+    if (mediaType === "video" && videoRef.current) {
+      // Seek to end
+      videoRef.current.currentTime = videoRef.current.duration - 0.1;
+      setTimeout(() => {
+        handleScreenshot();
+      }, 200);
+    }
+  };
+
+  const handleFullscreen = () => {
+    if (containerRef.current) {
+      if (!document.fullscreenElement) {
+        containerRef.current.requestFullscreen();
+        setIsFullscreen(true);
+      } else {
+        document.exitFullscreen();
+        setIsFullscreen(false);
+      }
+    }
   };
 
   const togglePlay = () => setIsPlaying(!isPlaying);
