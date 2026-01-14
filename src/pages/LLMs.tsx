@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from "react";
-import { Bot, Sparkles, Send, Loader2, User, MessageSquare, Zap, Brain, Code, FileText } from "lucide-react";
+import { Bot, Sparkles, Send, Loader2, User, MessageSquare, Zap, Brain, Code, FileText, LayoutGrid, Gift, ShieldOff, Tag } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { ModelSelector } from "@/components/ModelSelector";
 import { AIModel, getModelsByCategory } from "@/data/aiModels";
@@ -16,18 +16,47 @@ interface Message {
   timestamp: Date;
 }
 
+type LLMFilter = "all" | "services" | "free" | "uncensored";
+
 const LLMs = () => {
   const { getModelsWithStatus } = useAPIStatus();
   const [selectedModel, setSelectedModel] = useState<AIModel | null>(null);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<LLMFilter>("all");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const models = useMemo(() => {
+  const allModels = useMemo(() => {
     const categoryModels = getModelsByCategory("llms");
     return getModelsWithStatus(categoryModels);
   }, [getModelsWithStatus]);
+
+  const filteredModels = useMemo(() => {
+    switch (activeFilter) {
+      case "services":
+        return allModels.filter(m => m.apiStatus === "active");
+      case "free":
+        return allModels.filter(m => m.isFree || m.apiStatus === "free");
+      case "uncensored":
+        return allModels.filter(m => 
+          m.badges.some(b => b.toLowerCase().includes("uncensored") || b.toLowerCase().includes("nsfw") || b === "18+") ||
+          m.name.toLowerCase().includes("uncensored")
+        );
+      default:
+        return allModels;
+    }
+  }, [allModels, activeFilter]);
+
+  const filterCounts = useMemo(() => ({
+    all: allModels.length,
+    services: allModels.filter(m => m.apiStatus === "active").length,
+    free: allModels.filter(m => m.isFree || m.apiStatus === "free").length,
+    uncensored: allModels.filter(m => 
+      m.badges.some(b => b.toLowerCase().includes("uncensored") || b.toLowerCase().includes("nsfw") || b === "18+") ||
+      m.name.toLowerCase().includes("uncensored")
+    ).length,
+  }), [allModels]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -70,6 +99,13 @@ const LLMs = () => {
     }
   };
 
+  const filters: { id: LLMFilter; label: string; icon: React.ReactNode }[] = [
+    { id: "all", label: "Catégories", icon: <LayoutGrid className="h-4 w-4" /> },
+    { id: "services", label: "Services", icon: <Tag className="h-4 w-4" /> },
+    { id: "free", label: "Gratuits", icon: <Gift className="h-4 w-4" /> },
+    { id: "uncensored", label: "Sans Censure", icon: <ShieldOff className="h-4 w-4" /> },
+  ];
+
   return (
     <div className="min-h-screen bg-background">
       <Sidebar />
@@ -89,9 +125,38 @@ const LLMs = () => {
               CHAT LLM
             </h1>
             <p className="text-lg text-muted-foreground">
-              <span className="text-[hsl(45,100%,55%)] font-bold">{models.length}</span> MODÈLES DISPONIBLES
+              <span className="text-[hsl(45,100%,55%)] font-bold">{filteredModels.length}</span> MODÈLES DISPONIBLES
             </p>
           </div>
+        </div>
+
+        {/* Filter Buttons */}
+        <div className="flex flex-wrap gap-3 mb-6">
+          {filters.map((filter) => (
+            <Button
+              key={filter.id}
+              variant={activeFilter === filter.id ? "default" : "outline"}
+              size="sm"
+              onClick={() => setActiveFilter(filter.id)}
+              className={cn(
+                "gap-2 text-sm font-semibold transition-all",
+                activeFilter === filter.id 
+                  ? "btn-3d-yellow" 
+                  : "hover:border-[hsl(45,100%,55%)]/50"
+              )}
+            >
+              {filter.icon}
+              {filter.label}
+              <span className={cn(
+                "ml-1 px-1.5 py-0.5 rounded-full text-xs",
+                activeFilter === filter.id 
+                  ? "bg-black/20 text-white" 
+                  : "bg-muted text-muted-foreground"
+              )}>
+                {filterCounts[filter.id]}
+              </span>
+            </Button>
+          ))}
         </div>
 
         {/* Quick Actions */}
@@ -127,7 +192,7 @@ const LLMs = () => {
                 </label>
               </div>
               <ModelSelector
-                models={models}
+                models={filteredModels}
                 selectedModel={selectedModel}
                 onSelectModel={setSelectedModel}
                 category="llms"
