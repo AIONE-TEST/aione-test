@@ -2,7 +2,8 @@ import { useState, useMemo, useRef, useCallback } from "react";
 import { Volume2, Sparkles, Zap, Music, Mic, Radio, Headphones, Upload, File, Type, Download, Play, Pause, LayoutGrid, Gift, ShieldOff, Tag } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { ModelSelector } from "@/components/ModelSelector";
-import { ModelGrid } from "@/components/ModelGrid";
+import { AppTileCard } from "@/components/AppTileCard";
+import { APIKeyModal } from "@/components/APIKeyModal";
 import { AIModel, getModelsByCategory } from "@/data/aiModels";
 import { useAPIStatus } from "@/hooks/useAPIStatus";
 import { Button } from "@/components/ui/button";
@@ -35,7 +36,14 @@ const GenerateAudio = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeFilter, setActiveFilter] = useState<AudioFilter>("all");
+  const [apiKeyModalOpen, setApiKeyModalOpen] = useState(false);
+  const [selectedApiKeyName, setSelectedApiKeyName] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleOpenAPIKeyModal = (apiKeyName: string) => {
+    setSelectedApiKeyName(apiKeyName);
+    setApiKeyModalOpen(true);
+  };
 
   const allModels = useMemo(() => {
     const categoryModels = getModelsByCategory("audio");
@@ -480,24 +488,37 @@ const GenerateAudio = () => {
           </div>
         </div>
 
-        {/* Models Section */}
+        {/* Models Section - Style APPLIS IA */}
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-6">
             <Volume2 className="h-6 w-6 text-[hsl(25,100%,55%)]" />
-            <h2 className="font-display text-2xl font-bold">TOUS LES MODÈLES AUDIO</h2>
+            <h2 className="font-display text-2xl font-bold">MODÈLES AUDIO COMPATIBLES</h2>
             <Badge variant="outline" className="text-base px-3">
               {filteredModels.length}
             </Badge>
           </div>
 
-          <ModelGrid
-            models={filteredModels}
-            category="audio"
-            favorites={favorites}
-            onToggleFavorite={toggleFavorite}
-            onSelectModel={setSelectedModel}
-          />
+          {/* Grid avec le même style que APPLIS IA */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {filteredModels.map((model) => (
+              <AppTileCard
+                key={model.id}
+                model={model}
+                viewMode="grid"
+                horizontal
+                onOpenAPIKeyModal={handleOpenAPIKeyModal}
+                onClick={() => setSelectedModel(model)}
+              />
+            ))}
+          </div>
         </div>
+
+        {/* API Key Modal */}
+        <APIKeyModal
+          isOpen={apiKeyModalOpen}
+          onClose={() => setApiKeyModalOpen(false)}
+          apiKeyName={selectedApiKeyName}
+        />
       </main>
     </div>
   );

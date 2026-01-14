@@ -1,8 +1,8 @@
 import { useState, useMemo, useRef, useEffect } from "react";
-import { Bot, Sparkles, Send, Loader2, User, MessageSquare, Zap, Brain, Code, FileText, LayoutGrid, Gift, ShieldOff, Tag } from "lucide-react";
+import { Bot, Sparkles, Send, Loader2, User, MessageSquare, Zap, Brain, Code, FileText, LayoutGrid, Gift, ShieldOff, Tag, Paperclip, Upload } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { ModelSelector } from "@/components/ModelSelector";
-import { ModelGrid } from "@/components/ModelGrid";
+import { AppTileCard } from "@/components/AppTileCard";
 import { AIModel, getModelsByCategory } from "@/data/aiModels";
 import { useAPIStatus } from "@/hooks/useAPIStatus";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { APIKeyModal } from "@/components/APIKeyModal";
 
 interface Message {
   id: string;
@@ -62,6 +63,13 @@ const LLMs = () => {
   const [activeFilter, setActiveFilter] = useState<LLMFilter>("all");
   const [favorites, setFavorites] = useState<string[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [apiKeyModalOpen, setApiKeyModalOpen] = useState(false);
+  const [selectedApiKeyName, setSelectedApiKeyName] = useState<string>("");
+
+  const handleOpenAPIKeyModal = (apiKeyName: string) => {
+    setSelectedApiKeyName(apiKeyName);
+    setApiKeyModalOpen(true);
+  };
 
   const allModels = useMemo(() => {
     const categoryModels = getModelsByCategory("llms");
@@ -316,16 +324,25 @@ const LLMs = () => {
             )}
           </ScrollArea>
 
-          {/* Input compact */}
+          {/* Input avec icône upload */}
           <div className="p-3 border-t border-border/50">
-            <div className="flex gap-2">
+            <div className="flex gap-2 items-end">
+              {/* Icône Upload à gauche */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-10 w-10 shrink-0 text-muted-foreground hover:text-[hsl(45,100%,55%)] hover:bg-[hsl(45,100%,55%)]/10"
+                onClick={() => toast({ title: "Upload", description: "Fonction d'upload de fichiers bientôt disponible" })}
+              >
+                <Paperclip className="h-5 w-5" />
+              </Button>
               <Textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder={selectedModel ? "Écrivez votre message..." : "Sélectionnez un modèle..."}
                 disabled={!selectedModel || isLoading}
-                className="input-3d min-h-[50px] max-h-[120px] resize-none text-sm"
+                className="input-3d min-h-[50px] max-h-[120px] resize-none text-sm flex-1"
               />
               <Button
                 onClick={handleSend}
@@ -342,22 +359,35 @@ const LLMs = () => {
           </div>
         </div>
 
-        {/* Grille des modèles LLM */}
+        {/* Grille des modèles LLM - Style APPLIS IA */}
         <div className="mt-4">
           <div className="flex items-center gap-3 mb-3">
             <MessageSquare className="h-5 w-5 text-[hsl(45,100%,55%)]" />
-            <h2 className="font-display text-lg font-bold">MODÈLES CHAT</h2>
+            <h2 className="font-display text-lg font-bold">MODÈLES CHAT COMPATIBLES</h2>
             <Badge variant="outline" className="text-sm">{filteredModels.length}</Badge>
           </div>
 
-          <ModelGrid
-            models={filteredModels}
-            category="llms"
-            favorites={favorites}
-            onToggleFavorite={toggleFavorite}
-            onSelectModel={setSelectedModel}
-          />
+          {/* Grid avec le même style que APPLIS IA */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {filteredModels.map((model) => (
+              <AppTileCard
+                key={model.id}
+                model={model}
+                viewMode="grid"
+                horizontal
+                onOpenAPIKeyModal={handleOpenAPIKeyModal}
+                onClick={() => setSelectedModel(model)}
+              />
+            ))}
+          </div>
         </div>
+
+        {/* API Key Modal */}
+        <APIKeyModal
+          isOpen={apiKeyModalOpen}
+          onClose={() => setApiKeyModalOpen(false)}
+          apiKeyName={selectedApiKeyName}
+        />
       </main>
     </div>
   );
