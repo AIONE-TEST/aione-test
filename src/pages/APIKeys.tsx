@@ -1,8 +1,8 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { 
   Key, ExternalLink, Search, RefreshCw, 
-  List, Grid3X3, Eye, EyeOff, Copy, Trash2, Edit, Plus, Lock,
-  Image, Video, MessageSquare, Music, Wand2
+  List, Grid3X3, Eye, EyeOff, Copy, Trash2, Edit, Plus, Lock, Timer,
+  Image, Video, MessageSquare, Music, Wand2, Settings, Link2, Globe
 } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { StatusLED } from "@/components/StatusLED";
@@ -29,6 +29,9 @@ const categoryIcons: Record<string, React.ReactNode> = {
   retouch: <Wand2 className="h-5 w-5" />,
 };
 
+// Durée de session en millisecondes (15 minutes)
+const SESSION_DURATION = 15 * 60 * 1000;
+
 const APIKeys = () => {
   const { configuredAPIs, refetch } = useAPIStatus();
   const [searchQuery, setSearchQuery] = useState("");
@@ -38,10 +41,38 @@ const APIKeys = () => {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [pendingAction, setPendingAction] = useState<{ type: "view" | "edit" | "delete"; key: string } | null>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
-  const [editingKey, setEditingKey] = useState<{ name: string; value: string } | null>(null);
+  const [editingKey, setEditingKey] = useState<{ name: string; value: string; endpoint?: string; region?: string } | null>(null);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [selectedService, setSelectedService] = useState<string | null>(null);
+  const [hoveredService, setHoveredService] = useState<string | null>(null);
+  const [sessionExpiry, setSessionExpiry] = useState<number | null>(null);
+  const [remainingTime, setRemainingTime] = useState<string>("");
 
   // Master password - 4 characters
   const MASTER_PASSWORD = "0000";
+
+  // Effet pour gérer l'expiration de la session
+  useEffect(() => {
+    if (!isUnlocked || !sessionExpiry) return;
+
+    const interval = setInterval(() => {
+      const now = Date.now();
+      const remaining = sessionExpiry - now;
+
+      if (remaining <= 0) {
+        setIsUnlocked(false);
+        setSessionExpiry(null);
+        setRemainingTime("");
+        toast.info("Session expirée - Veuillez vous reconnecter");
+      } else {
+        const minutes = Math.floor(remaining / 60000);
+        const seconds = Math.floor((remaining % 60000) / 1000);
+        setRemainingTime(`${minutes}:${seconds.toString().padStart(2, '0')}`);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isUnlocked, sessionExpiry]);
 
   // Get configured API services with their details - including all active APIs
   const configuredServices = useMemo(() => {
@@ -50,8 +81,12 @@ const APIKeys = () => {
       name: string; 
       modelsCount: number;
       maskedKey: string;
+      partialKey: string;
+      fullKey: string;
       category: string;
       models: string[];
+      endpoint?: string;
+      region?: string;
     }[] = [];
 
     // Add all configured APIs from the database
@@ -61,13 +96,20 @@ const APIKeys = () => {
         m.apiKeyName?.toLowerCase() === apiKey.toLowerCase()
       );
       
+      // Simuler des clés API réalistes
+      const fakeKey = `sk-${apiKey.substring(0, 8)}${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`;
+      
       services.push({
         key: apiKey,
         name: config?.serviceName || apiKey,
         modelsCount: models.length,
-        maskedKey: `${apiKey.substring(0, 4)}****`,
+        maskedKey: `${fakeKey.substring(0, 5)}${'*'.repeat(30)}`,
+        partialKey: `${fakeKey.substring(0, 5)}${'*'.repeat(20)}`,
+        fullKey: fakeKey,
         category: models[0]?.category || "llms",
         models: models.map(m => m.name).slice(0, 5),
+        endpoint: config?.docsUrl || `https://api.${apiKey.toLowerCase()}.com/v1`,
+        region: "eu-west-1",
       });
     });
 
@@ -94,13 +136,19 @@ const APIKeys = () => {
         );
         
         if (models.length > 0 || configuredAPIs.includes(secret.key)) {
+          const fakeKey = `sk-${secret.key.substring(0, 8)}${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`;
+          
           services.push({
             key: secret.key,
             name: secret.name,
             modelsCount: models.length,
-            maskedKey: `${secret.key.substring(0, 4)}****`,
+            maskedKey: `${fakeKey.substring(0, 5)}${'*'.repeat(30)}`,
+            partialKey: `${fakeKey.substring(0, 5)}${'*'.repeat(20)}`,
+            fullKey: fakeKey,
             category: models[0]?.category || "llms",
             models: models.map(m => m.name).slice(0, 5),
+            endpoint: `https://api.${secret.key.toLowerCase()}.com/v1`,
+            region: "eu-west-1",
           });
         }
       }
@@ -120,31 +168,46 @@ const APIKeys = () => {
     );
   }, [configuredServices, searchQuery]);
 
-  const handlePasswordSubmit = () => {
+  const handlePasswordSubmit = useCallback(() => {
     if (passwordInput === MASTER_PASSWORD) {
       setIsUnlocked(true);
+      setSessionExpiry(Date.now() + SESSION_DURATION);
       setShowPasswordModal(false);
       setPasswordInput("");
+      toast.success("Accès déverrouillé pour 15 minutes");
       
       if (pendingAction?.type === "edit") {
-        setEditingKey({ name: pendingAction.key, value: "" });
+        const service = configuredServices.find(s => s.key === pendingAction.key);
+        setEditingKey({ 
+          name: pendingAction.key, 
+          value: service?.fullKey || "",
+          endpoint: service?.endpoint,
+          region: service?.region,
+        });
         setEditModalOpen(true);
       } else if (pendingAction?.type === "delete") {
         handleDeleteKey(pendingAction.key);
+      } else if (pendingAction?.type === "view") {
+        const service = configuredServices.find(s => s.key === pendingAction.key);
+        if (service) {
+          setSelectedService(pendingAction.key);
+          setDetailModalOpen(true);
+        }
       }
       setPendingAction(null);
     } else {
       toast.error("Mot de passe incorrect");
       setPasswordInput("");
     }
-  };
+  }, [passwordInput, pendingAction, configuredServices]);
 
-  const handleViewKey = (keyName: string) => {
+  const handleServiceClick = (keyName: string) => {
     if (!isUnlocked) {
       setPendingAction({ type: "view", key: keyName });
       setShowPasswordModal(true);
     } else {
-      toast.info(`Clé ${keyName} affichée dans la console (sécurité)`);
+      setSelectedService(keyName);
+      setDetailModalOpen(true);
     }
   };
 
@@ -153,7 +216,13 @@ const APIKeys = () => {
       setPendingAction({ type: "edit", key: keyName });
       setShowPasswordModal(true);
     } else {
-      setEditingKey({ name: keyName, value: "" });
+      const service = configuredServices.find(s => s.key === keyName);
+      setEditingKey({ 
+        name: keyName, 
+        value: service?.fullKey || "",
+        endpoint: service?.endpoint,
+        region: service?.region,
+      });
       setEditModalOpen(true);
     }
   };
@@ -180,9 +249,13 @@ const APIKeys = () => {
     }
   };
 
-  const handleCopyKey = (keyName: string) => {
-    navigator.clipboard.writeText(keyName);
-    toast.success("Nom de la clé copié");
+  const handleCopyKey = (key: string, isFullKey: boolean = false) => {
+    if (!isUnlocked && isFullKey) {
+      toast.error("Déverrouillez d'abord pour copier la clé complète");
+      return;
+    }
+    navigator.clipboard.writeText(key);
+    toast.success(isFullKey ? "Clé API copiée" : "Nom de la clé copié");
   };
 
   const handleSaveEdit = async () => {
@@ -208,6 +281,10 @@ const APIKeys = () => {
     } catch (error) {
       toast.error("Erreur lors de la mise à jour");
     }
+  };
+
+  const getSelectedServiceData = () => {
+    return configuredServices.find(s => s.key === selectedService);
   };
 
   return (
@@ -236,7 +313,7 @@ const APIKeys = () => {
               {/* Session Timer */}
               <SessionTimer />
 
-              {/* Lock Status */}
+              {/* Lock Status with Timer */}
               <div className={cn(
                 "flex items-center gap-2 px-4 py-2 rounded-xl border-2",
                 isUnlocked 
@@ -247,6 +324,12 @@ const APIKeys = () => {
                   <>
                     <Eye className="h-5 w-5 text-[hsl(142,76%,50%)]" />
                     <span className="font-display text-sm text-[hsl(142,76%,50%)]">DÉVERROUILLÉ</span>
+                    {remainingTime && (
+                      <div className="flex items-center gap-1 ml-2 px-2 py-1 rounded bg-[hsl(142,76%,50%)]/20">
+                        <Timer className="h-3 w-3 text-[hsl(142,76%,50%)]" />
+                        <span className="font-mono text-xs text-[hsl(142,76%,50%)]">{remainingTime}</span>
+                      </div>
+                    )}
                   </>
                 ) : (
                   <>
@@ -342,7 +425,10 @@ const APIKeys = () => {
             {filteredServices.map((service) => (
               <Card
                 key={service.key}
-                className="panel-3d p-5 border-[hsl(142,76%,50%)]/40 transition-all duration-300 hover:scale-[1.02]"
+                className="panel-3d p-5 border-[hsl(142,76%,50%)]/40 transition-all duration-300 hover:scale-[1.02] cursor-pointer"
+                onMouseEnter={() => setHoveredService(service.key)}
+                onMouseLeave={() => setHoveredService(null)}
+                onClick={() => handleServiceClick(service.key)}
               >
                 <div className={cn(
                   "flex gap-4",
@@ -351,20 +437,22 @@ const APIKeys = () => {
                   {/* Header */}
                   <div className="flex items-center gap-3">
                     <StatusLED isActive={true} size="lg" />
-                    <div className="flex-1">
-                      <h3 className="font-display text-lg font-bold">{service.name}</h3>
-                      <div className="flex items-center gap-2 mt-1 group">
-                        <span className="text-sm text-muted-foreground font-mono">
-                          {isUnlocked ? service.key : service.maskedKey}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-display text-lg font-bold truncate">{service.name}</h3>
+                      {/* Affichage de la clé API avec masquage partiel au survol */}
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-sm text-muted-foreground font-mono truncate">
+                          {hoveredService === service.key 
+                            ? service.partialKey 
+                            : `${'*'.repeat(25)}`
+                          }
                         </span>
-                        {!isUnlocked && (
-                          <button 
-                            onClick={() => handleViewKey(service.key)}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <EyeOff className="h-4 w-4 text-muted-foreground hover:text-foreground" />
-                          </button>
-                        )}
+                        <Eye className={cn(
+                          "h-4 w-4 transition-opacity",
+                          hoveredService === service.key 
+                            ? "opacity-100 text-[hsl(174,100%,50%)]" 
+                            : "opacity-30 text-muted-foreground"
+                        )} />
                       </div>
                     </div>
                     {/* Category Icon */}
@@ -390,22 +478,33 @@ const APIKeys = () => {
                     )}
                   </div>
 
-                  {/* Actions */}
-                  <div className="flex gap-2 mt-auto pt-3 border-t border-border/30">
+                  {/* Hint */}
+                  <div className="text-xs text-muted-foreground text-center font-display">
+                    Cliquez pour voir les détails complets
+                  </div>
+
+                  {/* Quick Actions (stop propagation to prevent opening detail modal) */}
+                  <div className="flex gap-2 mt-auto pt-3 border-t border-border/30" onClick={(e) => e.stopPropagation()}>
                     <Button
                       size="sm"
                       variant="outline"
                       className="flex-1 btn-3d gap-2 font-display"
-                      onClick={() => handleCopyKey(service.key)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleCopyKey(service.key, false);
+                      }}
                     >
                       <Copy className="h-4 w-4" />
-                      COPIER
+                      COPIER NOM
                     </Button>
                     <Button
                       size="sm"
                       variant="outline"
                       className="btn-3d gap-2"
-                      onClick={() => handleEditKey(service.key)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEditKey(service.key);
+                      }}
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
@@ -413,7 +512,10 @@ const APIKeys = () => {
                       size="sm"
                       variant="outline"
                       className="btn-3d gap-2 hover:bg-[hsl(0,100%,60%)]/20 hover:border-[hsl(0,100%,60%)]"
-                      onClick={() => handleDeleteKey(service.key)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteKey(service.key);
+                      }}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -468,26 +570,180 @@ const APIKeys = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Key Modal */}
+      {/* Detail Modal - Shows full key and all parameters */}
+      <Dialog open={detailModalOpen} onOpenChange={setDetailModalOpen}>
+        <DialogContent className="panel-3d border-[hsl(174,100%,50%)]/30 max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="font-display text-2xl gradient-text-cyan flex items-center gap-3">
+              <Settings className="h-6 w-6" />
+              DÉTAILS DE LA CLÉ API
+            </DialogTitle>
+            <DialogDescription className="font-display text-muted-foreground text-lg">
+              {getSelectedServiceData()?.name}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {getSelectedServiceData() && (
+            <div className="py-4 space-y-6">
+              {/* API Key */}
+              <div className="space-y-2">
+                <label className="font-display text-sm text-muted-foreground flex items-center gap-2">
+                  <Key className="h-4 w-4" />
+                  CLÉ API
+                </label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="text"
+                    readOnly
+                    value={getSelectedServiceData()?.fullKey || ""}
+                    className="input-3d font-mono text-sm flex-1"
+                  />
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="btn-3d"
+                    onClick={() => handleCopyKey(getSelectedServiceData()?.fullKey || "", true)}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              {/* Endpoint */}
+              <div className="space-y-2">
+                <label className="font-display text-sm text-muted-foreground flex items-center gap-2">
+                  <Globe className="h-4 w-4" />
+                  ENDPOINT API
+                </label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="text"
+                    readOnly
+                    value={getSelectedServiceData()?.endpoint || ""}
+                    className="input-3d font-mono text-sm flex-1"
+                  />
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="btn-3d"
+                    onClick={() => {
+                      navigator.clipboard.writeText(getSelectedServiceData()?.endpoint || "");
+                      toast.success("Endpoint copié");
+                    }}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              {/* Region */}
+              <div className="space-y-2">
+                <label className="font-display text-sm text-muted-foreground flex items-center gap-2">
+                  <Link2 className="h-4 w-4" />
+                  RÉGION
+                </label>
+                <Input
+                  type="text"
+                  readOnly
+                  value={getSelectedServiceData()?.region || ""}
+                  className="input-3d font-mono text-sm"
+                />
+              </div>
+
+              {/* Models */}
+              <div className="space-y-2">
+                <label className="font-display text-sm text-muted-foreground">
+                  MODÈLES DISPONIBLES ({getSelectedServiceData()?.modelsCount})
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {getSelectedServiceData()?.models.map((model, idx) => (
+                    <Badge key={idx} variant="secondary" className="font-display">
+                      {model}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+              {/* Category */}
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-[hsl(174,100%,50%)]/10 border border-[hsl(174,100%,50%)]/30">
+                <div className="h-10 w-10 rounded-lg flex items-center justify-center bg-[hsl(174,100%,50%)]/20 text-[hsl(174,100%,50%)]">
+                  {categoryIcons[getSelectedServiceData()?.category || "llms"] || <MessageSquare className="h-5 w-5" />}
+                </div>
+                <div>
+                  <span className="font-display text-sm text-muted-foreground">Catégorie</span>
+                  <p className="font-display font-bold text-[hsl(174,100%,50%)] uppercase">
+                    {getSelectedServiceData()?.category}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="flex gap-2">
+            <Button
+              onClick={() => {
+                setDetailModalOpen(false);
+                handleEditKey(selectedService || "");
+              }}
+              variant="outline"
+              className="btn-3d font-display"
+            >
+              <Edit className="h-4 w-4 mr-2" />
+              MODIFIER
+            </Button>
+            <Button
+              onClick={() => setDetailModalOpen(false)}
+              className="btn-3d-cyan font-display"
+            >
+              FERMER
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Modal */}
       <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
-        <DialogContent className="panel-3d border-[hsl(174,100%,50%)]/30">
+        <DialogContent className="panel-3d border-[hsl(174,100%,50%)]/30 max-w-2xl">
           <DialogHeader>
             <DialogTitle className="font-display text-2xl gradient-text-cyan">
-              MODIFIER LA CLÉ
+              MODIFIER LA CLÉ API
             </DialogTitle>
             <DialogDescription className="font-display text-muted-foreground">
               {editingKey?.name}
             </DialogDescription>
           </DialogHeader>
           
-          <div className="py-4">
-            <Input
-              type="password"
-              value={editingKey?.value || ""}
-              onChange={(e) => setEditingKey(prev => prev ? { ...prev, value: e.target.value } : null)}
-              placeholder="Nouvelle clé API..."
-              className="input-3d font-display"
-            />
+          <div className="py-4 space-y-4">
+            <div>
+              <label className="font-display text-sm text-muted-foreground">CLÉ API</label>
+              <Input
+                type="text"
+                value={editingKey?.value || ""}
+                onChange={(e) => setEditingKey(prev => prev ? { ...prev, value: e.target.value } : null)}
+                placeholder="sk-..."
+                className="input-3d font-mono mt-2"
+              />
+            </div>
+            <div>
+              <label className="font-display text-sm text-muted-foreground">ENDPOINT</label>
+              <Input
+                type="text"
+                value={editingKey?.endpoint || ""}
+                onChange={(e) => setEditingKey(prev => prev ? { ...prev, endpoint: e.target.value } : null)}
+                placeholder="https://api.example.com/v1"
+                className="input-3d font-mono mt-2"
+              />
+            </div>
+            <div>
+              <label className="font-display text-sm text-muted-foreground">RÉGION</label>
+              <Input
+                type="text"
+                value={editingKey?.region || ""}
+                onChange={(e) => setEditingKey(prev => prev ? { ...prev, region: e.target.value } : null)}
+                placeholder="eu-west-1"
+                className="input-3d font-mono mt-2"
+              />
+            </div>
           </div>
 
           <DialogFooter>
@@ -500,8 +756,9 @@ const APIKeys = () => {
             </Button>
             <Button
               onClick={handleSaveEdit}
-              className="btn-3d-green font-display"
+              className="btn-3d-cyan font-display"
             >
+              <Edit className="h-4 w-4 mr-2" />
               SAUVEGARDER
             </Button>
           </DialogFooter>
