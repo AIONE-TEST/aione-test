@@ -1,5 +1,5 @@
-import { useState, useMemo, useCallback } from "react";
-import { Wand2, Sparkles, Upload, Maximize, Brush, Eraser, Palette, ImagePlus, Layers, Scissors, ZoomIn, Download, Type } from "lucide-react";
+import { useState, useMemo, useCallback, useRef } from "react";
+import { Wand2, Sparkles, Upload, Maximize, Brush, Eraser, Palette, ImagePlus, Layers, Scissors, ZoomIn, Download, Type, Image, Video, File, Archive, Music } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { ModelSelector } from "@/components/ModelSelector";
 import { ModelGrid } from "@/components/ModelGrid";
@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { StatusLED } from "@/components/StatusLED";
-import { DynamicGenerationOptions, DynamicGenerationSettings } from "@/components/DynamicGenerationOptions";
 import { cn } from "@/lib/utils";
 
 interface RetouchTool {
@@ -30,6 +29,14 @@ const retouchTools: RetouchTool[] = [
   { id: "inpainting", name: "Inpainting", icon: <Scissors className="h-5 w-5" />, description: "Modifier des zones spécifiques" },
 ];
 
+const mediaTypes = [
+  { id: "image", label: "Image", icon: <Image className="h-5 w-5" />, accept: "image/*" },
+  { id: "video", label: "Vidéo", icon: <Video className="h-5 w-5" />, accept: "video/*" },
+  { id: "audio", label: "Audio", icon: <Music className="h-5 w-5" />, accept: "audio/*" },
+  { id: "document", label: "Document", icon: <File className="h-5 w-5" />, accept: ".pdf,.doc,.docx,.txt" },
+  { id: "archive", label: "Archive", icon: <Archive className="h-5 w-5" />, accept: ".zip,.rar,.7z" },
+];
+
 const GenerateRetouch = () => {
   const { getModelsWithStatus } = useAPIStatus();
   const [selectedModel, setSelectedModel] = useState<AIModel | null>(null);
@@ -40,11 +47,8 @@ const GenerateRetouch = () => {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [resultImage, setResultImage] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [generationOptions, setGenerationOptions] = useState<DynamicGenerationSettings>({
-    mode: "image-to-content",
-    aspectRatio: "1:1",
-    quality: "1080p",
-  });
+  const [selectedMediaType, setSelectedMediaType] = useState("image");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const models = useMemo(() => {
     const categoryModels = getModelsByCategory("retouch");
@@ -59,7 +63,6 @@ const GenerateRetouch = () => {
     setIsGenerating(true);
     setTimeout(() => {
       setIsGenerating(false);
-      // Simulate result
       setResultImage(uploadedImage);
     }, 3000);
   };
@@ -97,15 +100,13 @@ const GenerateRetouch = () => {
     }
   };
 
-  const handleImportMedia = useCallback((file: File, type: string) => {
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      setUploadedImage(event.target?.result as string);
-    };
-    reader.readAsDataURL(file);
-  }, []);
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
 
   const canGenerate = Boolean(selectedModel) && Boolean(uploadedImage);
+
+  const currentMediaType = mediaTypes.find(m => m.id === selectedMediaType);
 
   return (
     <div className="min-h-screen bg-background">
@@ -153,9 +154,10 @@ const GenerateRetouch = () => {
           </div>
         </div>
 
-        {/* Main Interface */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-10">
-          {/* Left: Source Image */}
+        {/* Main Layout - ORDER: Source -> Result -> Prompt -> Engine */}
+        <div className="flex flex-col gap-6 max-w-6xl mb-10">
+          
+          {/* 1. IMAGE SOURCE - En haut */}
           <div className="panel-3d p-6">
             <div className="flex items-center justify-between mb-4">
               <span className="font-display text-xl font-bold text-foreground">IMAGE SOURCE</span>
@@ -173,7 +175,7 @@ const GenerateRetouch = () => {
             
             <div
               className={cn(
-                "canvas-3d aspect-square flex items-center justify-center transition-all duration-300 cursor-pointer",
+                "canvas-3d aspect-video flex items-center justify-center transition-all duration-300 cursor-pointer",
                 isDragging && "border-[hsl(var(--primary))] bg-[hsl(var(--primary))]/5"
               )}
               onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
@@ -211,7 +213,7 @@ const GenerateRetouch = () => {
             </div>
           </div>
 
-          {/* Right: Result */}
+          {/* 2. RÉSULTAT - En dessous */}
           <div className="panel-3d p-6">
             <div className="flex items-center justify-between mb-4">
               <span className="font-display text-xl font-bold text-foreground">RÉSULTAT</span>
@@ -223,7 +225,7 @@ const GenerateRetouch = () => {
               )}
             </div>
             
-            <div className="canvas-3d aspect-square flex items-center justify-center">
+            <div className="canvas-3d aspect-video flex items-center justify-center">
               {isGenerating ? (
                 <div className="flex flex-col items-center gap-4">
                   <div className="h-16 w-16 rounded-full border-4 border-[hsl(var(--primary))]/30 border-t-[hsl(var(--primary))] animate-spin" />
@@ -248,12 +250,9 @@ const GenerateRetouch = () => {
               )}
             </div>
           </div>
-        </div>
 
-        {/* Prompt & Controls */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-10">
-          {/* Prompt Editor */}
-          <div className="xl:col-span-2 panel-3d p-6">
+          {/* 3. ÉDITEUR DE PROMPT - En dessous */}
+          <div className="panel-3d p-6">
             <div className="flex items-center gap-2 mb-4">
               <Type className="h-5 w-5 text-[hsl(var(--primary))]" />
               <span className="font-display text-lg font-bold">ÉDITEUR DE PROMPT</span>
@@ -290,22 +289,60 @@ const GenerateRetouch = () => {
             </div>
           </div>
 
-          {/* Dynamic Generation Options with Import */}
+          {/* 4. MOTEUR DE GÉNÉRATION & OPTIONS - En bas */}
           <div className="panel-3d p-6">
-            <DynamicGenerationOptions
-              contentType="image"
-              selectedModel={selectedModel}
-              options={generationOptions}
-              onOptionsChange={setGenerationOptions}
-              onImportMedia={handleImportMedia}
-            />
+            <div className="flex items-center gap-2 mb-4">
+              <Sparkles className="h-5 w-5 text-[hsl(var(--secondary))]" />
+              <span className="font-display text-lg font-bold">MOTEUR DE GÉNÉRATION & OPTIONS</span>
+            </div>
 
-            <div className="mt-6">
-              <div className="flex items-center gap-2 mb-4">
-                <Sparkles className="h-5 w-5 text-[hsl(var(--secondary))]" />
-                <span className="font-display text-lg font-bold">MOTEUR DE RETOUCHE AI</span>
+            {/* Gros bouton d'import média */}
+            <div className="mb-6">
+              <label className="font-display text-sm text-muted-foreground mb-3 block">
+                IMPORTER UN MÉDIA
+              </label>
+              
+              {/* Sélection type de média */}
+              <div className="flex flex-wrap gap-2 mb-4">
+                {mediaTypes.map((type) => (
+                  <Button
+                    key={type.id}
+                    size="sm"
+                    variant={selectedMediaType === type.id ? "default" : "outline"}
+                    onClick={() => setSelectedMediaType(type.id)}
+                    className={cn(
+                      "gap-2",
+                      selectedMediaType === type.id ? "btn-3d-cyan" : "btn-3d"
+                    )}
+                  >
+                    {type.icon}
+                    {type.label}
+                  </Button>
+                ))}
               </div>
 
+              {/* Bouton d'import */}
+              <Button
+                onClick={handleImportClick}
+                className="w-full h-16 btn-3d-purple gap-3 text-lg font-display font-bold tracking-wider"
+              >
+                <Upload className="h-6 w-6" />
+                IMPORTER {currentMediaType?.label.toUpperCase()}
+              </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept={currentMediaType?.accept}
+                className="hidden"
+                onChange={handleFileSelect}
+              />
+            </div>
+
+            {/* Sélecteur de modèle */}
+            <div className="mb-6">
+              <label className="font-display text-sm text-muted-foreground mb-3 block">
+                MOTEUR DE RETOUCHE AI
+              </label>
               <ModelSelector
                 models={models}
                 selectedModel={selectedModel}
@@ -321,6 +358,22 @@ const GenerateRetouch = () => {
                     {selectedModel ? selectedModel.name : "Aucun modèle sélectionné"}
                   </span>
                 </div>
+              </div>
+            </div>
+
+            {/* Options supplémentaires */}
+            <div className="pt-4 border-t border-border/50 space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Résolution max</span>
+                <span className="font-bold text-foreground">8192x8192</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Formats supportés</span>
+                <span className="font-bold text-foreground">PNG, JPG, WEBP</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Quota restant</span>
+                <span className="font-bold text-[hsl(142,76%,50%)]">50 générations</span>
               </div>
             </div>
           </div>
