@@ -32,7 +32,7 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <Sidebar />
 
-      <main className="ml-[140px] min-h-screen p-6">
+      <main className="ml-[280px] min-h-screen p-6">
         {/* Hero Section */}
         <div className="text-center mb-10">
           <h1 className="font-display text-4xl font-black gradient-text-pink text-glow-pink mb-3">

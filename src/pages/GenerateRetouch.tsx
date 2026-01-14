@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { StatusLED } from "@/components/StatusLED";
+import { DynamicGenerationOptions, DynamicGenerationSettings } from "@/components/DynamicGenerationOptions";
 import { cn } from "@/lib/utils";
 
 interface RetouchTool {
@@ -39,6 +40,11 @@ const GenerateRetouch = () => {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [resultImage, setResultImage] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [generationOptions, setGenerationOptions] = useState<DynamicGenerationSettings>({
+    mode: "image-to-content",
+    aspectRatio: "1:1",
+    quality: "1080p",
+  });
 
   const models = useMemo(() => {
     const categoryModels = getModelsByCategory("retouch");
@@ -91,13 +97,21 @@ const GenerateRetouch = () => {
     }
   };
 
+  const handleImportMedia = useCallback((file: File, type: string) => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setUploadedImage(event.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  }, []);
+
   const canGenerate = Boolean(selectedModel) && Boolean(uploadedImage);
 
   return (
     <div className="min-h-screen bg-background">
       <Sidebar />
 
-      <main className="ml-[200px] min-h-screen p-6">
+      <main className="ml-[280px] min-h-screen p-6">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-2">
@@ -276,27 +290,37 @@ const GenerateRetouch = () => {
             </div>
           </div>
 
-          {/* Model Selector */}
+          {/* Dynamic Generation Options with Import */}
           <div className="panel-3d p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Sparkles className="h-5 w-5 text-[hsl(var(--secondary))]" />
-              <span className="font-display text-lg font-bold">MOTEUR DE RETOUCHE AI</span>
-            </div>
-
-            <ModelSelector
-              models={models}
+            <DynamicGenerationOptions
+              contentType="image"
               selectedModel={selectedModel}
-              onSelectModel={setSelectedModel}
-              category="retouch"
-              className="w-full"
+              options={generationOptions}
+              onOptionsChange={setGenerationOptions}
+              onImportMedia={handleImportMedia}
             />
 
-            <div className="mt-4 space-y-2 text-sm">
-              <div className="flex items-center gap-2">
-                <StatusLED isActive={!!selectedModel} />
-                <span className="text-muted-foreground">
-                  {selectedModel ? selectedModel.name : "Aucun modèle sélectionné"}
-                </span>
+            <div className="mt-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Sparkles className="h-5 w-5 text-[hsl(var(--secondary))]" />
+                <span className="font-display text-lg font-bold">MOTEUR DE RETOUCHE AI</span>
+              </div>
+
+              <ModelSelector
+                models={models}
+                selectedModel={selectedModel}
+                onSelectModel={setSelectedModel}
+                category="retouch"
+                className="w-full"
+              />
+
+              <div className="mt-4 space-y-2 text-sm">
+                <div className="flex items-center gap-2">
+                  <StatusLED isActive={!!selectedModel} />
+                  <span className="text-muted-foreground">
+                    {selectedModel ? selectedModel.name : "Aucun modèle sélectionné"}
+                  </span>
+                </div>
               </div>
             </div>
           </div>

@@ -8,12 +8,12 @@ import {
   Box, 
   Key, 
   AppWindow, 
-  Zap,
   Flame,
   User,
   GraduationCap
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AnimatedGlobe } from "./AnimatedGlobe";
 
 interface NavItem {
   id: string;
@@ -113,14 +113,14 @@ export function Sidebar() {
   const location = useLocation();
 
   return (
-    <aside className="fixed left-0 top-0 z-50 flex h-full w-[200px] flex-col bg-gradient-to-b from-[hsl(220,20%,10%)] to-[hsl(220,25%,6%)] border-r-2 border-[hsl(220,15%,25%)] shadow-2xl">
-      {/* Logo AIONE */}
+    <aside className="fixed left-0 top-0 z-50 flex h-full w-[280px] flex-col bg-gradient-to-b from-[hsl(220,20%,8%)] to-[hsl(220,25%,4%)] border-r-2 border-[hsl(220,15%,25%)] shadow-2xl">
+      {/* Logo AIONE with Animated Globe */}
       <Link 
         to="/" 
         className="flex flex-col items-center gap-3 py-6 px-4 border-b-2 border-[hsl(220,15%,25%)] hover:bg-[hsl(220,15%,15%)] transition-all duration-300 group"
       >
-        <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-[hsl(280,100%,65%)] via-[hsl(320,100%,60%)] to-[hsl(174,100%,50%)] glow-purple shadow-lg transform group-hover:scale-110 transition-transform duration-300">
-          <Zap className="h-10 w-10 text-white drop-shadow-lg" />
+        <div className="transform group-hover:scale-110 transition-transform duration-300">
+          <AnimatedGlobe size={80} />
         </div>
         <span className="font-display text-4xl font-black gradient-text-pink text-glow-pink tracking-widest">
           AIONE
