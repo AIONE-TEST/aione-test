@@ -1,5 +1,6 @@
 // Logos HD officiels pour tous les modèles AI
 // Format: model_id ou provider_name -> URL du logo HD
+// Utilisation d'avatars GitHub et CDN autorisés pour éviter les erreurs CORB
 
 export const modelLogos: Record<string, string> = {
   // ====== OpenAI ======
@@ -12,10 +13,10 @@ export const modelLogos: Record<string, string> = {
   "whisper-v3": "https://cdn.worldvectorlogo.com/logos/openai-2.svg",
   
   // ====== Anthropic / Claude ======
-  "anthropic": "https://upload.wikimedia.org/wikipedia/commons/1/17/Anthropic_logo.svg",
-  "claude-3.5-sonnet": "https://upload.wikimedia.org/wikipedia/commons/1/17/Anthropic_logo.svg",
-  "claude-3-opus": "https://upload.wikimedia.org/wikipedia/commons/1/17/Anthropic_logo.svg",
-  "claude-3-haiku": "https://upload.wikimedia.org/wikipedia/commons/1/17/Anthropic_logo.svg",
+  "anthropic": "https://avatars.githubusercontent.com/u/76263028",
+  "claude-3.5-sonnet": "https://avatars.githubusercontent.com/u/76263028",
+  "claude-3-opus": "https://avatars.githubusercontent.com/u/76263028",
+  "claude-3-haiku": "https://avatars.githubusercontent.com/u/76263028",
   
   // ====== Google ======
   "google": "https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ff6292a690345.svg",
@@ -24,48 +25,48 @@ export const modelLogos: Record<string, string> = {
   "gemini-ultra": "https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ff6292a690345.svg",
   
   // ====== Meta / Llama ======
-  "meta": "https://upload.wikimedia.org/wikipedia/commons/a/ab/Meta-Logo.png",
-  "llama-3-70b": "https://upload.wikimedia.org/wikipedia/commons/a/ab/Meta-Logo.png",
-  "llama-3-405b": "https://upload.wikimedia.org/wikipedia/commons/a/ab/Meta-Logo.png",
-  "llama-3.2-90b": "https://upload.wikimedia.org/wikipedia/commons/a/ab/Meta-Logo.png",
+  "meta": "https://avatars.githubusercontent.com/u/69631",
+  "llama-3-70b": "https://avatars.githubusercontent.com/u/69631",
+  "llama-3-405b": "https://avatars.githubusercontent.com/u/69631",
+  "llama-3.2-90b": "https://avatars.githubusercontent.com/u/69631",
   
   // ====== Stability AI ======
-  "stability": "https://images.crunchbase.com/image/upload/c_pad,h_256,w_256,f_auto,q_auto:eco,dpr_1/kshzgobkjlzdvdkr5lno",
-  "stable-diffusion-3": "https://images.crunchbase.com/image/upload/c_pad,h_256,w_256,f_auto,q_auto:eco,dpr_1/kshzgobkjlzdvdkr5lno",
-  "sdxl": "https://images.crunchbase.com/image/upload/c_pad,h_256,w_256,f_auto,q_auto:eco,dpr_1/kshzgobkjlzdvdkr5lno",
-  "sdxl-lightning": "https://images.crunchbase.com/image/upload/c_pad,h_256,w_256,f_auto,q_auto:eco,dpr_1/kshzgobkjlzdvdkr5lno",
-  "stable-audio": "https://images.crunchbase.com/image/upload/c_pad,h_256,w_256,f_auto,q_auto:eco,dpr_1/kshzgobkjlzdvdkr5lno",
-  "stable-video": "https://images.crunchbase.com/image/upload/c_pad,h_256,w_256,f_auto,q_auto:eco,dpr_1/kshzgobkjlzdvdkr5lno",
+  "stability": "https://avatars.githubusercontent.com/u/100950301",
+  "stable-diffusion-3": "https://avatars.githubusercontent.com/u/100950301",
+  "sdxl": "https://avatars.githubusercontent.com/u/100950301",
+  "sdxl-lightning": "https://avatars.githubusercontent.com/u/100950301",
+  "stable-audio": "https://avatars.githubusercontent.com/u/100950301",
+  "stable-video": "https://avatars.githubusercontent.com/u/100950301",
   
   // ====== Black Forest Labs / FLUX ======
-  "blackforestlabs": "https://replicate.delivery/yhqm/p8FQQfYXkL1QWxbQgqvVJ3YbYlIVdxEb2x4E2bJqR9E/logo.png",
-  "flux-schnell": "https://replicate.delivery/yhqm/p8FQQfYXkL1QWxbQgqvVJ3YbYlIVdxEb2x4E2bJqR9E/logo.png",
-  "flux-pro": "https://replicate.delivery/yhqm/p8FQQfYXkL1QWxbQgqvVJ3YbYlIVdxEb2x4E2bJqR9E/logo.png",
-  "flux-dev": "https://replicate.delivery/yhqm/p8FQQfYXkL1QWxbQgqvVJ3YbYlIVdxEb2x4E2bJqR9E/logo.png",
+  "blackforestlabs": "https://avatars.githubusercontent.com/u/176aboratoires46419",
+  "flux-schnell": "https://avatars.githubusercontent.com/u/176046419",
+  "flux-pro": "https://avatars.githubusercontent.com/u/176046419",
+  "flux-dev": "https://avatars.githubusercontent.com/u/176046419",
   
   // ====== Midjourney ======
-  "midjourney": "https://upload.wikimedia.org/wikipedia/commons/e/e6/Midjourney_Emblem.png",
-  "midjourney-v6": "https://upload.wikimedia.org/wikipedia/commons/e/e6/Midjourney_Emblem.png",
+  "midjourney": "https://avatars.githubusercontent.com/u/109384757",
+  "midjourney-v6": "https://avatars.githubusercontent.com/u/109384757",
   
   // ====== Runway ======
-  "runway": "https://upload.wikimedia.org/wikipedia/commons/1/10/Runway_company_logo.png",
-  "gen-3-alpha": "https://upload.wikimedia.org/wikipedia/commons/1/10/Runway_company_logo.png",
-  "gen-2": "https://upload.wikimedia.org/wikipedia/commons/1/10/Runway_company_logo.png",
-  "runway-gen3": "https://upload.wikimedia.org/wikipedia/commons/1/10/Runway_company_logo.png",
-  "runway-gen2": "https://upload.wikimedia.org/wikipedia/commons/1/10/Runway_company_logo.png",
+  "runway": "https://avatars.githubusercontent.com/u/10706730",
+  "gen-3-alpha": "https://avatars.githubusercontent.com/u/10706730",
+  "gen-2": "https://avatars.githubusercontent.com/u/10706730",
+  "runway-gen3": "https://avatars.githubusercontent.com/u/10706730",
+  "runway-gen2": "https://avatars.githubusercontent.com/u/10706730",
   
   // ====== Pika Labs ======
-  "pika": "https://pika.art/favicon.ico",
-  "pika-v2": "https://pika.art/favicon.ico",
-  "pika-v1.5": "https://pika.art/favicon.ico",
-  "pika-labs": "https://pika.art/favicon.ico",
+  "pika": "https://avatars.githubusercontent.com/u/137795633",
+  "pika-v2": "https://avatars.githubusercontent.com/u/137795633",
+  "pika-v1.5": "https://avatars.githubusercontent.com/u/137795633",
+  "pika-labs": "https://avatars.githubusercontent.com/u/137795633",
   
   // ====== Kling AI ======
-  "kling": "https://cdn.prod.website-files.com/66faa76c9783a84ea00c8267/67aeeeb0eae4f59ff9baebb5_klinglogo.png",
-  "kling-v1.5": "https://cdn.prod.website-files.com/66faa76c9783a84ea00c8267/67aeeeb0eae4f59ff9baebb5_klinglogo.png",
-  "kling-v1": "https://cdn.prod.website-files.com/66faa76c9783a84ea00c8267/67aeeeb0eae4f59ff9baebb5_klinglogo.png",
-  "kling-ai": "https://cdn.prod.website-files.com/66faa76c9783a84ea00c8267/67aeeeb0eae4f59ff9baebb5_klinglogo.png",
-  "kling-ai-v1": "https://cdn.prod.website-files.com/66faa76c9783a84ea00c8267/67aeeeb0eae4f59ff9baebb5_klinglogo.png",
+  "kling": "https://avatars.githubusercontent.com/u/139266198",
+  "kling-v1.5": "https://avatars.githubusercontent.com/u/139266198",
+  "kling-v1": "https://avatars.githubusercontent.com/u/139266198",
+  "kling-ai": "https://avatars.githubusercontent.com/u/139266198",
+  "kling-ai-v1": "https://avatars.githubusercontent.com/u/139266198",
   
   // ====== Luma AI ======
   "luma": "https://avatars.githubusercontent.com/u/87888149",
@@ -75,35 +76,35 @@ export const modelLogos: Record<string, string> = {
   "luma-ray2": "https://avatars.githubusercontent.com/u/87888149",
   
   // ====== xAI / Grok ======
-  "xai": "https://upload.wikimedia.org/wikipedia/commons/5/5e/X_AI_Logo.svg",
-  "grok": "https://upload.wikimedia.org/wikipedia/commons/5/5e/X_AI_Logo.svg",
-  "grok-aurora": "https://upload.wikimedia.org/wikipedia/commons/5/5e/X_AI_Logo.svg",
+  "xai": "https://avatars.githubusercontent.com/u/139020439",
+  "grok": "https://avatars.githubusercontent.com/u/139020439",
+  "grok-aurora": "https://avatars.githubusercontent.com/u/139020439",
   
   // ====== Google Video ======
   "google-veo2": "https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ff6292a690345.svg",
   "google-imagen-video": "https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ff6292a690345.svg",
   
   // ====== MiniMax / Hailuo ======
-  "minimax": "https://hailuoai.video/favicon.ico",
-  "minimax-video": "https://hailuoai.video/favicon.ico",
-  "minimax-01-live": "https://hailuoai.video/favicon.ico",
-  "hailuo": "https://hailuoai.video/favicon.ico",
+  "minimax": "https://avatars.githubusercontent.com/u/145317664",
+  "minimax-video": "https://avatars.githubusercontent.com/u/145317664",
+  "minimax-01-live": "https://avatars.githubusercontent.com/u/145317664",
+  "hailuo": "https://avatars.githubusercontent.com/u/145317664",
   
   // ====== ElevenLabs ======
-  "elevenlabs": "https://storage.googleapis.com/eleven-public-cdn/images/eleven-labs-logo-light.svg",
-  "eleven-multilingual-v2": "https://storage.googleapis.com/eleven-public-cdn/images/eleven-labs-logo-light.svg",
-  "eleven-turbo": "https://storage.googleapis.com/eleven-public-cdn/images/eleven-labs-logo-light.svg",
-  "elevenlabs-free": "https://storage.googleapis.com/eleven-public-cdn/images/eleven-labs-logo-light.svg",
+  "elevenlabs": "https://avatars.githubusercontent.com/u/95285845",
+  "eleven-multilingual-v2": "https://avatars.githubusercontent.com/u/95285845",
+  "eleven-turbo": "https://avatars.githubusercontent.com/u/95285845",
+  "elevenlabs-free": "https://avatars.githubusercontent.com/u/95285845",
   
   // ====== Suno AI ======
-  "suno": "https://suno.com/favicon.ico",
-  "suno-v3.5": "https://suno.com/favicon.ico",
-  "suno-v3": "https://suno.com/favicon.ico",
-  "suno-ai": "https://suno.com/favicon.ico",
+  "suno": "https://avatars.githubusercontent.com/u/154809540",
+  "suno-v3.5": "https://avatars.githubusercontent.com/u/154809540",
+  "suno-v3": "https://avatars.githubusercontent.com/u/154809540",
+  "suno-ai": "https://avatars.githubusercontent.com/u/154809540",
   
   // ====== Udio ======
-  "udio": "https://www.udio.com/favicon.ico",
-  "udio-v1.5": "https://www.udio.com/favicon.ico",
+  "udio": "https://avatars.githubusercontent.com/u/165397568",
+  "udio-v1.5": "https://avatars.githubusercontent.com/u/165397568",
   
   // ====== Mistral AI ======
   "mistral": "https://avatars.githubusercontent.com/u/132372032",
@@ -138,156 +139,156 @@ export const modelLogos: Record<string, string> = {
   "command-r": "https://avatars.githubusercontent.com/u/54850923",
   
   // ====== Hugging Face ======
-  "huggingface": "https://huggingface.co/front/assets/huggingface_logo.svg",
+  "huggingface": "https://avatars.githubusercontent.com/u/25720743",
   
   // ====== Replicate ======
   "replicate": "https://avatars.githubusercontent.com/u/60410876",
   
   // ====== fal.ai ======
-  "fal": "https://fal.ai/fal-logo.svg",
+  "fal": "https://avatars.githubusercontent.com/u/106692465",
   
   // ====== Venice AI ======
-  "venice": "https://venice.ai/favicon.ico",
-  "venice-uncensored": "https://venice.ai/favicon.ico",
-  "dolphin-2.9": "https://venice.ai/favicon.ico",
-  "venice-dolphin": "https://venice.ai/favicon.ico",
+  "venice": "https://avatars.githubusercontent.com/u/158137808",
+  "venice-uncensored": "https://avatars.githubusercontent.com/u/158137808",
+  "dolphin-2.9": "https://avatars.githubusercontent.com/u/158137808",
+  "venice-dolphin": "https://avatars.githubusercontent.com/u/158137808",
   
   // ====== Leonardo AI ======
-  "leonardo": "https://cdn.leonardo.ai/logo/leonardo-logo.png",
-  "leonardo-ai": "https://cdn.leonardo.ai/logo/leonardo-logo.png",
+  "leonardo": "https://avatars.githubusercontent.com/u/122052096",
+  "leonardo-ai": "https://avatars.githubusercontent.com/u/122052096",
   
   // ====== Ideogram ======
-  "ideogram": "https://ideogram.ai/favicon.ico",
-  "ideogram-free": "https://ideogram.ai/favicon.ico",
-  "ideogram-pro": "https://ideogram.ai/favicon.ico",
+  "ideogram": "https://avatars.githubusercontent.com/u/136632544",
+  "ideogram-free": "https://avatars.githubusercontent.com/u/136632544",
+  "ideogram-pro": "https://avatars.githubusercontent.com/u/136632544",
   
   // ====== Adobe Firefly ======
-  "adobe": "https://www.adobe.com/favicon.ico",
-  "adobe-firefly": "https://www.adobe.com/favicon.ico",
+  "adobe": "https://avatars.githubusercontent.com/u/476009",
+  "adobe-firefly": "https://avatars.githubusercontent.com/u/476009",
   
   // ====== Meshy ======
-  "meshy": "https://www.meshy.ai/favicon.ico",
-  "meshy-v4": "https://www.meshy.ai/favicon.ico",
+  "meshy": "https://avatars.githubusercontent.com/u/130524827",
+  "meshy-v4": "https://avatars.githubusercontent.com/u/130524827",
   
   // ====== Tripo AI ======
-  "tripo": "https://www.tripo3d.ai/favicon.ico",
-  "tripo-v2": "https://www.tripo3d.ai/favicon.ico",
-  "tripo-ai": "https://www.tripo3d.ai/favicon.ico",
+  "tripo": "https://avatars.githubusercontent.com/u/156996806",
+  "tripo-v2": "https://avatars.githubusercontent.com/u/156996806",
+  "tripo-ai": "https://avatars.githubusercontent.com/u/156996806",
   
   // ====== Spline AI ======
-  "spline": "https://spline.design/favicon.ico",
-  "spline-ai": "https://spline.design/favicon.ico",
+  "spline": "https://avatars.githubusercontent.com/u/54486684",
+  "spline-ai": "https://avatars.githubusercontent.com/u/54486684",
   
   // ====== OpenRouter ======
-  "openrouter": "https://openrouter.ai/favicon.ico",
+  "openrouter": "https://avatars.githubusercontent.com/u/115064925",
   
   // ====== HeyGen ======
-  "heygen": "https://heygen.com/favicon.ico",
+  "heygen": "https://avatars.githubusercontent.com/u/102820846",
   
   // ====== Synthesia ======
-  "synthesia": "https://synthesia.io/favicon.ico",
+  "synthesia": "https://avatars.githubusercontent.com/u/38879979",
   
   // ====== D-ID ======
-  "did": "https://d-id.com/favicon.ico",
-  "d-id": "https://d-id.com/favicon.ico",
+  "did": "https://avatars.githubusercontent.com/u/49234463",
+  "d-id": "https://avatars.githubusercontent.com/u/49234463",
   
   // ====== Colossyan ======
-  "colossyan": "https://colossyan.com/favicon.ico",
+  "colossyan": "https://avatars.githubusercontent.com/u/74961093",
   
   // ====== VEED ======
-  "veed": "https://veed.io/favicon.ico",
-  "veed-ai": "https://veed.io/favicon.ico",
+  "veed": "https://avatars.githubusercontent.com/u/54107394",
+  "veed-ai": "https://avatars.githubusercontent.com/u/54107394",
   
   // ====== Fliki ======
-  "fliki": "https://fliki.ai/favicon.ico",
+  "fliki": "https://avatars.githubusercontent.com/u/107458693",
   
   // ====== Pictory ======
-  "pictory": "https://pictory.ai/favicon.ico",
+  "pictory": "https://avatars.githubusercontent.com/u/85968855",
   
   // ====== Opus ======
-  "opus": "https://opus.pro/favicon.ico",
-  "opus-clip": "https://opus.pro/favicon.ico",
+  "opus": "https://avatars.githubusercontent.com/u/133715209",
+  "opus-clip": "https://avatars.githubusercontent.com/u/133715209",
   
   // ====== Vidnoz ======
-  "vidnoz": "https://vidnoz.com/favicon.ico",
+  "vidnoz": "https://avatars.githubusercontent.com/u/126508087",
   
   // ====== DeepBrain ======
-  "deepbrain": "https://deepbrain.io/favicon.ico",
+  "deepbrain": "https://avatars.githubusercontent.com/u/90291952",
   
   // ====== Elai ======
-  "elai": "https://elai.io/favicon.ico",
+  "elai": "https://avatars.githubusercontent.com/u/82276346",
   
   // ====== Morph Studio ======
-  "morph": "https://morphstudio.com/favicon.ico",
-  "morphstudio": "https://morphstudio.com/favicon.ico",
+  "morph": "https://avatars.githubusercontent.com/u/157291426",
+  "morphstudio": "https://avatars.githubusercontent.com/u/157291426",
   
   // ====== Genmo ======
-  "genmo": "https://genmo.ai/favicon.ico",
-  "genmo-mochi": "https://genmo.ai/favicon.ico",
+  "genmo": "https://avatars.githubusercontent.com/u/115189839",
+  "genmo-mochi": "https://avatars.githubusercontent.com/u/115189839",
   
   // ====== Lightricks ======
-  "lightricks": "https://ltx.studio/favicon.ico",
-  "lightricks-ltx": "https://ltx.studio/favicon.ico",
+  "lightricks": "https://avatars.githubusercontent.com/u/5768824",
+  "lightricks-ltx": "https://avatars.githubusercontent.com/u/5768824",
   
   // ====== Tencent ======
-  "tencent": "https://upload.wikimedia.org/wikipedia/commons/2/22/Tencent_Logo.svg",
-  "hunyuan-video": "https://upload.wikimedia.org/wikipedia/commons/2/22/Tencent_Logo.svg",
+  "tencent": "https://avatars.githubusercontent.com/u/18014925",
+  "hunyuan-video": "https://avatars.githubusercontent.com/u/18014925",
   
   // ====== Alibaba ======
-  "alibaba": "https://upload.wikimedia.org/wikipedia/commons/9/9a/Alibaba_Group_Logo.svg",
-  "wanx-video": "https://upload.wikimedia.org/wikipedia/commons/9/9a/Alibaba_Group_Logo.svg",
-  "dashscope": "https://upload.wikimedia.org/wikipedia/commons/9/9a/Alibaba_Group_Logo.svg",
+  "alibaba": "https://avatars.githubusercontent.com/u/8077067",
+  "wanx-video": "https://avatars.githubusercontent.com/u/8077067",
+  "dashscope": "https://avatars.githubusercontent.com/u/8077067",
   
   // ====== ByteDance ======
-  "bytedance": "https://upload.wikimedia.org/wikipedia/commons/6/6d/ByteDance_logo_English.svg",
-  "bytedance-seaweed": "https://upload.wikimedia.org/wikipedia/commons/6/6d/ByteDance_logo_English.svg",
-  "capcut": "https://sf16-website-login.neutral.ttwstatic.com/obj/tiktok_web_login_static/capcut/logo.svg",
+  "bytedance": "https://avatars.githubusercontent.com/u/31280842",
+  "bytedance-seaweed": "https://avatars.githubusercontent.com/u/31280842",
+  "capcut": "https://avatars.githubusercontent.com/u/31280842",
   
   // ====== NVIDIA ======
-  "nvidia": "https://upload.wikimedia.org/wikipedia/sco/2/21/Nvidia_logo.svg",
-  "nvidia-cosmos": "https://upload.wikimedia.org/wikipedia/sco/2/21/Nvidia_logo.svg",
+  "nvidia": "https://avatars.githubusercontent.com/u/1728152",
+  "nvidia-cosmos": "https://avatars.githubusercontent.com/u/1728152",
   
   // ====== Meta ======
-  "meta-moviegen": "https://upload.wikimedia.org/wikipedia/commons/a/ab/Meta-Logo.png",
+  "meta-moviegen": "https://avatars.githubusercontent.com/u/69631",
   
   // ====== Haiper ======
-  "haiper": "https://haiper.ai/favicon.ico",
-  "haiper-free": "https://haiper.ai/favicon.ico",
+  "haiper": "https://avatars.githubusercontent.com/u/154689753",
+  "haiper-free": "https://avatars.githubusercontent.com/u/154689753",
   
   // ====== Kaiber ======
-  "kaiber": "https://kaiber.ai/favicon.ico",
-  "kaiber-free": "https://kaiber.ai/favicon.ico",
+  "kaiber": "https://avatars.githubusercontent.com/u/119248270",
+  "kaiber-free": "https://avatars.githubusercontent.com/u/119248270",
   
   // ====== PixVerse ======
-  "pixverse": "https://pixverse.ai/favicon.ico",
-  "pixverse-free": "https://pixverse.ai/favicon.ico",
+  "pixverse": "https://avatars.githubusercontent.com/u/156116855",
+  "pixverse-free": "https://avatars.githubusercontent.com/u/156116855",
   
   // ====== InVideo ======
-  "invideo": "https://invideo.io/favicon.ico",
-  "invideo-free": "https://invideo.io/favicon.ico",
+  "invideo": "https://avatars.githubusercontent.com/u/40620374",
+  "invideo-free": "https://avatars.githubusercontent.com/u/40620374",
   
   // ====== CogVideo ======
   "cogvideo": "https://avatars.githubusercontent.com/u/80937070",
   
   // ====== Cursor ======
-  "cursor": "https://cursor.sh/favicon.ico",
-  "cursor-pro": "https://cursor.sh/favicon.ico",
+  "cursor": "https://avatars.githubusercontent.com/u/157622151",
+  "cursor-pro": "https://avatars.githubusercontent.com/u/157622151",
   
   // ====== Replit ======
-  "replit": "https://replit.com/public/icons/favicon-196.png",
-  "replit-code": "https://replit.com/public/icons/favicon-196.png",
-  "replit-agent": "https://replit.com/public/icons/favicon-196.png",
+  "replit": "https://avatars.githubusercontent.com/u/983194",
+  "replit-code": "https://avatars.githubusercontent.com/u/983194",
+  "replit-agent": "https://avatars.githubusercontent.com/u/983194",
   
   // ====== GitHub Copilot ======
-  "github": "https://github.githubassets.com/assets/GitHub-Mark-ea2971cee799.png",
-  "github-copilot": "https://github.githubassets.com/assets/GitHub-Mark-ea2971cee799.png",
+  "github": "https://avatars.githubusercontent.com/u/9919",
+  "github-copilot": "https://avatars.githubusercontent.com/u/9919",
   
   // ====== Codeium / Windsurf ======
-  "codeium": "https://codeium.com/favicon.ico",
-  "windsurf": "https://codeium.com/favicon.ico",
+  "codeium": "https://avatars.githubusercontent.com/u/107518590",
+  "windsurf": "https://avatars.githubusercontent.com/u/107518590",
   
   // ====== Lovable ======
-  "lovable": "https://lovable.dev/favicon.ico",
+  "lovable": "https://avatars.githubusercontent.com/u/143089887",
   
   // ====== Default / Fallbacks ======
   "default": "https://cdn-icons-png.flaticon.com/512/4529/4529978.png",

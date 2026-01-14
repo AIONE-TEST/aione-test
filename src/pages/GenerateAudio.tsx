@@ -82,70 +82,65 @@ const GenerateAudio = () => {
           </Button>
         </div>
 
-        {/* Main Grid */}
-        <div className="grid grid-cols-1 xl:grid-cols-[1fr_420px] gap-6 h-[calc(100vh-280px)]">
-          {/* Left: Canvas */}
-          <div className="min-h-0">
-            <GenerationCanvas
+        {/* Main Layout - Vertical */}
+        <div className="flex flex-col gap-6 max-w-4xl">
+          {/* Canvas */}
+          <GenerationCanvas
+            selectedModel={selectedModel}
+            generatedContent={generatedContent}
+            isGenerating={isGenerating}
+            contentType="audio"
+          />
+
+          {/* Prompt Editor */}
+          <PromptEditor
+            prompt={prompt}
+            onPromptChange={setPrompt}
+            onGenerate={handleGenerate}
+            isGenerating={isGenerating}
+            canGenerate={canGenerate}
+            placeholder="Ex: Une musique épique orchestrale avec des choeurs, style Hans Zimmer, tempo rapide..."
+          />
+
+          {/* Model Selector */}
+          <div className="panel-3d p-4 space-y-3">
+            <label className="font-display text-sm text-[hsl(25,100%,55%)] tracking-wider flex items-center gap-2">
+              <Sparkles className="h-4 w-4" />
+              MOTEUR DE GÉNÉRATION
+            </label>
+            <ModelSelector
+              models={models}
               selectedModel={selectedModel}
-              generatedContent={generatedContent}
-              isGenerating={isGenerating}
-              contentType="audio"
+              onSelectModel={setSelectedModel}
+              category="audio"
             />
           </div>
 
-          {/* Right: Controls */}
-          <div className="flex flex-col gap-4 min-h-0 overflow-y-auto">
-            {/* Model Selector */}
-            <div className="panel-3d p-4 space-y-3">
-              <label className="font-display text-sm text-[hsl(25,100%,55%)] tracking-wider flex items-center gap-2">
-                <Sparkles className="h-4 w-4" />
-                MODÈLE IA
-              </label>
-              <ModelSelector
-                models={models}
-                selectedModel={selectedModel}
-                onSelectModel={setSelectedModel}
-                category="audio"
-              />
-            </div>
+          {/* Options */}
+          <GenerationOptions
+            contentType="audio"
+            options={options}
+            onOptionsChange={setOptions}
+          />
 
-            {/* Prompt Editor */}
-            <PromptEditor
-              prompt={prompt}
-              onPromptChange={setPrompt}
-              onGenerate={handleGenerate}
-              isGenerating={isGenerating}
-              canGenerate={canGenerate}
-              placeholder="Ex: Une musique épique orchestrale avec des choeurs, style Hans Zimmer, tempo rapide..."
-            />
-
-            {/* Options */}
-            <GenerationOptions
-              contentType="audio"
-              options={options}
-              onOptionsChange={setOptions}
-            />
-
-            {/* Generate Button */}
-            <Button 
-              onClick={handleGenerate}
-              disabled={!canGenerate || isGenerating}
-              className="btn-3d-orange h-14 text-xl font-bold gap-3 hover:scale-105 transition-transform disabled:opacity-50"
-            >
-              {isGenerating ? (
-                <>
-                  <div className="h-6 w-6 border-3 border-white/30 border-t-white rounded-full animate-spin" />
-                  GÉNÉRATION...
-                </>
-              ) : (
-                <>
-                  <Zap className="h-6 w-6" />
-                  GÉNÉRER
-                </>
-              )}
-            </Button>
-          </div>
+          {/* Generate Button */}
+          <Button 
+            onClick={handleGenerate}
+            disabled={!canGenerate || isGenerating}
+            className="btn-3d-orange h-14 text-xl font-bold gap-3 hover:scale-105 transition-transform disabled:opacity-50"
+          >
+            {isGenerating ? (
+              <>
+                <div className="h-6 w-6 border-3 border-white/30 border-t-white rounded-full animate-spin" />
+                GÉNÉRATION...
+              </>
+            ) : (
+              <>
+                <Zap className="h-6 w-6" />
+                GÉNÉRER
+              </>
+            )}
+          </Button>
         </div>
       </main>
     </div>
