@@ -115,18 +115,18 @@ export function Sidebar() {
 
   return (
     <aside className="fixed left-0 top-0 z-50 flex h-full w-[373px] flex-col bg-gradient-to-b from-[hsl(220,20%,8%)] to-[hsl(220,25%,4%)] border-r-2 border-[hsl(220,15%,25%)] shadow-2xl">
-      {/* Logo AIONE with Animated Globe */}
+      {/* Logo AIONE with Animated Globe - AGRANDIT +50% */}
       <Link 
         to="/" 
-        className="flex flex-col items-center gap-3 py-6 px-4 border-b-2 border-[hsl(220,15%,25%)] hover:bg-[hsl(220,15%,15%)] transition-all duration-300 group"
+        className="flex flex-col items-center gap-4 py-8 px-4 border-b-2 border-[hsl(220,15%,25%)] hover:bg-[hsl(220,15%,15%)] transition-all duration-300 group"
       >
         <div className="transform group-hover:scale-110 transition-transform duration-300">
-          <AnimatedGlobe size={100} />
+          <AnimatedGlobe size={150} />
         </div>
-        <span className="font-display text-5xl font-black gradient-text-pink text-glow-pink tracking-widest">
+        <span className="font-display text-7xl font-black gradient-text-pink text-glow-pink tracking-widest">
           AIONE
         </span>
-        <span className="font-display text-sm text-[hsl(174,100%,50%)] tracking-[0.3em] uppercase">
+        <span className="font-display text-base text-[hsl(174,100%,50%)] tracking-[0.3em] uppercase">
           AI GATEWAY
         </span>
       </Link>
