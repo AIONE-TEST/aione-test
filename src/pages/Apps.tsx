@@ -23,15 +23,14 @@ interface CategoryConfig {
 }
 
 const categoryConfigs: CategoryConfig[] = [
-  { id: "all", label: "TOUS", icon: <AppWindow className="h-5 w-5" />, color: "text-[hsl(174,100%,50%)]", bgColor: "bg-[hsl(174,100%,50%)]/10", borderColor: "border-[hsl(174,100%,50%)]/30" },
-  { id: "activated", label: "APIS CLÉS OK", icon: <Check className="h-5 w-5" />, color: "text-[hsl(142,76%,50%)]", bgColor: "bg-[hsl(142,76%,50%)]/10", borderColor: "border-[hsl(142,76%,50%)]/30" },
-  { id: "images", label: "IMAGES", icon: <Image className="h-5 w-5" />, color: "text-[hsl(320,100%,60%)]", bgColor: "bg-[hsl(320,100%,60%)]/10", borderColor: "border-[hsl(320,100%,60%)]/30" },
-  { id: "videos", label: "VIDÉOS", icon: <Video className="h-5 w-5" />, color: "text-[hsl(280,100%,65%)]", bgColor: "bg-[hsl(280,100%,65%)]/10", borderColor: "border-[hsl(280,100%,65%)]/30" },
-  { id: "llms", label: "LLMS", icon: <MessageSquare className="h-5 w-5" />, color: "text-[hsl(45,100%,55%)]", bgColor: "bg-[hsl(45,100%,55%)]/10", borderColor: "border-[hsl(45,100%,55%)]/30" },
-  { id: "audio", label: "AUDIO", icon: <Music className="h-5 w-5" />, color: "text-[hsl(25,100%,55%)]", bgColor: "bg-[hsl(25,100%,55%)]/10", borderColor: "border-[hsl(25,100%,55%)]/30" },
-  { id: "retouch", label: "RETOUCHE", icon: <Wand2 className="h-5 w-5" />, color: "text-[hsl(174,100%,50%)]", bgColor: "bg-[hsl(174,100%,50%)]/10", borderColor: "border-[hsl(174,100%,50%)]/30" },
-  { id: "code", label: "CODE", icon: <Code className="h-5 w-5" />, color: "text-[hsl(210,100%,60%)]", bgColor: "bg-[hsl(210,100%,60%)]/10", borderColor: "border-[hsl(210,100%,60%)]/30" },
-  { id: "uncensored", label: "SANS CENSURE", icon: <Flame className="h-5 w-5" />, color: "text-[hsl(0,100%,60%)]", bgColor: "bg-[hsl(0,100%,60%)]/10", borderColor: "border-[hsl(0,100%,60%)]/30" },
+  { id: "all", label: "TOUS", icon: <AppWindow className="h-6 w-6" />, color: "text-[hsl(174,100%,50%)]", bgColor: "bg-[hsl(174,100%,50%)]/10", borderColor: "border-[hsl(174,100%,50%)]/30" },
+  { id: "activated", label: "APPLIS OK", icon: <Check className="h-6 w-6" />, color: "text-[hsl(142,76%,50%)]", bgColor: "bg-[hsl(142,76%,50%)]/10", borderColor: "border-[hsl(142,76%,50%)]/30" },
+  { id: "videos", label: "VIDÉOS", icon: <Video className="h-6 w-6" />, color: "text-[hsl(280,100%,65%)]", bgColor: "bg-[hsl(280,100%,65%)]/10", borderColor: "border-[hsl(280,100%,65%)]/30" },
+  { id: "images", label: "IMAGES", icon: <Image className="h-6 w-6" />, color: "text-[hsl(320,100%,60%)]", bgColor: "bg-[hsl(320,100%,60%)]/10", borderColor: "border-[hsl(320,100%,60%)]/30" },
+  { id: "retouch", label: "RETOUCHES", icon: <Wand2 className="h-6 w-6" />, color: "text-[hsl(45,100%,55%)]", bgColor: "bg-[hsl(45,100%,55%)]/10", borderColor: "border-[hsl(45,100%,55%)]/30" },
+  { id: "uncensored", label: "SANS CENSURE", icon: <Flame className="h-6 w-6" />, color: "text-[hsl(0,100%,60%)]", bgColor: "bg-[hsl(0,100%,60%)]/10", borderColor: "border-[hsl(0,100%,60%)]/30" },
+  { id: "audio", label: "AUDIO", icon: <Music className="h-6 w-6" />, color: "text-[hsl(25,100%,55%)]", bgColor: "bg-[hsl(25,100%,55%)]/10", borderColor: "border-[hsl(25,100%,55%)]/30" },
+  { id: "code", label: "CODE", icon: <Code className="h-6 w-6" />, color: "text-[hsl(210,100%,60%)]", bgColor: "bg-[hsl(210,100%,60%)]/10", borderColor: "border-[hsl(210,100%,60%)]/30" },
 ];
 
 const Apps = () => {
@@ -93,7 +92,7 @@ const Apps = () => {
       activated: allModels.filter(m => m.apiStatus === "active" || m.isFree).length,
     };
     
-    ["images", "videos", "llms", "audio", "retouch", "code", "uncensored"].forEach(cat => {
+    ["images", "videos", "audio", "retouch", "code", "uncensored"].forEach(cat => {
       counts[cat] = allModels.filter(m => m.category === cat).length;
     });
     
@@ -382,24 +381,24 @@ function AppModelCard({ model, viewMode, onOpenAPIKeyModal, onClick }: AppModelC
         !isActive && "opacity-80"
       )}
       onClick={onClick}
-      style={{ minHeight: "180px" }}
+      style={{ minHeight: "240px" }}
     >
       {/* Status LED - Top left */}
       <div className="absolute top-2 left-2">
         <StatusLED isActive={isActive} />
       </div>
 
-      {/* Logo - Top right */}
-      <div className="absolute top-2 right-2 h-10 w-10 rounded-lg bg-muted/70 border border-border/50 overflow-hidden">
+      {/* Logo - Top right - Double size */}
+      <div className="absolute top-2 right-2 h-16 w-16 rounded-lg bg-muted/70 border border-border/50 overflow-hidden">
         {!imageError ? (
           <img
             src={logoUrl}
             alt={model.provider}
-            className="h-full w-full object-contain p-1"
+            className="h-full w-full object-contain p-2"
             onError={() => setImageError(true)}
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-sm font-bold text-muted-foreground font-display">
+          <div className="flex h-full w-full items-center justify-center text-lg font-bold text-muted-foreground font-display">
             {model.provider.charAt(0)}
           </div>
         )}
@@ -420,15 +419,15 @@ function AppModelCard({ model, viewMode, onOpenAPIKeyModal, onClick }: AppModelC
       )}
 
       {/* Content - Centered */}
-      <div className="pt-10 flex flex-col items-center text-center flex-1">
-        {/* Name */}
-        <h3 className="font-display text-sm font-bold text-foreground mb-1 line-clamp-2 tracking-wider leading-tight">
+      <div className="pt-12 flex flex-col items-center text-center flex-1">
+        {/* Name - Double size */}
+        <h3 className="font-display text-lg font-bold text-foreground mb-1 line-clamp-2 tracking-wider leading-tight">
           {model.name}
         </h3>
-        <p className="text-xs text-muted-foreground mb-2 font-display">{model.provider}</p>
+        <p className="text-sm text-muted-foreground mb-2 font-display">{model.provider}</p>
 
-        {/* Category Badge */}
-        <Badge variant="outline" className={cn("text-[10px] mb-2 font-display", getCategoryColor(model.category))}>
+        {/* Category Badge - Double size */}
+        <Badge variant="outline" className={cn("text-sm mb-2 font-display px-3 py-1", getCategoryColor(model.category))}>
           {model.category.toUpperCase()}
         </Badge>
 
@@ -465,13 +464,13 @@ function AppModelCard({ model, viewMode, onOpenAPIKeyModal, onClick }: AppModelC
         ) : (
           <Button
             size="sm"
-            className="w-full h-8 text-xs font-bold btn-3d-purple gap-1.5 hover:scale-105 transition-transform font-display tracking-wider"
+            className="w-full h-8 text-sm font-bold bg-[hsl(30,100%,60%)] hover:bg-[hsl(30,100%,65%)] text-black gap-1.5 hover:scale-105 transition-transform font-display tracking-wider"
             onClick={(e) => {
               e.stopPropagation();
               if (model.apiKeyName) onOpenAPIKeyModal(model.apiKeyName);
             }}
           >
-            <Key className="h-3 w-3" />
+            <Key className="h-4 w-4" />
             ACHETER
           </Button>
         )}
