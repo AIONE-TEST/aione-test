@@ -266,8 +266,12 @@ const Apps = () => {
           </Badge>
         </div>
 
-        {/* Models Grid - Max 5 per row, horizontal cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+        {/* Models Grid - Max 4 per row, horizontal cards */}
+        <div className={cn(
+          viewMode === "list" 
+            ? "flex flex-col gap-3" 
+            : "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
+        )}>
           {models.map((model) => (
             <AppTileCard
               key={model.id}
@@ -448,8 +452,12 @@ const Apps = () => {
                 </Badge>
               </div>
 
-              {/* Models Grid - Max 5 per row, horizontal cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+              {/* Models Grid - Max 4 per row, horizontal cards */}
+              <div className={cn(
+                viewMode === "list" 
+                  ? "flex flex-col gap-3" 
+                  : "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
+              )}>
                 {filteredModels.map((model) => (
                   <AppTileCard
                     key={model.id}
