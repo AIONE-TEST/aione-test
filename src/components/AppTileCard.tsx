@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { AIModel, apiConfigs } from "@/data/aiModels";
 import { getModelLogo } from "@/data/modelLogos";
+import { getPackageInfo } from "@/data/modelPackages";
 import { StatusLED } from "@/components/StatusLED";
 import { VintageStamp } from "@/components/VintageStamp";
 import { AnimatedFlame } from "@/components/AnimatedFlame";
@@ -105,15 +106,15 @@ const categoryStyles: Record<string, {
   },
 };
 
-// Icônes des capacités
+// Icônes des capacités - DOUBLED SIZE (h-8 w-8)
 const capabilityIcons: Record<string, { icon: React.ReactNode; label: string }> = {
-  "image": { icon: <ImageIcon className="h-4 w-4" />, label: "Images" },
-  "video": { icon: <Video className="h-4 w-4" />, label: "Vidéos" },
-  "audio": { icon: <Music className="h-4 w-4" />, label: "Audio" },
-  "text": { icon: <MessageSquare className="h-4 w-4" />, label: "Texte" },
-  "3d": { icon: <Box className="h-4 w-4" />, label: "3D" },
-  "code": { icon: <Code className="h-4 w-4" />, label: "Code" },
-  "retouch": { icon: <Wand2 className="h-4 w-4" />, label: "Retouche" },
+  "image": { icon: <ImageIcon className="h-8 w-8" />, label: "Images" },
+  "video": { icon: <Video className="h-8 w-8" />, label: "Vidéos" },
+  "audio": { icon: <Music className="h-8 w-8" />, label: "Audio" },
+  "text": { icon: <MessageSquare className="h-8 w-8" />, label: "Texte" },
+  "3d": { icon: <Box className="h-8 w-8" />, label: "3D" },
+  "code": { icon: <Code className="h-8 w-8" />, label: "Code" },
+  "retouch": { icon: <Wand2 className="h-8 w-8" />, label: "Retouche" },
 };
 
 // Max generations per model with free generations info and prices in EUR
@@ -123,29 +124,30 @@ const modelGenerationLimits: Record<string, {
   freeGens?: number; 
   freeUnit?: string;
   priceEur?: string;
+  remaining?: number;
 }> = {
   "flux-schnell": { max: null, unit: "illimité", freeGens: null, freeUnit: "illimité", priceEur: "GRATUIT" },
   "perchance-ai": { max: null, unit: "illimité", freeGens: null, freeUnit: "illimité", priceEur: "GRATUIT" },
   "pollinations": { max: null, unit: "illimité", freeGens: null, freeUnit: "illimité", priceEur: "GRATUIT" },
-  "ideogram-free": { max: 25, unit: "/jour", freeGens: 25, freeUnit: "/jour", priceEur: "GRATUIT" },
+  "ideogram-free": { max: 25, unit: "/jour", freeGens: 25, freeUnit: "/jour", priceEur: "GRATUIT", remaining: 25 },
   "dall-e-3": { max: 200, unit: "/mois", freeGens: 0, freeUnit: "", priceEur: "0,04€" },
-  "midjourney-v6": { max: 200, unit: "/mois", freeGens: 25, freeUnit: "essai", priceEur: "9€/mois" },
-  "stable-diffusion-3": { max: 150, unit: "/mois", freeGens: 25, freeUnit: "crédits", priceEur: "0,03€" },
-  "runway-gen3": { max: 125, unit: "sec/mois", freeGens: 125, freeUnit: "sec essai", priceEur: "12€/mois" },
-  "elevenlabs": { max: 10000, unit: "chars/mois", freeGens: 10000, freeUnit: "chars/mois", priceEur: "5€/mois" },
+  "midjourney-v6": { max: 200, unit: "/mois", freeGens: 25, freeUnit: "essai", priceEur: "9€/mois", remaining: 25 },
+  "stable-diffusion-3": { max: 150, unit: "/mois", freeGens: 25, freeUnit: "crédits", priceEur: "0,03€", remaining: 25 },
+  "runway-gen3": { max: 125, unit: "sec/mois", freeGens: 125, freeUnit: "sec essai", priceEur: "12€/mois", remaining: 125 },
+  "elevenlabs": { max: 10000, unit: "chars/mois", freeGens: 10000, freeUnit: "chars/mois", priceEur: "5€/mois", remaining: 10000 },
   "gpt-4o": { max: null, unit: "illimité", freeGens: 0, freeUnit: "", priceEur: "0,01€/1K" },
   "claude-3-5-sonnet": { max: null, unit: "illimité", freeGens: 0, freeUnit: "", priceEur: "0,01€/1K" },
-  "tensor-art": { max: 100, unit: "/jour", freeGens: 100, freeUnit: "crédits/jour", priceEur: "GRATUIT" },
-  "leonardo-ai": { max: 150, unit: "/jour", freeGens: 150, freeUnit: "tokens/jour", priceEur: "11€/mois" },
-  "playground-v2": { max: 500, unit: "/jour", freeGens: 500, freeUnit: "/jour", priceEur: "GRATUIT" },
+  "tensor-art": { max: 100, unit: "/jour", freeGens: 100, freeUnit: "crédits/jour", priceEur: "GRATUIT", remaining: 100 },
+  "leonardo-ai": { max: 150, unit: "/jour", freeGens: 150, freeUnit: "tokens/jour", priceEur: "11€/mois", remaining: 150 },
+  "playground-v2": { max: 500, unit: "/jour", freeGens: 500, freeUnit: "/jour", priceEur: "GRATUIT", remaining: 500 },
   "pixart-alpha": { max: null, unit: "illimité", freeGens: null, freeUnit: "illimité", priceEur: "GRATUIT" },
   "sdxl-lightning": { max: null, unit: "illimité", freeGens: null, freeUnit: "illimité", priceEur: "GRATUIT" },
-  "kling-ai": { max: 66, unit: "/mois", freeGens: 66, freeUnit: "crédits/mois", priceEur: "5€/mois" },
-  "luma-dream": { max: 30, unit: "/mois", freeGens: 30, freeUnit: "générations", priceEur: "24€/mois" },
-  "hailuo-minimax": { max: 10, unit: "/jour", freeGens: 10, freeUnit: "/jour", priceEur: "GRATUIT" },
-  "pika-labs": { max: 250, unit: "crédits", freeGens: 250, freeUnit: "essai", priceEur: "8€/mois" },
-  "suno-ai": { max: 50, unit: "/jour", freeGens: 50, freeUnit: "crédits/jour", priceEur: "8€/mois" },
-  "udio": { max: 1200, unit: "/mois", freeGens: 1200, freeUnit: "crédits/mois", priceEur: "10€/mois" },
+  "kling-ai": { max: 66, unit: "/mois", freeGens: 66, freeUnit: "crédits/mois", priceEur: "5€/mois", remaining: 66 },
+  "luma-dream": { max: 30, unit: "/mois", freeGens: 30, freeUnit: "générations", priceEur: "24€/mois", remaining: 30 },
+  "hailuo-minimax": { max: 10, unit: "/jour", freeGens: 10, freeUnit: "/jour", priceEur: "GRATUIT", remaining: 10 },
+  "pika-labs": { max: 250, unit: "crédits", freeGens: 250, freeUnit: "essai", priceEur: "8€/mois", remaining: 250 },
+  "suno-ai": { max: 50, unit: "/jour", freeGens: 50, freeUnit: "crédits/jour", priceEur: "8€/mois", remaining: 50 },
+  "udio": { max: 1200, unit: "/mois", freeGens: 1200, freeUnit: "crédits/mois", priceEur: "10€/mois", remaining: 1200 },
 };
 
 interface AppTileCardProps {
@@ -176,21 +178,46 @@ export function AppTileCard({ model, onOpenAPIKeyModal, onClick, viewMode = "gri
   );
   
   const generationLimit = modelGenerationLimits[model.id];
+  const packageInfo = getPackageInfo(model.id);
   
   // Determine effective category for styling
   const effectiveCategory = isActive && !model.isFree ? "activated" : 
                            model.isFree ? "free" : model.category;
   const style = categoryStyles[effectiveCategory] || categoryStyles.images;
 
-  // Get capabilities from model features
+  // Get capabilities from model features and package info
   const getModelCapabilities = () => {
     const caps: string[] = [];
-    if (model.category === "images" || model.category === "retouch") caps.push("image");
-    if (model.category === "videos") caps.push("video");
-    if (model.category === "audio") caps.push("audio");
-    if (model.category === "llms") caps.push("text");
-    if (model.category === "3d") caps.push("3d");
-    if (model.category === "code") caps.push("code");
+    
+    // From package info first
+    if (packageInfo?.capabilities) {
+      packageInfo.capabilities.forEach(c => {
+        if (!caps.includes(c)) caps.push(c);
+      });
+    }
+    
+    // From category
+    if (model.category === "images" || model.category === "retouch") {
+      if (!caps.includes("image")) caps.push("image");
+    }
+    if (model.category === "videos") {
+      if (!caps.includes("video")) caps.push("video");
+    }
+    if (model.category === "audio") {
+      if (!caps.includes("audio")) caps.push("audio");
+    }
+    if (model.category === "llms") {
+      if (!caps.includes("text")) caps.push("text");
+    }
+    if (model.category === "3d") {
+      if (!caps.includes("3d")) caps.push("3d");
+    }
+    if (model.category === "code") {
+      if (!caps.includes("code")) caps.push("code");
+    }
+    if (model.category === "retouch") {
+      if (!caps.includes("retouch")) caps.push("retouch");
+    }
     
     // Check features for additional capabilities
     model.features?.forEach(f => {
@@ -198,6 +225,10 @@ export function AppTileCard({ model, onOpenAPIKeyModal, onClick, viewMode = "gri
       if ((fl.includes("image") || fl.includes("photo")) && !caps.includes("image")) caps.push("image");
       if ((fl.includes("video") || fl.includes("vidéo")) && !caps.includes("video")) caps.push("video");
       if ((fl.includes("audio") || fl.includes("musique") || fl.includes("voix")) && !caps.includes("audio")) caps.push("audio");
+      if ((fl.includes("text") || fl.includes("texte") || fl.includes("chat")) && !caps.includes("text")) caps.push("text");
+      if ((fl.includes("code") || fl.includes("programming")) && !caps.includes("code")) caps.push("code");
+      if ((fl.includes("3d") || fl.includes("mesh")) && !caps.includes("3d")) caps.push("3d");
+      if ((fl.includes("retouch") || fl.includes("edit") || fl.includes("inpaint")) && !caps.includes("retouch")) caps.push("retouch");
     });
     
     return caps;
@@ -207,6 +238,9 @@ export function AppTileCard({ model, onOpenAPIKeyModal, onClick, viewMode = "gri
 
   // Price display
   const priceDisplay = generationLimit?.priceEur || model.price?.replace("$", "€") || "";
+  
+  // Remaining generations display
+  const remainingGens = generationLimit?.remaining ?? generationLimit?.freeGens;
 
   // LIST VIEW - Full width with all details
   if (viewMode === "list") {
@@ -226,6 +260,9 @@ export function AppTileCard({ model, onOpenAPIKeyModal, onClick, viewMode = "gri
         <div className="flex items-center gap-4 p-4">
           {/* LED Status */}
           <StatusLED isActive={isActive} size="lg" />
+          
+          {/* Flame for uncensored */}
+          {isUncensored && <AnimatedFlame size="md" />}
           
           {/* Logo - 3D sphere effect */}
           <div className={cn(
@@ -255,13 +292,13 @@ export function AppTileCard({ model, onOpenAPIKeyModal, onClick, viewMode = "gri
             <p className="text-sm text-muted-foreground truncate font-display">{model.provider}</p>
           </div>
 
-          {/* Capabilities Icons */}
-          <div className="flex items-center gap-2 min-w-[100px]">
+          {/* Capabilities Icons - DOUBLED SIZE */}
+          <div className="flex items-center gap-3 min-w-[150px]">
             {capabilities.map(cap => (
               <div 
                 key={cap}
                 className={cn(
-                  "h-8 w-8 rounded-lg flex items-center justify-center",
+                  "h-12 w-12 rounded-lg flex items-center justify-center",
                   "bg-gradient-to-br from-white/10 to-black/20",
                   "shadow-[inset_-1px_-1px_3px_rgba(0,0,0,0.3),inset_1px_1px_3px_rgba(255,255,255,0.1)]",
                   style.textColor
@@ -272,6 +309,36 @@ export function AppTileCard({ model, onOpenAPIKeyModal, onClick, viewMode = "gri
               </div>
             ))}
           </div>
+
+          {/* Package Generators */}
+          {packageInfo && packageInfo.generators.length > 0 && (
+            <div className="min-w-[150px] flex flex-wrap gap-1">
+              {packageInfo.generators.slice(0, 3).map((gen, idx) => (
+                <Badge key={idx} className="font-display text-[10px] bg-white/10 text-white/80">
+                  {gen}
+                </Badge>
+              ))}
+              {packageInfo.generators.length > 3 && (
+                <Badge className="font-display text-[10px] bg-white/10 text-white/60">
+                  +{packageInfo.generators.length - 3}
+                </Badge>
+              )}
+            </div>
+          )}
+
+          {/* Remaining Generations */}
+          {remainingGens !== undefined && remainingGens !== null && (
+            <div className="min-w-[80px] text-center">
+              <Badge className={cn(
+                "font-display text-xs",
+                remainingGens === null || generationLimit?.max === null
+                  ? "bg-[hsl(142,76%,50%)]/20 text-[hsl(142,76%,50%)]"
+                  : "bg-[hsl(280,100%,65%)]/20 text-[hsl(280,100%,65%)]"
+              )}>
+                {remainingGens === null ? "∞" : `${remainingGens} restants`}
+              </Badge>
+            </div>
+          )}
 
           {/* Generation Limit */}
           <div className="min-w-[100px] text-center">
@@ -314,18 +381,7 @@ export function AppTileCard({ model, onOpenAPIKeyModal, onClick, viewMode = "gri
             <span className="text-[hsl(30,100%,50%)] font-display font-black text-sm animate-pulse">🔥HOT</span>
           )}
 
-          {/* Unlimited Badge */}
-          {isUnlimited && !isUncensored && (
-            <Button
-              className="btn-3d-green font-display text-xs font-bold px-3 py-1 gap-1 h-auto"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <InfinityIcon className="h-4 w-4" />
-              ILLIMITÉ
-            </Button>
-          )}
-
-          {/* Status / Action Button */}
+          {/* Status / Action Button - NO DUPLICATE UNLIMITED BUTTON */}
           <div className="flex items-center gap-2 ml-auto">
             {isActive ? (
               <span className="font-display text-lg font-black text-[hsl(142,76%,50%)] tracking-wider">
@@ -364,7 +420,7 @@ export function AppTileCard({ model, onOpenAPIKeyModal, onClick, viewMode = "gri
       )}
       onClick={onClick}
       style={{ 
-        minHeight: "200px",
+        minHeight: "220px",
         display: "flex",
         flexDirection: "column"
       }}
@@ -392,7 +448,7 @@ export function AppTileCard({ model, onOpenAPIKeyModal, onClick, viewMode = "gri
       </div>
 
       {/* MIDDLE ZONE - Logo + Info */}
-      <div className="flex-1 p-3 flex items-center gap-3">
+      <div className="flex-1 p-3 flex items-start gap-3">
         {/* Logo with 3D sphere effect */}
         <div className={cn(
           "h-14 w-14 shrink-0",
@@ -423,13 +479,13 @@ export function AppTileCard({ model, onOpenAPIKeyModal, onClick, viewMode = "gri
             {model.provider}
           </p>
           
-          {/* Capabilities Icons Row */}
-          <div className="flex gap-1">
+          {/* Capabilities Icons Row - DOUBLED SIZE */}
+          <div className="flex gap-2 flex-wrap">
             {capabilities.slice(0, 4).map(cap => (
               <div 
                 key={cap}
                 className={cn(
-                  "h-6 w-6 rounded-md flex items-center justify-center",
+                  "h-10 w-10 rounded-md flex items-center justify-center",
                   "bg-gradient-to-br from-white/10 to-black/20",
                   "shadow-[inset_-1px_-1px_2px_rgba(0,0,0,0.3),inset_1px_1px_2px_rgba(255,255,255,0.1)]",
                   style.textColor
@@ -441,17 +497,43 @@ export function AppTileCard({ model, onOpenAPIKeyModal, onClick, viewMode = "gri
             ))}
           </div>
 
-          {/* Generation Limit */}
-          {generationLimit && (
-            <Badge className={cn(
-              "font-display text-[10px] w-fit px-2 py-0.5",
-              generationLimit.max === null 
-                ? "bg-[hsl(142,76%,50%)]/20 text-[hsl(142,76%,50%)]"
-                : "bg-[hsl(45,100%,55%)]/20 text-[hsl(45,100%,55%)]"
-            )}>
-              {generationLimit.max === null ? "∞" : `${generationLimit.max}${generationLimit.unit}`}
-            </Badge>
+          {/* Package Generators - Readable list */}
+          {packageInfo && packageInfo.generators.length > 0 && (
+            <div className="mt-1">
+              <p className="text-[10px] text-muted-foreground font-display mb-0.5">INCLUS:</p>
+              <div className="flex flex-wrap gap-1">
+                {packageInfo.generators.slice(0, 3).map((gen, idx) => (
+                  <Badge key={idx} className="font-display text-[9px] bg-white/10 text-white/80 px-1.5 py-0">
+                    {gen}
+                  </Badge>
+                ))}
+                {packageInfo.generators.length > 3 && (
+                  <Badge className="font-display text-[9px] bg-white/10 text-white/60 px-1.5 py-0">
+                    +{packageInfo.generators.length - 3}
+                  </Badge>
+                )}
+              </div>
+            </div>
           )}
+
+          {/* Generation Limit + Remaining */}
+          <div className="flex items-center gap-2 mt-1">
+            {generationLimit && (
+              <Badge className={cn(
+                "font-display text-[10px] px-2 py-0.5",
+                generationLimit.max === null 
+                  ? "bg-[hsl(142,76%,50%)]/20 text-[hsl(142,76%,50%)]"
+                  : "bg-[hsl(45,100%,55%)]/20 text-[hsl(45,100%,55%)]"
+              )}>
+                {generationLimit.max === null ? "∞" : `${generationLimit.max}${generationLimit.unit}`}
+              </Badge>
+            )}
+            {remainingGens !== undefined && remainingGens !== null && generationLimit?.max !== null && (
+              <Badge className="font-display text-[10px] px-2 py-0.5 bg-[hsl(280,100%,65%)]/20 text-[hsl(280,100%,65%)]">
+                {remainingGens} restants
+              </Badge>
+            )}
+          </div>
         </div>
 
         {/* Right Side - Price display */}
@@ -469,23 +551,19 @@ export function AppTileCard({ model, onOpenAPIKeyModal, onClick, viewMode = "gri
         </div>
       </div>
 
-      {/* BOTTOM ZONE - Actions & Badges */}
+      {/* BOTTOM ZONE - Actions & Badges - NO DUPLICATE UNLIMITED BUTTON */}
       <div className={cn(
         "px-3 py-2 border-t shrink-0 flex items-center justify-between gap-2",
         style.borderColor,
         "bg-black/10"
       )}>
-        {/* Left - Price */}
+        {/* Left - Unlimited badge (only one, not a button) */}
         <div className="flex items-center gap-1">
-          {priceDisplay && (
-            <span className={cn(
-              "font-display text-[10px] font-bold",
-              priceDisplay === "GRATUIT" 
-                ? "text-[hsl(142,76%,50%)]"
-                : "text-[hsl(45,100%,55%)]"
-            )}>
-              {priceDisplay}
-            </span>
+          {isUnlimited && (
+            <Badge className="bg-[hsl(142,76%,50%)]/20 text-[hsl(142,76%,50%)] font-display text-[10px] gap-0.5 px-1.5">
+              <InfinityIcon className="h-3 w-3" />
+              ILLIMITÉ
+            </Badge>
           )}
         </div>
 
@@ -498,13 +576,6 @@ export function AppTileCard({ model, onOpenAPIKeyModal, onClick, viewMode = "gri
 
         {/* Right - Status/Button */}
         <div className="flex items-center gap-1">
-          {isUnlimited && !isUncensored && (
-            <Badge className="bg-[hsl(142,76%,50%)]/20 text-[hsl(142,76%,50%)] font-display text-[10px] gap-0.5 px-1.5">
-              <InfinityIcon className="h-3 w-3" />
-              ILLIMITÉ
-            </Badge>
-          )}
-          
           {isActive ? (
             <span className="font-display text-xs font-black text-[hsl(142,76%,50%)]">
               ACTIF
