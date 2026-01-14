@@ -321,36 +321,32 @@ const GenerateAudio = () => {
             </div>
           </div>
 
-          {/* 3. ÉDITEUR DE PROMPT - En dessous */}
-          <div className="panel-3d p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Type className="h-5 w-5 text-[hsl(var(--primary))]" />
-              <span className="font-display text-lg font-bold">ÉDITEUR DE PROMPT</span>
+          {/* 3. ÉDITEUR DE PROMPT - Compact */}
+          <div className="panel-3d p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Type className="h-4 w-4 text-[hsl(var(--primary))]" />
+              <span className="font-display text-sm font-bold">PROMPT</span>
             </div>
             
             <Textarea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              placeholder="Décrivez l'audio que vous souhaitez créer... Ex: Une musique épique orchestrale avec des choeurs, style Hans Zimmer"
-              className="input-3d min-h-[100px] text-lg resize-none mb-4"
+              placeholder="Décrivez l'audio... Ex: Musique épique orchestrale, style Hans Zimmer"
+              className="input-3d min-h-[60px] text-base resize-none mb-3"
             />
 
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Badge className="bg-[hsl(142,76%,50%)]/20 text-[hsl(142,76%,50%)] border-[hsl(142,76%,50%)]/30 text-base px-3 py-1">
-                  {freeModelsCount} GRATUITS
-                </Badge>
-              </div>
+              <Badge className="bg-[hsl(142,76%,50%)]/20 text-[hsl(142,76%,50%)] border-[hsl(142,76%,50%)]/30 text-sm px-2 py-0.5">
+                {freeModelsCount} GRATUITS
+              </Badge>
               
-              <div className="flex items-center gap-4">
-                <Button
-                  onClick={handleGenerate}
-                  disabled={!canGenerate || isGenerating}
-                  className="btn-3d-orange text-lg px-8 py-6 font-display font-bold tracking-wider"
-                >
-                  {isGenerating ? "GÉNÉRATION..." : "GÉNÉRER"}
-                </Button>
-              </div>
+              <Button
+                onClick={handleGenerate}
+                disabled={!canGenerate || isGenerating}
+                className="btn-3d-orange text-base px-6 py-4 font-display font-bold"
+              >
+                {isGenerating ? "..." : "GÉNÉRER"}
+              </Button>
             </div>
           </div>
 

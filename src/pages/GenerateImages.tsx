@@ -245,164 +245,147 @@ const GenerateImages = () => {
             </div>
           </div>
 
-          {/* 3. ÉDITEUR DE PROMPT - En dessous */}
-          <div className="panel-3d p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Type className="h-5 w-5 text-[hsl(var(--primary))]" />
-              <span className="font-display text-lg font-bold">ÉDITEUR DE PROMPT</span>
+          {/* 3. ÉDITEUR DE PROMPT - Compact */}
+          <div className="panel-3d p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Type className="h-4 w-4 text-[hsl(var(--primary))]" />
+              <span className="font-display text-sm font-bold">PROMPT</span>
             </div>
             
             <Textarea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              placeholder="Décrivez l'image que vous souhaitez créer... Ex: Un paysage fantastique avec des montagnes de cristal au coucher du soleil, style Ghibli"
-              className="input-3d min-h-[100px] text-lg resize-none mb-4"
+              placeholder="Décrivez l'image... Ex: Paysage fantastique, montagnes de cristal, style Ghibli"
+              className="input-3d min-h-[60px] text-base resize-none mb-3"
             />
 
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Badge className="bg-[hsl(142,76%,50%)]/20 text-[hsl(142,76%,50%)] border-[hsl(142,76%,50%)]/30 text-base px-3 py-1">
-                  {freeModelsCount} GRATUITS
-                </Badge>
-              </div>
+              <Badge className="bg-[hsl(142,76%,50%)]/20 text-[hsl(142,76%,50%)] border-[hsl(142,76%,50%)]/30 text-sm px-2 py-0.5">
+                {freeModelsCount} GRATUITS
+              </Badge>
               
-              <div className="flex items-center gap-4">
-                <Button
-                  onClick={handleGenerate}
-                  disabled={!canGenerate || isGenerating}
-                  className="btn-3d-pink text-lg px-8 py-6 font-display font-bold tracking-wider"
-                >
-                  {isGenerating ? "GÉNÉRATION..." : "GÉNÉRER"}
-                </Button>
-              </div>
+              <Button
+                onClick={handleGenerate}
+                disabled={!canGenerate || isGenerating}
+                className="btn-3d-pink text-base px-6 py-4 font-display font-bold"
+              >
+                {isGenerating ? "..." : "GÉNÉRER"}
+              </Button>
             </div>
           </div>
 
-          {/* 4. MOTEUR DE GÉNÉRATION & OPTIONS - En bas */}
-          <div className="panel-3d p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Sparkles className="h-5 w-5 text-[hsl(var(--secondary))]" />
-              <span className="font-display text-lg font-bold">MOTEUR DE GÉNÉRATION & OPTIONS</span>
+          {/* 4. MOTEUR DE GÉNÉRATION & OPTIONS - Compact */}
+          <div className="panel-3d p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Sparkles className="h-4 w-4 text-[hsl(var(--secondary))]" />
+              <span className="font-display text-sm font-bold">MOTEUR & OPTIONS</span>
             </div>
 
-            {/* Gros bouton d'import média */}
-            <div className="mb-6">
-              <label className="font-display text-sm text-muted-foreground mb-3 block">
-                IMPORTER UN MÉDIA
-              </label>
-              
-              {/* Sélection type de média */}
-              <div className="flex flex-wrap gap-2 mb-4">
-                {mediaTypes.map((type) => (
-                  <Button
-                    key={type.id}
-                    size="sm"
-                    variant={selectedMediaType === type.id ? "default" : "outline"}
-                    onClick={() => setSelectedMediaType(type.id)}
-                    className={cn(
-                      "gap-2",
-                      selectedMediaType === type.id ? "btn-3d-cyan" : "btn-3d"
-                    )}
-                  >
-                    {type.icon}
-                    {type.label}
-                  </Button>
-                ))}
+            {/* Grid compact: Modèle + Options */}
+            <div className="grid grid-cols-2 gap-4">
+              {/* Sélecteur de modèle */}
+              <div>
+                <label className="font-display text-xs text-muted-foreground mb-2 block">MOTEUR AI</label>
+                <ModelSelector
+                  models={filteredModels}
+                  selectedModel={selectedModel}
+                  onSelectModel={setSelectedModel}
+                  category="images"
+                  className="w-full"
+                />
+                <div className="mt-2 flex items-center gap-2 text-xs">
+                  <StatusLED isActive={!!selectedModel} />
+                  <span className="text-muted-foreground truncate">
+                    {selectedModel ? selectedModel.name : "Aucun modèle"}
+                  </span>
+                </div>
               </div>
 
-              {/* Bouton d'import */}
-              <Button
-                onClick={handleImportClick}
-                className="w-full h-16 btn-3d-purple gap-3 text-lg font-display font-bold tracking-wider"
-              >
-                <Upload className="h-6 w-6" />
-                IMPORTER {currentMediaType?.label.toUpperCase()}
-              </Button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept={currentMediaType?.accept}
-                className="hidden"
-                onChange={handleFileSelect}
-              />
-            </div>
+              {/* Options rapides */}
+              <div className="space-y-3">
+                {/* Import média compact */}
+                <div>
+                  <label className="font-display text-xs text-muted-foreground mb-1 block">MÉDIA</label>
+                  <div className="flex gap-1">
+                    {mediaTypes.map((type) => (
+                      <Button
+                        key={type.id}
+                        size="sm"
+                        variant={selectedMediaType === type.id ? "default" : "outline"}
+                        onClick={() => setSelectedMediaType(type.id)}
+                        className={cn("p-2", selectedMediaType === type.id ? "btn-3d-cyan" : "btn-3d")}
+                      >
+                        {type.icon}
+                      </Button>
+                    ))}
+                    <Button
+                      onClick={handleImportClick}
+                      size="sm"
+                      className="btn-3d-purple p-2 flex-1"
+                    >
+                      <Upload className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept={currentMediaType?.accept}
+                    className="hidden"
+                    onChange={handleFileSelect}
+                  />
+                </div>
 
-            {/* Sélecteur de modèle */}
-            <div className="mb-6">
-              <label className="font-display text-sm text-muted-foreground mb-3 block">
-                MOTEUR DE GÉNÉRATION AI
-              </label>
-              <ModelSelector
-                models={filteredModels}
-                selectedModel={selectedModel}
-                onSelectModel={setSelectedModel}
-                category="images"
-                className="w-full"
-              />
+                {/* Format compact */}
+                <div>
+                  <label className="font-display text-xs text-muted-foreground mb-1 block">FORMAT</label>
+                  <div className="flex flex-wrap gap-1">
+                    {aspectRatios.slice(0, 4).map((ratio) => (
+                      <Button
+                        key={ratio}
+                        size="sm"
+                        variant={aspectRatio === ratio ? "default" : "outline"}
+                        onClick={() => setAspectRatio(ratio)}
+                        className={cn("text-xs px-2 py-1", aspectRatio === ratio ? "btn-3d-pink" : "btn-3d")}
+                      >
+                        {ratio}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
 
-              <div className="mt-4 space-y-2 text-sm">
-                <div className="flex items-center gap-2">
-                  <StatusLED isActive={!!selectedModel} />
-                  <span className="text-muted-foreground">
-                    {selectedModel ? selectedModel.name : "Aucun modèle sélectionné"}
-                  </span>
+                {/* Qualité compact */}
+                <div>
+                  <label className="font-display text-xs text-muted-foreground mb-1 block">QUALITÉ</label>
+                  <div className="flex gap-1">
+                    {qualities.map((q) => (
+                      <Button
+                        key={q}
+                        size="sm"
+                        variant={quality === q ? "default" : "outline"}
+                        onClick={() => setQuality(q)}
+                        className={cn("text-xs px-2 py-1 flex-1", quality === q ? "btn-3d-green" : "btn-3d")}
+                      >
+                        {q.toUpperCase()}
+                      </Button>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Aspect Ratio */}
-            <div className="mb-4">
-              <label className="font-display text-sm text-muted-foreground mb-2 block">
-                FORMATS
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {aspectRatios.map((ratio) => (
-                  <Button
-                    key={ratio}
-                    size="sm"
-                    variant={aspectRatio === ratio ? "default" : "outline"}
-                    onClick={() => setAspectRatio(ratio)}
-                    className={aspectRatio === ratio ? "btn-3d-pink" : "btn-3d"}
-                  >
-                    {ratio}
-                  </Button>
-                ))}
+            {/* Infos compactes */}
+            <div className="mt-3 pt-3 border-t border-border/50 grid grid-cols-3 gap-2 text-xs">
+              <div className="text-center">
+                <span className="text-muted-foreground block">Max</span>
+                <span className="font-bold text-foreground">4K</span>
               </div>
-            </div>
-
-            {/* Quality */}
-            <div className="mb-4">
-              <label className="font-display text-sm text-muted-foreground mb-2 block">
-                QUALITÉ
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {qualities.map((q) => (
-                  <Button
-                    key={q}
-                    size="sm"
-                    variant={quality === q ? "default" : "outline"}
-                    onClick={() => setQuality(q)}
-                    className={quality === q ? "btn-3d-green" : "btn-3d"}
-                  >
-                    {q.toUpperCase()}
-                  </Button>
-                ))}
+              <div className="text-center">
+                <span className="text-muted-foreground block">Formats</span>
+                <span className="font-bold text-foreground">PNG/JPG</span>
               </div>
-            </div>
-
-            {/* Options supplémentaires */}
-            <div className="pt-4 border-t border-border/50 space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Résolution max</span>
-                <span className="font-bold text-foreground">4096x4096</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Formats supportés</span>
-                <span className="font-bold text-foreground">PNG, JPG, WEBP</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Quota restant</span>
-                <span className="font-bold text-[hsl(142,76%,50%)]">50 générations</span>
+              <div className="text-center">
+                <span className="text-muted-foreground block">Quota</span>
+                <span className="font-bold text-[hsl(142,76%,50%)]">50</span>
               </div>
             </div>
           </div>
