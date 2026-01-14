@@ -1,3 +1,4 @@
+import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { 
   MessageSquare, 
@@ -115,24 +116,24 @@ export function Sidebar() {
 
   return (
     <aside className="fixed left-0 top-0 z-50 flex h-full w-[373px] flex-col bg-gradient-to-b from-[hsl(220,20%,8%)] to-[hsl(220,25%,4%)] border-r-2 border-[hsl(220,15%,25%)] shadow-2xl">
-      {/* Logo AIONE with Animated Globe - AGRANDIT +50% */}
+      {/* Logo AIONE with Animated Globe - Compact version */}
       <Link 
         to="/" 
-        className="flex flex-col items-center gap-4 py-8 px-4 border-b-2 border-[hsl(220,15%,25%)] hover:bg-[hsl(220,15%,15%)] transition-all duration-300 group"
+        className="flex flex-col items-center gap-2 py-4 px-4 border-b-2 border-[hsl(220,15%,25%)] hover:bg-[hsl(220,15%,15%)] transition-all duration-300 group"
       >
         <div className="transform group-hover:scale-110 transition-transform duration-300">
-          <AnimatedGlobe size={150} />
+          <AnimatedGlobe size={100} />
         </div>
-        <span className="font-display text-7xl font-black gradient-text-pink text-glow-pink tracking-widest">
+        <span className="font-display text-5xl font-black gradient-text-pink text-glow-pink tracking-widest">
           AIONE
         </span>
-        <span className="font-display text-base text-[hsl(174,100%,50%)] tracking-[0.3em] uppercase">
+        <span className="font-display text-xs text-[hsl(174,100%,50%)] tracking-[0.3em] uppercase">
           AI GATEWAY
         </span>
       </Link>
 
-      {/* Navigation Buttons */}
-      <nav className="flex-1 flex flex-col gap-3 p-4 overflow-y-auto">
+      {/* Navigation Buttons - Compact with 1mm margins */}
+      <nav className="flex-1 flex flex-col gap-1 p-1 overflow-y-auto">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
           
@@ -141,19 +142,19 @@ export function Sidebar() {
               key={item.id}
               to={item.path}
               className={cn(
-                "flex items-center justify-center gap-4 px-6 py-5 rounded-xl font-display text-lg font-bold tracking-wider transition-all duration-300 transform",
+                "flex items-center justify-center gap-3 px-4 py-3 rounded-lg font-display text-base font-bold tracking-wider transition-all duration-300 transform",
                 isActive 
-                  ? cn(item.btn3dClass, "text-white scale-105", item.glowClass) 
-                  : "btn-3d text-[hsl(215,20%,65%)] hover:text-white hover:scale-102"
+                  ? cn(item.btn3dClass, "text-white scale-102", item.glowClass) 
+                  : "btn-3d text-[hsl(215,20%,65%)] hover:text-white hover:scale-101"
               )}
             >
               <span className={cn(
                 "transition-all duration-300",
                 isActive ? "text-white drop-shadow-lg" : item.colorClass
               )}>
-                {item.icon}
+                {React.cloneElement(item.icon as React.ReactElement, { className: "h-7 w-7" })}
               </span>
-              <span className="flex-1 text-center text-lg font-bold">{item.label}</span>
+              <span className="flex-1 text-center text-base font-bold">{item.label}</span>
             </Link>
           );
         })}

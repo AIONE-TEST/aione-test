@@ -495,6 +495,12 @@ const Apps = () => {
         onAccept={handleAdultConfirm}
         serviceName={pendingAdultModel?.name || ""}
       />
+
+      <AppDetailModal
+        isOpen={detailModalOpen}
+        onClose={() => setDetailModalOpen(false)}
+        model={selectedDetailModel}
+      />
     </div>
   );
 };
