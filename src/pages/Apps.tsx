@@ -19,7 +19,7 @@ interface CategoryConfig {
   color: string;
   bgColor: string;
   borderColor: string;
-  sectionClass: string;
+  sectionBg: string;
 }
 
 // 8 catégories distinctes avec couleurs différentes et sections
@@ -31,7 +31,7 @@ const categoryConfigs: CategoryConfig[] = [
     color: "text-[hsl(174,100%,50%)]", 
     bgColor: "bg-[hsl(174,100%,50%)]/10", 
     borderColor: "border-[hsl(174,100%,50%)]/30",
-    sectionClass: "category-section-all"
+    sectionBg: "bg-gradient-to-br from-[hsl(174,100%,20%)]/20 to-[hsl(174,100%,10%)]/30"
   },
   { 
     id: "activated", 
@@ -40,7 +40,7 @@ const categoryConfigs: CategoryConfig[] = [
     color: "text-[hsl(142,76%,50%)]", 
     bgColor: "bg-[hsl(142,76%,50%)]/10", 
     borderColor: "border-[hsl(142,76%,50%)]/30",
-    sectionClass: "category-section-activated"
+    sectionBg: "bg-gradient-to-br from-[hsl(142,76%,20%)]/20 to-[hsl(142,76%,10%)]/30"
   },
   { 
     id: "videos", 
@@ -49,7 +49,7 @@ const categoryConfigs: CategoryConfig[] = [
     color: "text-[hsl(280,100%,65%)]", 
     bgColor: "bg-[hsl(280,100%,65%)]/10", 
     borderColor: "border-[hsl(280,100%,65%)]/30",
-    sectionClass: "category-section-videos"
+    sectionBg: "bg-gradient-to-br from-[hsl(280,100%,25%)]/20 to-[hsl(280,100%,15%)]/30"
   },
   { 
     id: "images", 
@@ -58,7 +58,7 @@ const categoryConfigs: CategoryConfig[] = [
     color: "text-[hsl(320,100%,60%)]", 
     bgColor: "bg-[hsl(320,100%,60%)]/10", 
     borderColor: "border-[hsl(320,100%,60%)]/30",
-    sectionClass: "category-section-images"
+    sectionBg: "bg-gradient-to-br from-[hsl(320,100%,25%)]/20 to-[hsl(320,100%,15%)]/30"
   },
   { 
     id: "retouch", 
@@ -67,7 +67,7 @@ const categoryConfigs: CategoryConfig[] = [
     color: "text-[hsl(45,100%,55%)]", 
     bgColor: "bg-[hsl(45,100%,55%)]/10", 
     borderColor: "border-[hsl(45,100%,55%)]/30",
-    sectionClass: "category-section-retouch"
+    sectionBg: "bg-gradient-to-br from-[hsl(45,100%,25%)]/20 to-[hsl(45,100%,15%)]/30"
   },
   { 
     id: "uncensored", 
@@ -76,7 +76,7 @@ const categoryConfigs: CategoryConfig[] = [
     color: "text-[hsl(0,100%,60%)]", 
     bgColor: "bg-[hsl(0,100%,60%)]/10", 
     borderColor: "border-[hsl(0,100%,60%)]/30",
-    sectionClass: "category-section-uncensored"
+    sectionBg: "bg-gradient-to-br from-[hsl(0,100%,20%)]/20 to-[hsl(0,100%,10%)]/30"
   },
   { 
     id: "audio", 
@@ -85,7 +85,7 @@ const categoryConfigs: CategoryConfig[] = [
     color: "text-[hsl(25,100%,55%)]", 
     bgColor: "bg-[hsl(25,100%,55%)]/10", 
     borderColor: "border-[hsl(25,100%,55%)]/30",
-    sectionClass: "category-section-audio"
+    sectionBg: "bg-gradient-to-br from-[hsl(25,100%,25%)]/20 to-[hsl(25,100%,15%)]/30"
   },
   { 
     id: "code", 
@@ -94,7 +94,7 @@ const categoryConfigs: CategoryConfig[] = [
     color: "text-[hsl(210,100%,60%)]", 
     bgColor: "bg-[hsl(210,100%,60%)]/10", 
     borderColor: "border-[hsl(210,100%,60%)]/30",
-    sectionClass: "category-section-code"
+    sectionBg: "bg-gradient-to-br from-[hsl(210,100%,25%)]/20 to-[hsl(210,100%,15%)]/30"
   },
 ];
 
@@ -113,22 +113,50 @@ const Apps = () => {
     return getModelsWithStatus(aiModels);
   }, [getModelsWithStatus]);
 
+  // Get category config excluding "all" and "activated" for display
+  const displayCategories = useMemo(() => {
+    return categoryConfigs.filter(c => c.id !== "all" && c.id !== "activated");
+  }, []);
+
   // Group models by category for sectioned view
   const modelsByCategory = useMemo(() => {
     const grouped: Record<string, AIModel[]> = {};
     
-    categoryConfigs.forEach(cat => {
-      if (cat.id === "all") {
-        grouped[cat.id] = allModels;
-      } else if (cat.id === "activated") {
-        grouped[cat.id] = allModels.filter(m => m.apiStatus === "active" || m.isFree);
-      } else {
-        grouped[cat.id] = allModels.filter(m => m.category === cat.id);
+    displayCategories.forEach(cat => {
+      let models = allModels.filter(m => m.category === cat.id);
+      
+      // Apply search filter
+      if (searchQuery) {
+        models = models.filter(m => 
+          m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          m.provider.toLowerCase().includes(searchQuery.toLowerCase())
+        );
       }
+      
+      // Sort: activated first, then free, then others
+      models.sort((a, b) => {
+        if ((a.apiStatus === "active" || a.isFree) && !(b.apiStatus === "active" || b.isFree)) return -1;
+        if (!(a.apiStatus === "active" || a.isFree) && (b.apiStatus === "active" || b.isFree)) return 1;
+        if (a.isFree && !b.isFree) return -1;
+        if (!a.isFree && b.isFree) return 1;
+        return 0;
+      });
+      
+      grouped[cat.id] = models;
     });
     
+    // Also add activated
+    let activatedModels = allModels.filter(m => m.apiStatus === "active" || m.isFree);
+    if (searchQuery) {
+      activatedModels = activatedModels.filter(m => 
+        m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        m.provider.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+    grouped["activated"] = activatedModels;
+    
     return grouped;
-  }, [allModels]);
+  }, [allModels, displayCategories, searchQuery]);
 
   const filteredModels = useMemo(() => {
     let result = allModels;
@@ -144,8 +172,6 @@ const Apps = () => {
     // Category filter
     if (selectedCategory === "activated") {
       result = result.filter(m => m.apiStatus === "active" || m.isFree);
-    } else if (selectedCategory === "uncensored") {
-      result = result.filter(m => m.category === "uncensored");
     } else if (selectedCategory !== "all") {
       result = result.filter(m => m.category === selectedCategory);
     }
@@ -207,6 +233,56 @@ const Apps = () => {
   // Get current category config
   const currentCategoryConfig = categoryConfigs.find(c => c.id === selectedCategory) || categoryConfigs[0];
 
+  // Render a category section
+  const renderCategorySection = (catConfig: CategoryConfig, models: AIModel[]) => {
+    if (models.length === 0) return null;
+    
+    return (
+      <div 
+        key={catConfig.id}
+        className={cn(
+          "rounded-2xl p-6 mb-6 border-2",
+          catConfig.sectionBg,
+          catConfig.borderColor
+        )}
+      >
+        {/* Section Title */}
+        <div className="flex items-center gap-3 mb-6">
+          <span className={catConfig.color}>
+            {catConfig.icon}
+          </span>
+          <h2 className={cn(
+            "font-display text-2xl font-black tracking-wider",
+            catConfig.color
+          )}>
+            {catConfig.label}
+          </h2>
+          <Badge className={cn(
+            "font-display",
+            catConfig.bgColor,
+            catConfig.color
+          )}>
+            {models.length} APPLIS
+          </Badge>
+        </div>
+
+        {/* Models Grid - Max 5 per row, horizontal cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          {models.map((model) => (
+            <AppTileCard
+              key={model.id}
+              model={model}
+              viewMode={viewMode}
+              onOpenAPIKeyModal={handleOpenAPIKeyModal}
+              onClick={() => handleModelClick(model)}
+              horizontal
+            />
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Sidebar />
@@ -256,7 +332,7 @@ const Apps = () => {
                 <p className="text-sm text-muted-foreground mt-1 font-display tracking-wider">SANS CENSURE</p>
               </div>
               <div className="panel-3d p-4 text-center">
-                <span className="font-display text-3xl font-black text-[hsl(280,100%,65%)]">{categoryConfigs.length - 2}</span>
+                <span className="font-display text-3xl font-black text-[hsl(280,100%,65%)]">{displayCategories.length}</span>
                 <p className="text-sm text-muted-foreground mt-1 font-display tracking-wider">CATÉGORIES</p>
               </div>
             </div>
@@ -294,7 +370,7 @@ const Apps = () => {
             </div>
 
             <Badge className="bg-muted text-muted-foreground border-border text-base px-4 py-2 font-display tracking-wider">
-              {filteredModels.length} RÉSULTATS
+              {selectedCategory === "all" ? allModels.length : filteredModels.length} RÉSULTATS
             </Badge>
           </div>
 
@@ -327,54 +403,72 @@ const Apps = () => {
           </div>
         </div>
 
-        {/* Category Section with colored background */}
-        <div className={cn(
-          "rounded-2xl p-6 mb-6",
-          currentCategoryConfig.sectionClass
-        )}>
-          {/* Section Title */}
-          <div className="flex items-center gap-3 mb-6">
-            <span className={currentCategoryConfig.color}>
-              {currentCategoryConfig.icon}
-            </span>
-            <h2 className={cn(
-              "font-display text-2xl font-black tracking-wider",
-              currentCategoryConfig.color
+        {/* Content Area - Vertical Scrolling */}
+        <div className="space-y-6 overflow-y-auto">
+          {selectedCategory === "all" ? (
+            // TOUS selected: Show all categories in separate colored sections
+            <>
+              {/* First show activated apps */}
+              {modelsByCategory["activated"]?.length > 0 && (
+                renderCategorySection(
+                  categoryConfigs.find(c => c.id === "activated")!,
+                  modelsByCategory["activated"]
+                )
+              )}
+              
+              {/* Then show each category separately */}
+              {displayCategories.map(catConfig => (
+                renderCategorySection(catConfig, modelsByCategory[catConfig.id] || [])
+              ))}
+            </>
+          ) : (
+            // Specific category selected
+            <div className={cn(
+              "rounded-2xl p-6 mb-6 border-2",
+              currentCategoryConfig.sectionBg,
+              currentCategoryConfig.borderColor
             )}>
-              {currentCategoryConfig.label}
-            </h2>
-            <Badge className={cn(
-              "font-display",
-              currentCategoryConfig.bgColor,
-              currentCategoryConfig.color
-            )}>
-              {filteredModels.length} APPLIS
-            </Badge>
-          </div>
+              {/* Section Title */}
+              <div className="flex items-center gap-3 mb-6">
+                <span className={currentCategoryConfig.color}>
+                  {currentCategoryConfig.icon}
+                </span>
+                <h2 className={cn(
+                  "font-display text-2xl font-black tracking-wider",
+                  currentCategoryConfig.color
+                )}>
+                  {currentCategoryConfig.label}
+                </h2>
+                <Badge className={cn(
+                  "font-display",
+                  currentCategoryConfig.bgColor,
+                  currentCategoryConfig.color
+                )}>
+                  {filteredModels.length} APPLIS
+                </Badge>
+              </div>
 
-          {/* Models Grid - Using AppTileCard */}
-          <div className={cn(
-            "gap-4",
-            viewMode === "grid" 
-              ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6" 
-              : "flex flex-col"
-          )}>
-            {filteredModels.map((model) => (
-              <AppTileCard
-                key={model.id}
-                model={model}
-                viewMode={viewMode}
-                onOpenAPIKeyModal={handleOpenAPIKeyModal}
-                onClick={() => handleModelClick(model)}
-              />
-            ))}
-          </div>
+              {/* Models Grid - Max 5 per row, horizontal cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                {filteredModels.map((model) => (
+                  <AppTileCard
+                    key={model.id}
+                    model={model}
+                    viewMode={viewMode}
+                    onOpenAPIKeyModal={handleOpenAPIKeyModal}
+                    onClick={() => handleModelClick(model)}
+                    horizontal
+                  />
+                ))}
+              </div>
 
-          {filteredModels.length === 0 && (
-            <div className="text-center py-20">
-              <p className="font-display text-2xl text-muted-foreground tracking-wider">
-                AUCUN RÉSULTAT TROUVÉ
-              </p>
+              {filteredModels.length === 0 && (
+                <div className="text-center py-20">
+                  <p className="font-display text-2xl text-muted-foreground tracking-wider">
+                    AUCUN RÉSULTAT TROUVÉ
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </div>
