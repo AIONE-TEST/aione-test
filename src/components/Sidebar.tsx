@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AnimatedGlobe } from "./AnimatedGlobe";
-
+import { SessionTimer } from "./SessionTimer";
 interface NavItem {
   id: string;
   label: string;

@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback } from "react";
 import { AppWindow, Sparkles, Key, Check, Zap, Flame, Search, LayoutGrid, List, Image, Video, MessageSquare, Music, Wand2, Box, Code } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
+import { SessionTimer } from "@/components/SessionTimer";
 import { AIModel, aiModels } from "@/data/aiModels";
 import { useAPIStatus } from "@/hooks/useAPIStatus";
 import { Badge } from "@/components/ui/badge";
@@ -18,18 +19,83 @@ interface CategoryConfig {
   color: string;
   bgColor: string;
   borderColor: string;
+  sectionClass: string;
 }
 
-// 8 catégories distinctes avec couleurs différentes
+// 8 catégories distinctes avec couleurs différentes et sections
 const categoryConfigs: CategoryConfig[] = [
-  { id: "all", label: "TOUS", icon: <AppWindow className="h-6 w-6" />, color: "text-[hsl(174,100%,50%)]", bgColor: "bg-[hsl(174,100%,50%)]/10", borderColor: "border-[hsl(174,100%,50%)]/30" },
-  { id: "activated", label: "APPLIS OK", icon: <Check className="h-6 w-6" />, color: "text-[hsl(142,76%,50%)]", bgColor: "bg-[hsl(142,76%,50%)]/10", borderColor: "border-[hsl(142,76%,50%)]/30" },
-  { id: "videos", label: "VIDÉOS", icon: <Video className="h-6 w-6" />, color: "text-[hsl(280,100%,65%)]", bgColor: "bg-[hsl(280,100%,65%)]/10", borderColor: "border-[hsl(280,100%,65%)]/30" },
-  { id: "images", label: "IMAGES", icon: <Image className="h-6 w-6" />, color: "text-[hsl(320,100%,60%)]", bgColor: "bg-[hsl(320,100%,60%)]/10", borderColor: "border-[hsl(320,100%,60%)]/30" },
-  { id: "retouch", label: "RETOUCHES", icon: <Wand2 className="h-6 w-6" />, color: "text-[hsl(45,100%,55%)]", bgColor: "bg-[hsl(45,100%,55%)]/10", borderColor: "border-[hsl(45,100%,55%)]/30" },
-  { id: "uncensored", label: "SANS CENSURE", icon: <Flame className="h-6 w-6" />, color: "text-[hsl(0,100%,60%)]", bgColor: "bg-[hsl(0,100%,60%)]/10", borderColor: "border-[hsl(0,100%,60%)]/30" },
-  { id: "audio", label: "AUDIO", icon: <Music className="h-6 w-6" />, color: "text-[hsl(25,100%,55%)]", bgColor: "bg-[hsl(25,100%,55%)]/10", borderColor: "border-[hsl(25,100%,55%)]/30" },
-  { id: "code", label: "CODE", icon: <Code className="h-6 w-6" />, color: "text-[hsl(210,100%,60%)]", bgColor: "bg-[hsl(210,100%,60%)]/10", borderColor: "border-[hsl(210,100%,60%)]/30" },
+  { 
+    id: "all", 
+    label: "TOUS", 
+    icon: <AppWindow className="h-6 w-6" />, 
+    color: "text-[hsl(174,100%,50%)]", 
+    bgColor: "bg-[hsl(174,100%,50%)]/10", 
+    borderColor: "border-[hsl(174,100%,50%)]/30",
+    sectionClass: "category-section-all"
+  },
+  { 
+    id: "activated", 
+    label: "APPLIS OK", 
+    icon: <Check className="h-6 w-6" />, 
+    color: "text-[hsl(142,76%,50%)]", 
+    bgColor: "bg-[hsl(142,76%,50%)]/10", 
+    borderColor: "border-[hsl(142,76%,50%)]/30",
+    sectionClass: "category-section-activated"
+  },
+  { 
+    id: "videos", 
+    label: "VIDÉOS", 
+    icon: <Video className="h-6 w-6" />, 
+    color: "text-[hsl(280,100%,65%)]", 
+    bgColor: "bg-[hsl(280,100%,65%)]/10", 
+    borderColor: "border-[hsl(280,100%,65%)]/30",
+    sectionClass: "category-section-videos"
+  },
+  { 
+    id: "images", 
+    label: "IMAGES", 
+    icon: <Image className="h-6 w-6" />, 
+    color: "text-[hsl(320,100%,60%)]", 
+    bgColor: "bg-[hsl(320,100%,60%)]/10", 
+    borderColor: "border-[hsl(320,100%,60%)]/30",
+    sectionClass: "category-section-images"
+  },
+  { 
+    id: "retouch", 
+    label: "RETOUCHES", 
+    icon: <Wand2 className="h-6 w-6" />, 
+    color: "text-[hsl(45,100%,55%)]", 
+    bgColor: "bg-[hsl(45,100%,55%)]/10", 
+    borderColor: "border-[hsl(45,100%,55%)]/30",
+    sectionClass: "category-section-retouch"
+  },
+  { 
+    id: "uncensored", 
+    label: "SANS CENSURE", 
+    icon: <Flame className="h-6 w-6" />, 
+    color: "text-[hsl(0,100%,60%)]", 
+    bgColor: "bg-[hsl(0,100%,60%)]/10", 
+    borderColor: "border-[hsl(0,100%,60%)]/30",
+    sectionClass: "category-section-uncensored"
+  },
+  { 
+    id: "audio", 
+    label: "AUDIO", 
+    icon: <Music className="h-6 w-6" />, 
+    color: "text-[hsl(25,100%,55%)]", 
+    bgColor: "bg-[hsl(25,100%,55%)]/10", 
+    borderColor: "border-[hsl(25,100%,55%)]/30",
+    sectionClass: "category-section-audio"
+  },
+  { 
+    id: "code", 
+    label: "CODE", 
+    icon: <Code className="h-6 w-6" />, 
+    color: "text-[hsl(210,100%,60%)]", 
+    bgColor: "bg-[hsl(210,100%,60%)]/10", 
+    borderColor: "border-[hsl(210,100%,60%)]/30",
+    sectionClass: "category-section-code"
+  },
 ];
 
 const Apps = () => {
@@ -46,6 +112,23 @@ const Apps = () => {
   const allModels = useMemo(() => {
     return getModelsWithStatus(aiModels);
   }, [getModelsWithStatus]);
+
+  // Group models by category for sectioned view
+  const modelsByCategory = useMemo(() => {
+    const grouped: Record<string, AIModel[]> = {};
+    
+    categoryConfigs.forEach(cat => {
+      if (cat.id === "all") {
+        grouped[cat.id] = allModels;
+      } else if (cat.id === "activated") {
+        grouped[cat.id] = allModels.filter(m => m.apiStatus === "active" || m.isFree);
+      } else {
+        grouped[cat.id] = allModels.filter(m => m.category === cat.id);
+      }
+    });
+    
+    return grouped;
+  }, [allModels]);
 
   const filteredModels = useMemo(() => {
     let result = allModels;
@@ -121,25 +204,33 @@ const Apps = () => {
     setPendingAdultModel(null);
   };
 
+  // Get current category config
+  const currentCategoryConfig = categoryConfigs.find(c => c.id === selectedCategory) || categoryConfigs[0];
+
   return (
     <div className="min-h-screen bg-background">
       <Sidebar />
 
       <main className="ml-[280px] min-h-screen p-6">
-        {/* Header */}
+        {/* Header with Session Timer */}
         <div className="mb-8">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[hsl(174,100%,50%)] to-[hsl(280,100%,65%)] glow-cyan">
-              <Zap className="h-7 w-7 text-white" />
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-4">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[hsl(174,100%,50%)] to-[hsl(280,100%,65%)] glow-cyan">
+                <Zap className="h-7 w-7 text-white" />
+              </div>
+              <div>
+                <h1 className="font-display text-3xl font-black gradient-text-cyan tracking-wider">
+                  MEGA API COLLECTION
+                </h1>
+                <p className="text-lg text-muted-foreground tracking-wide">
+                  <span className="text-[hsl(var(--primary))] font-bold">{stats.total}</span> SERVICES
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="font-display text-3xl font-black gradient-text-cyan tracking-wider">
-                MEGA API COLLECTION
-              </h1>
-              <p className="text-lg text-muted-foreground tracking-wide">
-                <span className="text-[hsl(var(--primary))] font-bold">{stats.total}</span> SERVICES
-              </p>
-            </div>
+            
+            {/* Session Timer */}
+            <SessionTimer />
           </div>
 
           <div className="panel-3d p-6 mb-6">
@@ -236,31 +327,57 @@ const Apps = () => {
           </div>
         </div>
 
-        {/* Models Grid - Using AppTileCard */}
+        {/* Category Section with colored background */}
         <div className={cn(
-          "gap-4",
-          viewMode === "grid" 
-            ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6" 
-            : "flex flex-col"
+          "rounded-2xl p-6 mb-6",
+          currentCategoryConfig.sectionClass
         )}>
-          {filteredModels.map((model) => (
-            <AppTileCard
-              key={model.id}
-              model={model}
-              viewMode={viewMode}
-              onOpenAPIKeyModal={handleOpenAPIKeyModal}
-              onClick={() => handleModelClick(model)}
-            />
-          ))}
-        </div>
-
-        {filteredModels.length === 0 && (
-          <div className="text-center py-20">
-            <p className="font-display text-2xl text-muted-foreground tracking-wider">
-              AUCUN RÉSULTAT TROUVÉ
-            </p>
+          {/* Section Title */}
+          <div className="flex items-center gap-3 mb-6">
+            <span className={currentCategoryConfig.color}>
+              {currentCategoryConfig.icon}
+            </span>
+            <h2 className={cn(
+              "font-display text-2xl font-black tracking-wider",
+              currentCategoryConfig.color
+            )}>
+              {currentCategoryConfig.label}
+            </h2>
+            <Badge className={cn(
+              "font-display",
+              currentCategoryConfig.bgColor,
+              currentCategoryConfig.color
+            )}>
+              {filteredModels.length} APPLIS
+            </Badge>
           </div>
-        )}
+
+          {/* Models Grid - Using AppTileCard */}
+          <div className={cn(
+            "gap-4",
+            viewMode === "grid" 
+              ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6" 
+              : "flex flex-col"
+          )}>
+            {filteredModels.map((model) => (
+              <AppTileCard
+                key={model.id}
+                model={model}
+                viewMode={viewMode}
+                onOpenAPIKeyModal={handleOpenAPIKeyModal}
+                onClick={() => handleModelClick(model)}
+              />
+            ))}
+          </div>
+
+          {filteredModels.length === 0 && (
+            <div className="text-center py-20">
+              <p className="font-display text-2xl text-muted-foreground tracking-wider">
+                AUCUN RÉSULTAT TROUVÉ
+              </p>
+            </div>
+          )}
+        </div>
       </main>
 
       <APIKeyModal
