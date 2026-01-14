@@ -51,7 +51,7 @@ const Generate3D = () => {
     <div className="min-h-screen bg-background">
       <Sidebar />
 
-      <main className="ml-[280px] min-h-screen">
+      <main className="ml-[373px] min-h-screen">
         <div className="container mx-auto max-w-7xl px-4 py-8">
           {/* Header */}
           <div className="mb-8">

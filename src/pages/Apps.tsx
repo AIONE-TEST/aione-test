@@ -36,7 +36,7 @@ const categoryConfigs: CategoryConfig[] = [
   },
   { 
     id: "activated", 
-    label: "APPLIS OK", 
+    label: "APPLIS ACTIVÉES", 
     icon: <Check className="h-6 w-6" />, 
     color: "text-[hsl(142,76%,50%)]", 
     bgColor: "bg-[hsl(142,76%,50%)]/10", 
@@ -71,8 +71,8 @@ const categoryConfigs: CategoryConfig[] = [
     sectionBg: "bg-gradient-to-br from-[hsl(45,100%,25%)]/20 to-[hsl(45,100%,15%)]/30"
   },
   { 
-    id: "uncensored", 
-    label: "SANS CENSURE", 
+    id: "adult", 
+    label: "CONTENU ADULTE", 
     icon: <Flame className="h-6 w-6" />, 
     color: "text-[hsl(0,100%,60%)]", 
     bgColor: "bg-[hsl(0,100%,60%)]/10", 
@@ -81,7 +81,7 @@ const categoryConfigs: CategoryConfig[] = [
   },
   { 
     id: "audio", 
-    label: "AUDIO", 
+    label: "MUSIQUE", 
     icon: <Music className="h-6 w-6" />, 
     color: "text-[hsl(25,100%,55%)]", 
     bgColor: "bg-[hsl(25,100%,55%)]/10", 
@@ -90,7 +90,7 @@ const categoryConfigs: CategoryConfig[] = [
   },
   { 
     id: "code", 
-    label: "CODE", 
+    label: "CODAGE", 
     icon: <Code className="h-6 w-6" />, 
     color: "text-[hsl(210,100%,60%)]", 
     bgColor: "bg-[hsl(210,100%,60%)]/10", 
@@ -180,7 +180,7 @@ const Apps = () => {
       total: allModels.length,
       free: allModels.filter(m => m.isFree).length,
       active: allModels.filter(m => m.apiStatus === "active" || m.isFree).length,
-      uncensored: allModels.filter(m => m.category === "uncensored").length,
+      adult: allModels.filter(m => m.category === "adult").length,
     };
   }, [allModels]);
 
@@ -190,7 +190,7 @@ const Apps = () => {
       activated: allModels.filter(m => m.apiStatus === "active" || m.isFree).length,
     };
     
-    ["images", "videos", "audio", "retouch", "code", "uncensored"].forEach(cat => {
+    ["images", "videos", "audio", "retouch", "code", "adult"].forEach(cat => {
       counts[cat] = allModels.filter(m => m.category === cat).length;
     });
     
@@ -208,7 +208,7 @@ const Apps = () => {
   }, [refetch]);
 
   const handleModelClick = (model: AIModel) => {
-    if (model.category === "uncensored") {
+    if (model.category === "adult") {
       setPendingAdultModel(model);
       setAdultModalOpen(true);
     }
@@ -280,7 +280,7 @@ const Apps = () => {
     <div className="min-h-screen bg-background">
       <Sidebar />
 
-      <main className="ml-[280px] min-h-screen p-6">
+      <main className="ml-[373px] min-h-screen p-6">
         {/* Header with Session Timer */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
@@ -321,8 +321,8 @@ const Apps = () => {
                 <p className="text-sm text-muted-foreground mt-1 font-display tracking-wider">GRATUITS</p>
               </div>
               <div className="panel-3d p-4 text-center">
-                <span className="font-display text-3xl font-black text-[hsl(25,100%,55%)]">{stats.uncensored}</span>
-                <p className="text-sm text-muted-foreground mt-1 font-display tracking-wider">SANS CENSURE</p>
+                <span className="font-display text-3xl font-black text-[hsl(0,100%,55%)]">{stats.adult}</span>
+                <p className="text-sm text-muted-foreground mt-1 font-display tracking-wider">CONTENU ADULTE</p>
               </div>
               <div className="panel-3d p-4 text-center">
                 <span className="font-display text-3xl font-black text-[hsl(280,100%,65%)]">{displayCategories.length}</span>

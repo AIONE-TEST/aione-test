@@ -162,15 +162,15 @@ export function AppTileCard({ model, onOpenAPIKeyModal, onClick, viewMode = "gri
   const [imageError, setImageError] = useState(false);
   const logoUrl = getModelLogo(model.id, model.provider);
   const isActive = model.apiStatus === "active" || model.isFree;
-  const isUncensored = model.category === "uncensored";
+  const isAdult = model.category === "adult";
   const isUnlimited = model.isFree && (
     modelGenerationLimits[model.id]?.max === null || 
     model.badges?.includes("UNLIMITED") ||
     model.badges?.includes("NO SIGNUP")
   );
   
-  // Check if it's an image-to-video uncensored generator (hot logo)
-  const isHotVideoGenerator = isUncensored && (
+  // Check if it's an image-to-video adult generator (hot logo)
+  const isHotVideoGenerator = isAdult && (
     model.features?.some(f => f.toLowerCase().includes("video") || f.toLowerCase().includes("vidéo")) ||
     model.name.toLowerCase().includes("video") ||
     model.description.toLowerCase().includes("image vers vidéo") ||
@@ -261,8 +261,8 @@ export function AppTileCard({ model, onOpenAPIKeyModal, onClick, viewMode = "gri
           {/* LED Status */}
           <StatusLED isActive={isActive} size="lg" />
           
-          {/* Flame for uncensored */}
-          {isUncensored && <AnimatedFlame size="md" />}
+          {/* Flame for adult content */}
+          {isAdult && <AnimatedFlame size="md" />}
           
           {/* Logo - 3D sphere effect */}
           <div className={cn(
@@ -369,10 +369,10 @@ export function AppTileCard({ model, onOpenAPIKeyModal, onClick, viewMode = "gri
             )}
           </div>
 
-          {/* Uncensored Text */}
-          {isUncensored && (
+          {/* Adult Content Badge */}
+          {isAdult && (
             <span className="font-display text-sm font-black text-[hsl(0,100%,50%)] tracking-wider min-w-[100px]">
-              SANS CENSURE
+              -18
             </span>
           )}
 
@@ -438,9 +438,9 @@ export function AppTileCard({ model, onOpenAPIKeyModal, onClick, viewMode = "gri
           {model.name}
         </h3>
         
-        {/* Flame + Hot for uncensored - Always visible */}
+        {/* Flame + Hot for adult content - Always visible */}
         <div className="flex items-center gap-1">
-          {isUncensored && <AnimatedFlame size="md" />}
+          {isAdult && <AnimatedFlame size="md" />}
           {isHotVideoGenerator && (
             <span className="text-sm font-display font-black text-[hsl(30,100%,50%)] animate-pulse">🔥</span>
           )}
@@ -567,10 +567,10 @@ export function AppTileCard({ model, onOpenAPIKeyModal, onClick, viewMode = "gri
           )}
         </div>
 
-        {/* Center - Uncensored text */}
-        {isUncensored && (
+        {/* Center - Adult content badge */}
+        {isAdult && (
           <span className="font-display text-[10px] font-black text-[hsl(0,100%,50%)] tracking-wider">
-            SANS CENSURE
+            -18
           </span>
         )}
 

@@ -1,24 +1,23 @@
 import { AIModel } from "@/data/aiModels";
 
-// Priority order for categories
+// Priority order for categories - NEW ORDER as requested
 const categoryPriority: Record<string, number> = {
   videos: 1,
   images: 2,
   retouch: 3,
-  audio: 4,
-  llms: 5,
-  "3d": 6,
-  code: 7,
-  uncensored: 8,
+  adult: 4,  // Renamed from uncensored
+  audio: 5,
+  llms: 6,
+  "3d": 7,
+  code: 8,
 };
 
 /**
  * Sort AI models according to the priority rules:
- * 1. By category priority: vidéo, image, retouche, audio, chat (llms)
+ * 1. By category priority: vidéo, image, retouche, contenu adulte, musique, chat
  * 2. Unlimited and free apps first within each category
- * 3. Retouch + uncensored apps
- * 4. Audio at the end
- * 5. Coding apps last
+ * 3. Then by price (cheapest first)
+ * 4. Coding apps last
  */
 export function sortAIModels(models: AIModel[]): AIModel[] {
   return [...models].sort((a, b) => {
@@ -57,14 +56,14 @@ export function sortAIModels(models: AIModel[]): AIModel[] {
     if (aIsActive && !bIsActive) return -1;
     if (!aIsActive && bIsActive) return 1;
     
-    // Then uncensored retouch apps
-    const aIsUncensoredRetouch = a.category === "uncensored" && 
+    // Then adult retouch apps
+    const aIsAdultRetouch = a.category === "adult" && 
       (a.features?.some(f => f.toLowerCase().includes("retouch") || f.toLowerCase().includes("edit")));
-    const bIsUncensoredRetouch = b.category === "uncensored" && 
+    const bIsAdultRetouch = b.category === "adult" && 
       (b.features?.some(f => f.toLowerCase().includes("retouch") || f.toLowerCase().includes("edit")));
     
-    if (aIsUncensoredRetouch && !bIsUncensoredRetouch) return -1;
-    if (!aIsUncensoredRetouch && bIsUncensoredRetouch) return 1;
+    if (aIsAdultRetouch && !bIsAdultRetouch) return -1;
+    if (!aIsAdultRetouch && bIsAdultRetouch) return 1;
     
     // Alphabetical as tiebreaker
     return a.name.localeCompare(b.name);
