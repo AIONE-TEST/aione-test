@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_logs: {
+        Row: {
+          action: string
+          created_at: string
+          details: Json | null
+          id: string
+          ip_address: string | null
+          session_id: string | null
+          username: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: string | null
+          session_id?: string | null
+          username?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: string | null
+          session_id?: string | null
+          username?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_logs_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "user_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       api_keys: {
         Row: {
           created_at: string
@@ -38,6 +76,76 @@ export type Database = {
         }
         Relationships: []
       }
+      chat_conversations: {
+        Row: {
+          created_at: string
+          id: string
+          model_id: string | null
+          session_id: string | null
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          model_id?: string | null
+          session_id?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          model_id?: string | null
+          session_id?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_conversations_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "user_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_messages: {
+        Row: {
+          attachments: Json | null
+          content: string
+          conversation_id: string | null
+          created_at: string
+          id: string
+          role: string
+        }
+        Insert: {
+          attachments?: Json | null
+          content: string
+          conversation_id?: string | null
+          created_at?: string
+          id?: string
+          role: string
+        }
+        Update: {
+          attachments?: Json | null
+          content?: string
+          conversation_id?: string | null
+          created_at?: string
+          id?: string
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "chat_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       favorite_models: {
         Row: {
           created_at: string
@@ -58,6 +166,62 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      generation_history: {
+        Row: {
+          aspect_ratio: string | null
+          created_at: string
+          credits_used: number | null
+          id: string
+          model_id: string
+          model_name: string | null
+          prompt: string | null
+          quality: string | null
+          result_url: string | null
+          session_id: string | null
+          settings: Json | null
+          thumbnail_url: string | null
+          type: string
+        }
+        Insert: {
+          aspect_ratio?: string | null
+          created_at?: string
+          credits_used?: number | null
+          id?: string
+          model_id: string
+          model_name?: string | null
+          prompt?: string | null
+          quality?: string | null
+          result_url?: string | null
+          session_id?: string | null
+          settings?: Json | null
+          thumbnail_url?: string | null
+          type: string
+        }
+        Update: {
+          aspect_ratio?: string | null
+          created_at?: string
+          credits_used?: number | null
+          id?: string
+          model_id?: string
+          model_name?: string | null
+          prompt?: string | null
+          quality?: string | null
+          result_url?: string | null
+          session_id?: string | null
+          settings?: Json | null
+          thumbnail_url?: string | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "generation_history_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "user_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notifications: {
         Row: {
@@ -109,6 +273,76 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_api_keys: {
+        Row: {
+          created_at: string
+          id: string
+          is_configured: boolean | null
+          service_name: string
+          session_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_configured?: boolean | null
+          service_name: string
+          session_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_configured?: boolean | null
+          service_name?: string
+          session_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_api_keys_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "user_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_notes: {
+        Row: {
+          content: string
+          created_at: string
+          format: string | null
+          id: string
+          session_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          content?: string
+          created_at?: string
+          format?: string | null
+          id?: string
+          session_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          format?: string | null
+          id?: string
+          session_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_notes_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "user_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_notifications: {
         Row: {
@@ -172,6 +406,42 @@ export type Database = {
           total_quota?: number
           updated_at?: string
           used_quota?: number
+        }
+        Relationships: []
+      }
+      user_sessions: {
+        Row: {
+          created_at: string
+          id: string
+          ip_address: string | null
+          last_login: string | null
+          password_hash: string | null
+          save_history: boolean | null
+          settings: Json | null
+          updated_at: string
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          last_login?: string | null
+          password_hash?: string | null
+          save_history?: boolean | null
+          settings?: Json | null
+          updated_at?: string
+          username: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          last_login?: string | null
+          password_hash?: string | null
+          save_history?: boolean | null
+          settings?: Json | null
+          updated_at?: string
+          username?: string
         }
         Relationships: []
       }
