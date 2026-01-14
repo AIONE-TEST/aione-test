@@ -3,6 +3,7 @@ import { AppWindow, Sparkles, Key, Check, Zap, Flame, Search, LayoutGrid, List, 
 import { Sidebar } from "@/components/Sidebar";
 import { SessionTimer } from "@/components/SessionTimer";
 import { AIModel, aiModels } from "@/data/aiModels";
+import { sortAIModels, sortModelsInCategory } from "@/utils/appSorting";
 import { useAPIStatus } from "@/hooks/useAPIStatus";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -133,14 +134,8 @@ const Apps = () => {
         );
       }
       
-      // Sort: activated first, then free, then others
-      models.sort((a, b) => {
-        if ((a.apiStatus === "active" || a.isFree) && !(b.apiStatus === "active" || b.isFree)) return -1;
-        if (!(a.apiStatus === "active" || a.isFree) && (b.apiStatus === "active" || b.isFree)) return 1;
-        if (a.isFree && !b.isFree) return -1;
-        if (!a.isFree && b.isFree) return 1;
-        return 0;
-      });
+      // Sort with priority: video, image, retouch, audio, llms, then unlimited/free first
+      models = sortModelsInCategory(models);
       
       grouped[cat.id] = models;
     });
@@ -176,14 +171,8 @@ const Apps = () => {
       result = result.filter(m => m.category === selectedCategory);
     }
 
-    // Sort: activated first, then free, then others
-    return result.sort((a, b) => {
-      if ((a.apiStatus === "active" || a.isFree) && !(b.apiStatus === "active" || b.isFree)) return -1;
-      if (!(a.apiStatus === "active" || a.isFree) && (b.apiStatus === "active" || b.isFree)) return 1;
-      if (a.isFree && !b.isFree) return -1;
-      if (!a.isFree && b.isFree) return 1;
-      return 0;
-    });
+    // Sort with priority: video, image, retouch, audio, llms, then unlimited/free first
+    return sortAIModels(result);
   }, [allModels, selectedCategory, searchQuery]);
 
   const stats = useMemo(() => {

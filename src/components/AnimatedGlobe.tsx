@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 interface Satellite {
   id: number;
@@ -8,24 +8,81 @@ interface Satellite {
   delay: number;
   color: string;
   orbitTilt: number;
+  direction: number; // 1 or -1 for direction
 }
 
-const satellites: Satellite[] = [
-  { id: 1, orbitRadius: 1.3, orbitDuration: 6, size: 3, delay: 0, color: "hsl(174,100%,50%)", orbitTilt: 25 },
-  { id: 2, orbitRadius: 1.5, orbitDuration: 8, size: 2.5, delay: 1.5, color: "hsl(45,100%,55%)", orbitTilt: -35 },
-  { id: 3, orbitRadius: 1.4, orbitDuration: 7, size: 2, delay: 3, color: "hsl(142,76%,50%)", orbitTilt: 50 },
-  { id: 4, orbitRadius: 1.6, orbitDuration: 10, size: 2, delay: 0.5, color: "hsl(280,100%,65%)", orbitTilt: -20 },
-  { id: 5, orbitRadius: 1.45, orbitDuration: 5, size: 2.5, delay: 2, color: "hsl(320,100%,60%)", orbitTilt: 65 },
-];
+interface Star {
+  id: number;
+  x: number;
+  y: number;
+  size: number;
+  opacity: number;
+  twinkleDuration: number;
+  delay: number;
+}
+
+// Generate random satellites
+const generateSatellites = (): Satellite[] => {
+  const colors = [
+    "hsl(174,100%,50%)",
+    "hsl(45,100%,55%)",
+    "hsl(142,76%,50%)",
+    "hsl(280,100%,65%)",
+    "hsl(320,100%,60%)",
+    "hsl(200,100%,60%)",
+  ];
+  
+  return Array.from({ length: 6 }, (_, i) => ({
+    id: i + 1,
+    orbitRadius: 1.2 + Math.random() * 0.5,
+    orbitDuration: 4 + Math.random() * 8,
+    size: 2 + Math.random() * 2,
+    delay: Math.random() * 5,
+    color: colors[i % colors.length],
+    orbitTilt: -60 + Math.random() * 120,
+    direction: Math.random() > 0.5 ? 1 : -1,
+  }));
+};
+
+// Generate random stars
+const generateStars = (count: number): Star[] => {
+  return Array.from({ length: count }, (_, i) => ({
+    id: i,
+    x: Math.random() * 100,
+    y: Math.random() * 100,
+    size: 0.5 + Math.random() * 1.5,
+    opacity: 0.3 + Math.random() * 0.7,
+    twinkleDuration: 1 + Math.random() * 3,
+    delay: Math.random() * 3,
+  }));
+};
 
 export function AnimatedGlobe({ size = 80 }: { size?: number }) {
   const [rotation, setRotation] = useState(0);
+  const [satellites] = useState(() => generateSatellites());
+  const [stars] = useState(() => generateStars(30));
+  const animationRef = useRef<number>();
+  const lastTimeRef = useRef<number>(0);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setRotation(prev => (prev + 1) % 360);
-    }, 50);
-    return () => clearInterval(interval);
+    const animate = (time: number) => {
+      if (lastTimeRef.current === 0) lastTimeRef.current = time;
+      const delta = time - lastTimeRef.current;
+      
+      if (delta > 30) { // ~33fps for smooth animation
+        setRotation(prev => (prev + 0.8) % 360);
+        lastTimeRef.current = time;
+      }
+      
+      animationRef.current = requestAnimationFrame(animate);
+    };
+    
+    animationRef.current = requestAnimationFrame(animate);
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
   }, []);
 
   return (
@@ -36,7 +93,46 @@ export function AnimatedGlobe({ size = 80 }: { size?: number }) {
         height: size * 1.8,
       }}
     >
-      {/* Satellites */}
+      {/* Background Stars */}
+      <svg 
+        className="absolute inset-0 w-full h-full pointer-events-none"
+        viewBox="0 0 100 100"
+      >
+        {stars.map((star) => (
+          <circle
+            key={star.id}
+            cx={star.x}
+            cy={star.y}
+            r={star.size}
+            fill="white"
+            className="animate-pulse"
+            style={{
+              opacity: star.opacity * 0.6,
+              animationDuration: `${star.twinkleDuration}s`,
+              animationDelay: `${star.delay}s`,
+              filter: "blur(0.3px)",
+            }}
+          />
+        ))}
+        {/* Distant asteroids/debris */}
+        {[...Array(5)].map((_, i) => (
+          <ellipse
+            key={`asteroid-${i}`}
+            cx={15 + i * 18}
+            cy={10 + (i % 3) * 35}
+            rx={1}
+            ry={0.6}
+            fill="hsl(30, 30%, 60%)"
+            opacity={0.4}
+            style={{
+              transform: `rotate(${i * 30}deg)`,
+              transformOrigin: `${15 + i * 18}px ${10 + (i % 3) * 35}px`,
+            }}
+          />
+        ))}
+      </svg>
+
+      {/* Satellites with random orbits */}
       {satellites.map((sat) => (
         <div
           key={sat.id}
@@ -46,7 +142,7 @@ export function AnimatedGlobe({ size = 80 }: { size?: number }) {
             height: size * 1.8,
             top: 0,
             left: 0,
-            animation: `spin ${sat.orbitDuration}s linear infinite`,
+            animation: `spin-satellite-${sat.direction > 0 ? 'cw' : 'ccw'} ${sat.orbitDuration}s linear infinite`,
             animationDelay: `${sat.delay}s`,
             transform: `rotateX(${sat.orbitTilt}deg)`,
           }}
@@ -58,7 +154,7 @@ export function AnimatedGlobe({ size = 80 }: { size?: number }) {
               width: sat.size,
               height: sat.size,
               background: sat.color,
-              boxShadow: `0 0 ${sat.size * 2}px ${sat.color}, 0 0 ${sat.size * 4}px ${sat.color}40`,
+              boxShadow: `0 0 ${sat.size * 3}px ${sat.color}, 0 0 ${sat.size * 6}px ${sat.color}40`,
               top: "50%",
               left: `${50 - sat.orbitRadius * 50}%`,
               transform: "translateY(-50%)",
@@ -66,7 +162,7 @@ export function AnimatedGlobe({ size = 80 }: { size?: number }) {
           />
           {/* Orbit trail (subtle) */}
           <div
-            className="absolute rounded-full border opacity-20"
+            className="absolute rounded-full border opacity-15"
             style={{
               width: `${sat.orbitRadius * 100}%`,
               height: `${sat.orbitRadius * 100}%`,
@@ -211,11 +307,15 @@ export function AnimatedGlobe({ size = 80 }: { size?: number }) {
         />
       </div>
 
-      {/* CSS Animation */}
+      {/* CSS Animation for satellites */}
       <style>{`
-        @keyframes spin {
+        @keyframes spin-satellite-cw {
           from { transform: rotateX(var(--tilt, 0deg)) rotateZ(0deg); }
           to { transform: rotateX(var(--tilt, 0deg)) rotateZ(360deg); }
+        }
+        @keyframes spin-satellite-ccw {
+          from { transform: rotateX(var(--tilt, 0deg)) rotateZ(360deg); }
+          to { transform: rotateX(var(--tilt, 0deg)) rotateZ(0deg); }
         }
       `}</style>
     </div>
