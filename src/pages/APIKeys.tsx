@@ -318,6 +318,8 @@ const APIKeys = () => {
           <div className="relative max-w-lg mb-6">
             <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-6 w-6 text-muted-foreground" />
             <Input
+              id="api-search"
+              name="api-search"
               placeholder="RECHERCHER UN SERVICE, MODÈLE..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}

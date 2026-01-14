@@ -10,7 +10,8 @@ import {
   AppWindow, 
   Zap,
   Flame,
-  User
+  User,
+  GraduationCap
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -87,6 +88,15 @@ const navItems: NavItem[] = [
     colorClass: "text-[hsl(45,100%,55%)]",
     btn3dClass: "btn-3d-yellow",
     glowClass: "glow-yellow"
+  },
+  { 
+    id: "tutorials", 
+    label: "TUTOS", 
+    icon: <GraduationCap className="h-6 w-6" />, 
+    path: "/tutorials",
+    colorClass: "text-[hsl(174,100%,50%)]",
+    btn3dClass: "btn-3d-cyan",
+    glowClass: "glow-cyan"
   },
   { 
     id: "account", 

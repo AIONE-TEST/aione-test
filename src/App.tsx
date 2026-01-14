@@ -13,6 +13,7 @@ import GenerateRetouch from "./pages/GenerateRetouch";
 import Apps from "./pages/Apps";
 import APIKeys from "./pages/APIKeys";
 import Account from "./pages/Account";
+import Tutorials from "./pages/Tutorials";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,6 +37,7 @@ const App = () => (
           <Route path="/keys" element={<APIKeys />} />
           <Route path="/apis" element={<APIKeys />} />
           <Route path="/account" element={<Account />} />
+          <Route path="/tutorials" element={<Tutorials />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
