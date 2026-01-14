@@ -219,7 +219,7 @@ const LLMs = () => {
     <div className="min-h-screen bg-background">
       <Sidebar />
 
-      <main className="ml-[280px] min-h-screen p-6 flex flex-col">
+      <main className="ml-[373px] min-h-screen p-6 flex flex-col">
         {/* Header */}
         <div className="flex items-center gap-4 mb-6">
           <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[hsl(45,100%,55%)] to-[hsl(25,100%,55%)] glow-yellow">

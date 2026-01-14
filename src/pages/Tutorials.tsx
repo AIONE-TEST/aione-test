@@ -241,7 +241,7 @@ const Tutorials = () => {
     <div className="min-h-screen bg-background">
       <Sidebar />
 
-      <main className="ml-[280px] min-h-screen p-8">
+      <main className="ml-[373px] min-h-screen p-8">
         {/* Header */}
         <div className="mb-10">
           <div className="flex items-center gap-6 mb-8">

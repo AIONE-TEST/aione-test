@@ -8,7 +8,20 @@ export type AICategory =
   | 'retouch' 
   | '3d' 
   | 'code' 
-  | 'uncensored';
+  | 'adult';  // Renamed from 'uncensored' to 'adult'
+
+// Labels français pour les catégories
+export const categoryLabels: Record<AICategory | 'all', string> = {
+  all: "TOUTES",
+  videos: "VIDÉO",
+  images: "IMAGE",
+  retouch: "RETOUCHE",
+  adult: "CONTENU ADULTE",
+  audio: "MUSIQUE",
+  llms: "CHAT",
+  "3d": "3D",
+  code: "CODAGE"
+};
 
 export type APIStatus = 'free' | 'active' | 'inactive';
 
@@ -2102,14 +2115,14 @@ export const aiModels: AIModel[] = [
   },
 
   // ================================================================
-  // ===== UNCENSORED - Modèles sans censure =====
+  // ===== CONTENU ADULTE - Modèles sans censure =====
   // ================================================================
   
   {
     id: "venice-dolphin",
     name: "Venice (Dolphin Mistral 24B)",
     description: "LLM non-censuré puissant. Réponses sans restrictions.",
-    category: "uncensored",
+    category: "adult",
     apiStatus: "free",
     isFree: true,
     badges: ["FREE", "🔓", "DEFAULT"],
@@ -2120,10 +2133,10 @@ export const aiModels: AIModel[] = [
     features: ["Non-censuré", "Gratuit", "24B params"],
   },
   {
-    id: "perchance-uncensored",
-    name: "Perchance AI (Uncensored)",
+    id: "perchance-adult",
+    name: "Perchance AI (Adult)",
     description: "Générateur d'images sans restrictions. Gratuit et illimité.",
-    category: "uncensored",
+    category: "adult",
     apiStatus: "free",
     isFree: true,
     badges: ["FREE", "UNLIMITED", "🔓"],
@@ -2137,7 +2150,7 @@ export const aiModels: AIModel[] = [
     id: "nous-hermes",
     name: "Nous Hermes 2 (Llama 3)",
     description: "LLM fine-tuné sans censure. Excellent pour le roleplay.",
-    category: "uncensored",
+    category: "adult",
     apiStatus: "free",
     isFree: true,
     badges: ["FREE", "🔓", "ROLEPLAY"],
@@ -2148,10 +2161,10 @@ export const aiModels: AIModel[] = [
     features: ["Roleplay", "Non-censuré", "Via OpenRouter"],
   },
   {
-    id: "wizardlm-uncensored",
-    name: "WizardLM Uncensored",
+    id: "wizardlm-adult",
+    name: "WizardLM (Adult)",
     description: "Version non-censurée de WizardLM. Bon pour l'instruction-following.",
-    category: "uncensored",
+    category: "adult",
     apiStatus: "free",
     isFree: true,
     badges: ["FREE", "🔓"],
@@ -2165,10 +2178,10 @@ export const aiModels: AIModel[] = [
     id: "flux-nsfw",
     name: "FLUX.1 (NSFW LoRAs)",
     description: "FLUX avec des LoRAs pour contenu adulte. Haute qualité.",
-    category: "uncensored",
+    category: "adult",
     apiStatus: "free",
     isFree: true,
-    badges: ["FREE", "🔓", "+18"],
+    badges: ["FREE", "🔓", "-18"],
     officialUrl: "https://civitai.com",
     apiUrl: "https://replicate.com",
     docsUrl: "https://civitai.com/models",
@@ -2176,10 +2189,10 @@ export const aiModels: AIModel[] = [
     features: ["Haute qualité", "LoRAs variés", "NSFW"],
   },
   {
-    id: "mistral-nemo-uncensored",
-    name: "Mistral Nemo Instruct (Uncensored)",
-    description: "Version uncensored de Mistral Nemo. 12B paramètres.",
-    category: "uncensored",
+    id: "mistral-nemo-adult",
+    name: "Mistral Nemo Instruct (Adult)",
+    description: "Version non-censurée de Mistral Nemo. 12B paramètres.",
+    category: "adult",
     apiStatus: "free",
     isFree: true,
     badges: ["FREE", "🔓", "12B"],
@@ -2187,7 +2200,7 @@ export const aiModels: AIModel[] = [
     apiUrl: "https://openrouter.ai/keys",
     docsUrl: "https://huggingface.co",
     provider: "Community",
-    features: ["12B params", "Fast", "Uncensored"],
+    features: ["12B params", "Fast", "Non-censuré"],
   },
 ];
 
@@ -2219,12 +2232,12 @@ export const getCategoryInfo = (category: AICategory) => {
   const categories = {
     images: { name: "Images", icon: "🖼️", color: "cat-images" },
     videos: { name: "Vidéos", icon: "🎬", color: "cat-videos" },
-    llms: { name: "LLMs / Chat", icon: "💬", color: "cat-llms" },
-    audio: { name: "Audio / Voix", icon: "🎵", color: "cat-audio" },
+    llms: { name: "Chat", icon: "💬", color: "cat-llms" },
+    audio: { name: "Musique", icon: "🎵", color: "cat-audio" },
     retouch: { name: "Retouche", icon: "✨", color: "cat-retouch" },
     "3d": { name: "3D", icon: "🧊", color: "cat-3d" },
-    code: { name: "Code", icon: "💻", color: "cat-code" },
-    uncensored: { name: "Sans Censure", icon: "🔓", color: "cat-uncensored" },
+    code: { name: "Codage", icon: "💻", color: "cat-code" },
+    adult: { name: "Contenu Adulte", icon: "🔞", color: "cat-adult" },
   };
   return categories[category];
 };

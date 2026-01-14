@@ -18,15 +18,15 @@ interface CategoryFilterProps {
 }
 
 const categories: { id: AICategory | "all"; label: string; icon: React.ReactNode }[] = [
-  { id: "all", label: "Tous", icon: <LayoutGrid className="h-4 w-4" /> },
-  { id: "images", label: "Images", icon: <Image className="h-4 w-4" /> },
-  { id: "videos", label: "Vidéos", icon: <Video className="h-4 w-4" /> },
-  { id: "llms", label: "LLMs", icon: <MessageSquare className="h-4 w-4" /> },
-  { id: "audio", label: "Audio", icon: <Music className="h-4 w-4" /> },
-  { id: "retouch", label: "Retouche", icon: <Wand2 className="h-4 w-4" /> },
+  { id: "all", label: "TOUS", icon: <LayoutGrid className="h-4 w-4" /> },
+  { id: "videos", label: "VIDÉO", icon: <Video className="h-4 w-4" /> },
+  { id: "images", label: "IMAGE", icon: <Image className="h-4 w-4" /> },
+  { id: "retouch", label: "RETOUCHE", icon: <Wand2 className="h-4 w-4" /> },
+  { id: "adult", label: "CONTENU ADULTE", icon: <ShieldOff className="h-4 w-4" /> },
+  { id: "audio", label: "MUSIQUE", icon: <Music className="h-4 w-4" /> },
+  { id: "llms", label: "CHAT", icon: <MessageSquare className="h-4 w-4" /> },
   { id: "3d", label: "3D", icon: <Box className="h-4 w-4" /> },
-  { id: "code", label: "Code", icon: <Code className="h-4 w-4" /> },
-  { id: "uncensored", label: "Non censuré", icon: <ShieldOff className="h-4 w-4" /> },
+  { id: "code", label: "CODAGE", icon: <Code className="h-4 w-4" /> },
 ];
 
 export function CategoryFilter({ selectedCategory, onCategoryChange }: CategoryFilterProps) {

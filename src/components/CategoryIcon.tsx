@@ -70,11 +70,11 @@ const categoryConfig: Record<string, {
     bgColor: "bg-[hsl(210,100%,60%)]/20",
     label: "CODE"
   },
-  uncensored: { 
+  adult: { 
     icon: <Flame />, 
-    color: "text-[hsl(25,100%,55%)]", 
-    bgColor: "bg-[hsl(25,100%,55%)]/20",
-    label: "+18"
+    color: "text-[hsl(0,100%,50%)]", 
+    bgColor: "bg-[hsl(0,100%,50%)]/20",
+    label: "-18"
   },
   text: { 
     icon: <FileText />, 
