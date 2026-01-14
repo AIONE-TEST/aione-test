@@ -142,6 +142,39 @@ export type Database = {
           },
         ]
       }
+      user_quotas: {
+        Row: {
+          created_at: string
+          id: string
+          quality: string
+          reset_date: string | null
+          service_name: string
+          total_quota: number
+          updated_at: string
+          used_quota: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          quality?: string
+          reset_date?: string | null
+          service_name: string
+          total_quota?: number
+          updated_at?: string
+          used_quota?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          quality?: string
+          reset_date?: string | null
+          service_name?: string
+          total_quota?: number
+          updated_at?: string
+          used_quota?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
