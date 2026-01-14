@@ -142,19 +142,28 @@ export function Sidebar() {
               key={item.id}
               to={item.path}
               className={cn(
-                "flex items-center justify-center gap-4 px-3 py-2 rounded-lg font-display text-2xl font-black tracking-wider transition-all duration-300 transform",
+                "flex items-center justify-center gap-4 px-3 py-2 rounded-lg font-display text-2xl font-black tracking-wider transition-all duration-300 transform group",
                 isActive 
                   ? cn(item.btn3dClass, "text-white scale-102", item.glowClass) 
                   : "btn-3d text-[hsl(215,20%,65%)] hover:text-white hover:scale-101"
               )}
+              style={{
+                "--hover-glow": item.colorClass.replace("text-", ""),
+              } as React.CSSProperties}
             >
               <span className={cn(
                 "transition-all duration-300",
-                isActive ? "text-white drop-shadow-lg" : item.colorClass
+                isActive ? "text-white drop-shadow-lg" : item.colorClass,
+                !isActive && "group-hover:drop-shadow-[0_0_10px_currentColor] group-hover:scale-110"
               )}>
                 {React.cloneElement(item.icon as React.ReactElement, { className: "h-8 w-8" })}
               </span>
-              <span className="flex-1 text-center text-2xl font-black">{item.label}</span>
+              <span className={cn(
+                "flex-1 text-center text-2xl font-black transition-all duration-300",
+                !isActive && "group-hover:text-white group-hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]"
+              )}>
+                {item.label}
+              </span>
             </Link>
           );
         })}

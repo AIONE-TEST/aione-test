@@ -1,12 +1,26 @@
 import { useState } from "react";
-import { Code, Terminal, Play, Save, FileCode, FolderOpen, Settings, Download } from "lucide-react";
+import { Code, Terminal, Play, Save, FileCode, Download, Search, ExternalLink } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+
+// Sites de dépôts et ressources pour développeurs
+const devSites = [
+  { name: "GitHub", url: "https://github.com/search?q=", icon: "🐙" },
+  { name: "GitLab", url: "https://gitlab.com/search?search=", icon: "🦊" },
+  { name: "Bitbucket", url: "https://bitbucket.org/repo/all?name=", icon: "🪣" },
+  { name: "NPM", url: "https://www.npmjs.com/search?q=", icon: "📦" },
+  { name: "PyPI", url: "https://pypi.org/search/?q=", icon: "🐍" },
+  { name: "Stack Overflow", url: "https://stackoverflow.com/search?q=", icon: "📚" },
+  { name: "CodePen", url: "https://codepen.io/search/pens?q=", icon: "✏️" },
+  { name: "JSFiddle", url: "https://jsfiddle.net/search/?q=", icon: "🎻" },
+  { name: "Replit", url: "https://replit.com/search?q=", icon: "⚡" },
+  { name: "Gist", url: "https://gist.github.com/search?q=", icon: "📝" },
+];
 
 const Coding = () => {
   const [terminalOutput, setTerminalOutput] = useState<string[]>([
@@ -27,6 +41,8 @@ if __name__ == "__main__":
     hello_world()
 `);
   const [selectedLanguage, setSelectedLanguage] = useState("python");
+  const [devSearchQuery, setDevSearchQuery] = useState("");
+  const [googleSearchQuery, setGoogleSearchQuery] = useState("");
 
   const languages = [
     { id: "python", label: "Python", icon: "🐍" },
@@ -111,6 +127,27 @@ if __name__ == "__main__":
     URL.revokeObjectURL(url);
   };
 
+  // Recherche sur sites de développeurs
+  const handleDevSearch = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && devSearchQuery.trim()) {
+      // Ouvrir GitHub par défaut avec la recherche
+      window.open(`https://github.com/search?q=${encodeURIComponent(devSearchQuery)}`, "_blank");
+    }
+  };
+
+  // Recherche Google
+  const handleGoogleSearch = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && googleSearchQuery.trim()) {
+      window.open(`https://www.google.com/search?q=${encodeURIComponent(googleSearchQuery)}`, "_blank");
+    }
+  };
+
+  const searchOnSite = (siteUrl: string) => {
+    if (devSearchQuery.trim()) {
+      window.open(`${siteUrl}${encodeURIComponent(devSearchQuery)}`, "_blank");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Sidebar />
@@ -152,6 +189,79 @@ if __name__ == "__main__":
               ))}
             </div>
           </div>
+        </div>
+
+        {/* BARRES DE RECHERCHE CÔTE À CÔTE */}
+        <div className="grid grid-cols-2 gap-4 mb-4 shrink-0">
+          {/* Recherche Dépôts / Dev Sites */}
+          <Card className="panel-3d p-3">
+            <div className="flex items-center gap-2 mb-2">
+              <Search className="h-4 w-4 text-[hsl(280,100%,65%)]" />
+              <span className="font-display text-xs font-bold">RECHERCHE DÉPÔTS & RESSOURCES</span>
+            </div>
+            <div className="flex gap-2">
+              <Input
+                value={devSearchQuery}
+                onChange={(e) => setDevSearchQuery(e.target.value)}
+                onKeyDown={handleDevSearch}
+                placeholder="Rechercher du code, libs, packages..."
+                className="input-3d flex-1"
+              />
+              <Button 
+                size="sm" 
+                className="btn-3d-purple"
+                onClick={() => handleDevSearch({ key: "Enter" } as React.KeyboardEvent)}
+              >
+                <Search className="h-4 w-4" />
+              </Button>
+            </div>
+            {/* Quick Links */}
+            <div className="flex flex-wrap gap-1 mt-2">
+              {devSites.map(site => (
+                <Button
+                  key={site.name}
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 px-2 text-[10px] hover:bg-[hsl(280,100%,65%)]/20"
+                  onClick={() => searchOnSite(site.url)}
+                >
+                  <span className="mr-1">{site.icon}</span>
+                  {site.name}
+                </Button>
+              ))}
+            </div>
+          </Card>
+
+          {/* Recherche Google */}
+          <Card className="panel-3d p-3">
+            <div className="flex items-center gap-2 mb-2">
+              <img 
+                src="https://www.google.com/favicon.ico" 
+                alt="Google" 
+                className="h-4 w-4"
+              />
+              <span className="font-display text-xs font-bold">RECHERCHE GOOGLE</span>
+            </div>
+            <div className="flex gap-2">
+              <Input
+                value={googleSearchQuery}
+                onChange={(e) => setGoogleSearchQuery(e.target.value)}
+                onKeyDown={handleGoogleSearch}
+                placeholder="Recherche Google..."
+                className="input-3d flex-1"
+              />
+              <Button 
+                size="sm" 
+                className="btn-3d-cyan"
+                onClick={() => handleGoogleSearch({ key: "Enter" } as React.KeyboardEvent)}
+              >
+                <Search className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="flex gap-2 mt-2 text-[10px] text-muted-foreground">
+              <span>Recherche web générale via Google</span>
+            </div>
+          </Card>
         </div>
 
         {/* Main Layout: Terminal (top half) + Editor (bottom half) */}
