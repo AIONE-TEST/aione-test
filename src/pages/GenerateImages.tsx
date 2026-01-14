@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { ImageIcon, Sparkles, Zap, Upload, Palette, Maximize2 } from "lucide-react";
+import { useState, useMemo, useRef } from "react";
+import { ImageIcon, Sparkles, Zap, Upload, Palette, Maximize2, Image, Video, File } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { ModelSelector } from "@/components/ModelSelector";
 import { PromptEditor } from "@/components/PromptEditor";
@@ -8,6 +8,12 @@ import { GenerationOptions, GenerationSettings } from "@/components/GenerationOp
 import { AIModel, getModelsByCategory } from "@/data/aiModels";
 import { useAPIStatus } from "@/hooks/useAPIStatus";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+
+const mediaTypes = [
+  { id: "image", label: "Image", icon: <Image className="h-5 w-5" />, accept: "image/*" },
+  { id: "document", label: "Document", icon: <File className="h-5 w-5" />, accept: ".pdf,.doc,.docx,.txt" },
+];
 
 const GenerateImages = () => {
   const { getModelsWithStatus } = useAPIStatus();
@@ -15,6 +21,8 @@ const GenerateImages = () => {
   const [prompt, setPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedContent, setGeneratedContent] = useState<string | null>(null);
+  const [selectedMediaType, setSelectedMediaType] = useState("image");
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [options, setOptions] = useState<GenerationSettings>({
     mode: "text-to-content",
     aspectRatio: "1:1",
@@ -36,7 +44,19 @@ const GenerateImages = () => {
     }, 3000);
   };
 
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      console.log("File selected:", files[0].name);
+    }
+  };
+
   const canGenerate = Boolean(selectedModel) && prompt.trim().length > 0;
+  const currentMediaType = mediaTypes.find(m => m.id === selectedMediaType);
 
   return (
     <div className="min-h-screen bg-background">
@@ -98,12 +118,55 @@ const GenerateImages = () => {
             placeholder="Ex: Un paysage fantastique avec des montagnes de cristal au coucher du soleil, style Ghibli..."
           />
 
-          {/* Model Selector */}
-          <div className="panel-3d p-4 space-y-3">
-            <label className="font-display text-sm text-[hsl(320,100%,60%)] tracking-wider flex items-center gap-2">
-              <Sparkles className="h-4 w-4" />
-              MOTEUR DE GÉNÉRATION
-            </label>
+          {/* Model Selector & Options */}
+          <div className="panel-3d p-6 space-y-6">
+            <div className="flex items-center gap-2 mb-2">
+              <Sparkles className="h-5 w-5 text-[hsl(var(--secondary))]" />
+              <span className="font-display text-lg font-bold">MOTEUR DE GÉNÉRATION & OPTIONS</span>
+            </div>
+
+            {/* Gros bouton d'import média */}
+            <div>
+              <label className="font-display text-sm text-muted-foreground mb-3 block">
+                IMPORTER UN MÉDIA
+              </label>
+              
+              {/* Sélection type de média */}
+              <div className="flex flex-wrap gap-2 mb-4">
+                {mediaTypes.map((type) => (
+                  <Button
+                    key={type.id}
+                    size="sm"
+                    variant={selectedMediaType === type.id ? "default" : "outline"}
+                    onClick={() => setSelectedMediaType(type.id)}
+                    className={cn(
+                      "gap-2",
+                      selectedMediaType === type.id ? "btn-3d-cyan" : "btn-3d"
+                    )}
+                  >
+                    {type.icon}
+                    {type.label}
+                  </Button>
+                ))}
+              </div>
+
+              {/* Bouton d'import */}
+              <Button
+                onClick={handleImportClick}
+                className="w-full h-14 btn-3d-purple gap-3 text-lg font-display font-bold tracking-wider"
+              >
+                <Upload className="h-6 w-6" />
+                IMPORTER {currentMediaType?.label.toUpperCase()}
+              </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept={currentMediaType?.accept}
+                className="hidden"
+                onChange={handleFileSelect}
+              />
+            </div>
+
             <ModelSelector
               models={models}
               selectedModel={selectedModel}

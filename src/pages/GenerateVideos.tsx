@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { Video, Sparkles, Camera, Film, Type, Upload, Zap } from "lucide-react";
+import { useState, useMemo, useRef } from "react";
+import { Video, Sparkles, Camera, Film, Type, Upload, Zap, Image, File, Archive, Music } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { ModelSelector } from "@/components/ModelSelector";
 import { GenerationCanvas } from "@/components/GenerationCanvas";
@@ -10,6 +10,13 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { StatusLED } from "@/components/StatusLED";
+import { cn } from "@/lib/utils";
+
+const mediaTypes = [
+  { id: "image", label: "Image", icon: <Image className="h-5 w-5" />, accept: "image/*" },
+  { id: "video", label: "Vidéo", icon: <Video className="h-5 w-5" />, accept: "video/*" },
+  { id: "document", label: "Document", icon: <File className="h-5 w-5" />, accept: ".pdf,.doc,.docx,.txt" },
+];
 
 const GenerateVideos = () => {
   const { getModelsWithStatus } = useAPIStatus();
@@ -21,6 +28,8 @@ const GenerateVideos = () => {
   const [mode, setMode] = useState<"text-to-video" | "image-to-video">("text-to-video");
   const [aspectRatio, setAspectRatio] = useState("16:9");
   const [quality, setQuality] = useState("1080p");
+  const [selectedMediaType, setSelectedMediaType] = useState("image");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const models = useMemo(() => {
     const categoryModels = getModelsByCategory("videos");
@@ -46,10 +55,23 @@ const GenerateVideos = () => {
     );
   };
 
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      console.log("File selected:", files[0].name);
+    }
+  };
+
   const canGenerate = Boolean(selectedModel) && prompt.trim().length > 0;
 
   const aspectRatios = ["1:1", "4:3", "3:4", "9:16", "16:9", "21:9"];
   const qualities = ["480p", "720p", "1080p", "4K", "8K"];
+
+  const currentMediaType = mediaTypes.find(m => m.id === selectedMediaType);
 
   return (
     <div className="min-h-screen bg-background">
@@ -132,6 +154,48 @@ const GenerateVideos = () => {
             <div className="flex items-center gap-2 mb-4">
               <Sparkles className="h-5 w-5 text-[hsl(var(--secondary))]" />
               <span className="font-display text-lg font-bold">MOTEUR DE GÉNÉRATION & OPTIONS</span>
+            </div>
+
+            {/* Gros bouton d'import média */}
+            <div className="mb-6">
+              <label className="font-display text-sm text-muted-foreground mb-3 block">
+                IMPORTER UN MÉDIA
+              </label>
+              
+              {/* Sélection type de média */}
+              <div className="flex flex-wrap gap-2 mb-4">
+                {mediaTypes.map((type) => (
+                  <Button
+                    key={type.id}
+                    size="sm"
+                    variant={selectedMediaType === type.id ? "default" : "outline"}
+                    onClick={() => setSelectedMediaType(type.id)}
+                    className={cn(
+                      "gap-2",
+                      selectedMediaType === type.id ? "btn-3d-cyan" : "btn-3d"
+                    )}
+                  >
+                    {type.icon}
+                    {type.label}
+                  </Button>
+                ))}
+              </div>
+
+              {/* Bouton d'import */}
+              <Button
+                onClick={handleImportClick}
+                className="w-full h-14 btn-3d-purple gap-3 text-lg font-display font-bold tracking-wider"
+              >
+                <Upload className="h-6 w-6" />
+                IMPORTER {currentMediaType?.label.toUpperCase()}
+              </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept={currentMediaType?.accept}
+                className="hidden"
+                onChange={handleFileSelect}
+              />
             </div>
 
             <ModelSelector
@@ -217,6 +281,10 @@ const GenerateVideos = () => {
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Types d'entrée</span>
                   <span className="font-bold text-foreground">TEXT / IMAGE</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Quota restant</span>
+                  <span className="font-bold text-[hsl(142,76%,50%)]">50 générations</span>
                 </div>
               </div>
             </div>

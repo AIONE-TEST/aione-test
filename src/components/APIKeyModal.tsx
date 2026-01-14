@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ExternalLink, Key, Check, Copy, AlertCircle, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { ExternalLink, Key, Check, Copy, AlertCircle, CheckCircle, XCircle, Loader2, Upload } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -23,27 +23,6 @@ interface APIKeyModalProps {
 
 type ValidationState = "idle" | "validating" | "success" | "error";
 
-// Patterns de validation pour chaque service
-const validationPatterns: Record<string, { pattern: RegExp; message: string }> = {
-  openai: { pattern: /^sk-[a-zA-Z0-9-_]{20,}$/, message: "Format: sk-..." },
-  anthropic: { pattern: /^sk-ant-[a-zA-Z0-9-_]{20,}$/, message: "Format: sk-ant-..." },
-  openrouter: { pattern: /^sk-or-[a-zA-Z0-9-_]{20,}$/, message: "Format: sk-or-..." },
-  replicate: { pattern: /^r8_[a-zA-Z0-9]{20,}$/, message: "Format: r8_..." },
-  stability: { pattern: /^sk-[a-zA-Z0-9]{20,}$/, message: "Format: sk-..." },
-  elevenlabs: { pattern: /^[a-zA-Z0-9]{20,}$/, message: "Clé alphanumérique" },
-  groq: { pattern: /^gsk_[a-zA-Z0-9]{20,}$/, message: "Format: gsk_..." },
-  google: { pattern: /^AIza[a-zA-Z0-9-_]{30,}$/, message: "Format: AIza..." },
-  mistral: { pattern: /^[a-zA-Z0-9]{20,}$/, message: "Clé alphanumérique" },
-  xai: { pattern: /^xai-[a-zA-Z0-9]{20,}$/, message: "Format: xai-..." },
-  runway: { pattern: /^[a-zA-Z0-9_-]{20,}$/, message: "Clé alphanumérique" },
-  huggingface: { pattern: /^hf_[a-zA-Z0-9]{20,}$/, message: "Format: hf_..." },
-  fireworks: { pattern: /^fw_[a-zA-Z0-9]{20,}$/, message: "Format: fw_..." },
-  together: { pattern: /^[a-zA-Z0-9]{20,}$/, message: "Clé alphanumérique" },
-  fal: { pattern: /^[a-zA-Z0-9_-]{20,}$/, message: "Clé alphanumérique" },
-  leonardo: { pattern: /^[a-zA-Z0-9-]{20,}$/, message: "Clé alphanumérique" },
-  deepseek: { pattern: /^sk-[a-zA-Z0-9]{20,}$/, message: "Format: sk-..." },
-};
-
 export function APIKeyModal({ isOpen, onClose, apiKeyName, onSuccess }: APIKeyModalProps) {
   const [apiKey, setApiKey] = useState("");
   const [validationState, setValidationState] = useState<ValidationState>("idle");
@@ -59,20 +38,20 @@ export function APIKeyModal({ isOpen, onClose, apiKeyName, onSuccess }: APIKeyMo
     instructions: "Entrez votre clé API pour activer ce service.",
   };
 
-  // Validation de la clé API
+  // Validation simplifiée - accepte la plupart des formats
   const validateAPIKey = (key: string): { valid: boolean; message: string } => {
     if (!key.trim()) {
       return { valid: false, message: "Veuillez entrer une clé API" };
     }
 
-    if (key.length < 10) {
-      return { valid: false, message: "La clé est trop courte" };
+    if (key.length < 8) {
+      return { valid: false, message: "La clé est trop courte (min 8 caractères)" };
     }
 
-    const validation = validationPatterns[apiKeyName.toLowerCase()];
-    
-    if (validation && !validation.pattern.test(key)) {
-      return { valid: false, message: `Format invalide. ${validation.message}` };
+    // Validation basique du format - beaucoup plus permissive
+    const hasValidChars = /^[a-zA-Z0-9_\-\.]+$/.test(key);
+    if (!hasValidChars) {
+      return { valid: false, message: "La clé contient des caractères invalides" };
     }
 
     return { valid: true, message: "Format valide" };
@@ -91,26 +70,30 @@ export function APIKeyModal({ isOpen, onClose, apiKeyName, onSuccess }: APIKeyMo
     setValidationMessage("Vérification en cours...");
 
     try {
-      // Simuler une vérification API (dans un vrai cas, on ferait un appel test)
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Courte pause pour UX
+      await new Promise(resolve => setTimeout(resolve, 800));
 
       // Check if key already exists
       const { data: existingKey } = await supabase
         .from("api_keys")
         .select("id")
         .eq("service_name", apiKeyName)
-        .single();
+        .maybeSingle();
 
       if (existingKey) {
-        await supabase
+        const { error } = await supabase
           .from("api_keys")
           .update({ is_configured: true, updated_at: new Date().toISOString() })
           .eq("service_name", apiKeyName);
+        
+        if (error) throw error;
       } else {
-        await supabase.from("api_keys").insert({
+        const { error } = await supabase.from("api_keys").insert({
           service_name: apiKeyName,
           is_configured: true,
         });
+        
+        if (error) throw error;
       }
 
       setValidationState("success");
