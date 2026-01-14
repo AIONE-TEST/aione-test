@@ -24,7 +24,7 @@ interface CategoryConfig {
   sectionBg: string;
 }
 
-// 8 catégories distinctes avec couleurs différentes et sections
+// 8 catégories distinctes avec couleurs différentes et sections - ORDRE CORRECT
 const categoryConfigs: CategoryConfig[] = [
   { 
     id: "all", 
@@ -88,6 +88,24 @@ const categoryConfigs: CategoryConfig[] = [
     bgColor: "bg-[hsl(25,100%,55%)]/10", 
     borderColor: "border-[hsl(25,100%,55%)]/30",
     sectionBg: "bg-gradient-to-br from-[hsl(25,100%,25%)]/20 to-[hsl(25,100%,15%)]/30"
+  },
+  { 
+    id: "llms", 
+    label: "CHAT IA", 
+    icon: <MessageSquare className="h-6 w-6" />, 
+    color: "text-[hsl(200,100%,55%)]", 
+    bgColor: "bg-[hsl(200,100%,55%)]/10", 
+    borderColor: "border-[hsl(200,100%,55%)]/30",
+    sectionBg: "bg-gradient-to-br from-[hsl(200,100%,25%)]/20 to-[hsl(200,100%,15%)]/30"
+  },
+  { 
+    id: "3d", 
+    label: "3D", 
+    icon: <Box className="h-6 w-6" />, 
+    color: "text-[hsl(160,100%,50%)]", 
+    bgColor: "bg-[hsl(160,100%,50%)]/10", 
+    borderColor: "border-[hsl(160,100%,50%)]/30",
+    sectionBg: "bg-gradient-to-br from-[hsl(160,100%,25%)]/20 to-[hsl(160,100%,15%)]/30"
   },
   { 
     id: "code", 
@@ -193,7 +211,7 @@ const Apps = () => {
       activated: allModels.filter(m => m.apiStatus === "active" || m.isFree).length,
     };
     
-    ["images", "videos", "audio", "retouch", "code", "adult"].forEach(cat => {
+    ["videos", "images", "retouch", "adult", "audio", "llms", "3d", "code"].forEach(cat => {
       counts[cat] = allModels.filter(m => m.category === cat).length;
     });
     
