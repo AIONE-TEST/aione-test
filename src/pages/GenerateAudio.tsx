@@ -358,11 +358,11 @@ const GenerateAudio = () => {
             </div>
           </div>
 
-          {/* 4. MOTEUR DE GÉNÉRATION & OPTIONS - En bas */}
+          {/* 4. MODÈLES AI & OPTIONS - En bas */}
           <div className="panel-3d p-6">
             <div className="flex items-center gap-2 mb-4">
               <Sparkles className="h-5 w-5 text-[hsl(var(--secondary))]" />
-              <span className="font-display text-lg font-bold">MOTEUR DE GÉNÉRATION & OPTIONS</span>
+              <span className="font-display text-lg font-bold">MODÈLES AI & OPTIONS</span>
             </div>
 
             {/* Gros bouton d'import média */}
@@ -410,7 +410,7 @@ const GenerateAudio = () => {
             {/* Sélecteur de modèle */}
             <div className="mb-6">
               <label className="font-display text-sm text-muted-foreground mb-3 block">
-                MOTEUR DE GÉNÉRATION AI
+                MODÈLE AI
               </label>
               <ModelSelector
                 models={filteredModels}

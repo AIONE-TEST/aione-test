@@ -283,17 +283,17 @@ const GenerateRetouch = () => {
             </div>
           </div>
 
-          {/* 4. MOTEUR DE GÉNÉRATION & OPTIONS - Compact */}
+          {/* 4. MODÈLES AI & OPTIONS - Compact */}
           <div className="panel-3d p-4">
             <div className="flex items-center gap-2 mb-3">
               <Sparkles className="h-4 w-4 text-[hsl(var(--secondary))]" />
-              <span className="font-display text-sm font-bold">MOTEUR & OPTIONS</span>
+              <span className="font-display text-sm font-bold">MODÈLES AI & OPTIONS</span>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               {/* Sélecteur de modèle */}
               <div>
-                <label className="font-display text-xs text-muted-foreground mb-2 block">MOTEUR AI</label>
+                <label className="font-display text-xs text-muted-foreground mb-2 block">MODÈLE AI</label>
                 <ModelSelector
                   models={models}
                   selectedModel={selectedModel}

@@ -314,12 +314,39 @@ export const modeLabels: Record<GenerationMode, string> = {
   'image-to-video': 'Image → Vidéo'
 };
 
-// Icônes des formats
+// Icônes des formats avec composants SVG
 export const aspectRatioIcons: Record<AspectRatio, string> = {
-  '16:9': '📺',
-  '4:3': '🖥️',
+  '16:9': '🖥️',
+  '4:3': '📺',
   '1:1': '⬜',
   '9:16': '📱',
   '3:4': '📷',
   '21:9': '🎬'
 };
+
+// Labels des formats
+export const aspectRatioLabels: Record<AspectRatio, string> = {
+  '16:9': 'Paysage HD',
+  '4:3': 'Standard',
+  '1:1': 'Carré',
+  '9:16': 'Portrait',
+  '3:4': 'Photo',
+  '21:9': 'Cinéma'
+};
+
+// Option Extension Vidéo - modèles compatibles
+export const videoExtensionCapable: string[] = [
+  'runway-gen3',
+  'kling-ai',
+  'luma-dream-machine-free',
+  'pika-labs',
+  'google-veo2',
+  'sora',
+  'minimax-video',
+  'grok-aurora'
+];
+
+// Vérifier si un modèle supporte l'extension vidéo
+export function supportsVideoExtension(modelId: string): boolean {
+  return videoExtensionCapable.includes(modelId);
+}
