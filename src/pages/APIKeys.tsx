@@ -1,10 +1,12 @@
 import { useState, useMemo } from "react";
 import { 
   Key, ExternalLink, Search, RefreshCw, 
-  List, Grid3X3, Eye, EyeOff, Copy, Trash2, Edit, Plus, Lock
+  List, Grid3X3, Eye, EyeOff, Copy, Trash2, Edit, Plus, Lock,
+  Image, Video, MessageSquare, Music, Wand2
 } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { StatusLED } from "@/components/StatusLED";
+import { SessionTimer } from "@/components/SessionTimer";
 import { useAPIStatus } from "@/hooks/useAPIStatus";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +19,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { aiModels, apiConfigs } from "@/data/aiModels";
 
 type ViewMode = "list" | "grid";
+
+// Icônes des catégories
+const categoryIcons: Record<string, React.ReactNode> = {
+  images: <Image className="h-5 w-5" />,
+  videos: <Video className="h-5 w-5" />,
+  llms: <MessageSquare className="h-5 w-5" />,
+  audio: <Music className="h-5 w-5" />,
+  retouch: <Wand2 className="h-5 w-5" />,
+};
 
 const APIKeys = () => {
   const { configuredAPIs, refetch } = useAPIStatus();
@@ -32,15 +43,18 @@ const APIKeys = () => {
   // Master password - 4 characters
   const MASTER_PASSWORD = "1234"; // User should change this
 
-  // Get configured API services with their details
+  // Get configured API services with their details - including all active APIs
   const configuredServices = useMemo(() => {
     const services: { 
       key: string; 
       name: string; 
       modelsCount: number;
       maskedKey: string;
+      category: string;
+      models: string[];
     }[] = [];
 
+    // Add all configured APIs from the database
     configuredAPIs.forEach(apiKey => {
       const config = apiConfigs[apiKey];
       const models = aiModels.filter(m => 
@@ -52,7 +66,44 @@ const APIKeys = () => {
         name: config?.serviceName || apiKey,
         modelsCount: models.length,
         maskedKey: `${apiKey.substring(0, 4)}****`,
+        category: models[0]?.category || "llms",
+        models: models.map(m => m.name).slice(0, 5),
       });
+    });
+
+    // Also include APIs from secrets that might not be in the database yet
+    const knownSecretKeys = [
+      { key: "openai", name: "OpenAI" },
+      { key: "anthropic", name: "Anthropic (Claude)" },
+      { key: "stability", name: "Stability AI" },
+      { key: "replicate", name: "Replicate" },
+      { key: "elevenlabs", name: "ElevenLabs" },
+      { key: "groq", name: "Groq" },
+      { key: "mistral", name: "Mistral AI" },
+      { key: "google", name: "Google AI" },
+      { key: "runway", name: "Runway ML" },
+      { key: "xai", name: "xAI (Grok)" },
+      { key: "openrouter", name: "OpenRouter" },
+      { key: "fireworks", name: "Fireworks AI" },
+    ];
+
+    knownSecretKeys.forEach(secret => {
+      if (!services.find(s => s.key.toLowerCase() === secret.key.toLowerCase())) {
+        const models = aiModels.filter(m => 
+          m.apiKeyName?.toLowerCase() === secret.key.toLowerCase()
+        );
+        
+        if (models.length > 0 || configuredAPIs.includes(secret.key)) {
+          services.push({
+            key: secret.key,
+            name: secret.name,
+            modelsCount: models.length,
+            maskedKey: `${secret.key.substring(0, 4)}****`,
+            category: models[0]?.category || "llms",
+            models: models.map(m => m.name).slice(0, 5),
+          });
+        }
+      }
     });
 
     return services;
@@ -164,7 +215,7 @@ const APIKeys = () => {
       <Sidebar />
 
       <main className="ml-[280px] min-h-screen p-8">
-        {/* Header */}
+        {/* Header with Session Timer */}
         <div className="mb-10">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-6">
@@ -182,6 +233,9 @@ const APIKeys = () => {
             </div>
 
             <div className="flex items-center gap-4">
+              {/* Session Timer */}
+              <SessionTimer />
+
               {/* Lock Status */}
               <div className={cn(
                 "flex items-center gap-2 px-4 py-2 rounded-xl border-2",
@@ -201,7 +255,21 @@ const APIKeys = () => {
                   </>
                 )}
               </div>
+            </div>
+          </div>
 
+          {/* Controls Row */}
+          <div className="flex items-center justify-between gap-4 mb-8">
+            {/* Stats */}
+            <Card className="px-6 py-4 panel-3d border-[hsl(142,76%,50%)]/30">
+              <div className="flex items-center gap-3">
+                <StatusLED isActive={true} size="lg" />
+                <span className="font-display text-3xl font-black text-[hsl(142,76%,50%)]">{configuredServices.length}</span>
+                <span className="text-base text-muted-foreground font-display">CLÉS ACTIVES</span>
+              </div>
+            </Card>
+
+            <div className="flex items-center gap-4">
               {/* View Mode Toggle */}
               <div className="flex items-center rounded-xl border-2 border-[hsl(220,15%,25%)] overflow-hidden">
                 <Button
@@ -236,17 +304,6 @@ const APIKeys = () => {
                 ACTUALISER
               </Button>
             </div>
-          </div>
-
-          {/* Stats */}
-          <div className="flex flex-wrap gap-6 mb-8">
-            <Card className="px-6 py-4 panel-3d border-[hsl(142,76%,50%)]/30">
-              <div className="flex items-center gap-3">
-                <StatusLED isActive={true} size="lg" />
-                <span className="font-display text-3xl font-black text-[hsl(142,76%,50%)]">{configuredServices.length}</span>
-                <span className="text-base text-muted-foreground font-display">CLÉS ACTIVES</span>
-              </div>
-            </Card>
           </div>
 
           {/* Search */}
@@ -310,12 +367,28 @@ const APIKeys = () => {
                         )}
                       </div>
                     </div>
+                    {/* Category Icon */}
+                    <div className="h-10 w-10 rounded-lg flex items-center justify-center bg-[hsl(174,100%,50%)]/10 text-[hsl(174,100%,50%)]">
+                      {categoryIcons[service.category] || <MessageSquare className="h-5 w-5" />}
+                    </div>
                   </div>
 
-                  {/* Models Count */}
-                  <Badge variant="secondary" className="font-display self-start">
-                    {service.modelsCount} MODÈLES
-                  </Badge>
+                  {/* Models Info */}
+                  <div className="flex flex-wrap gap-2">
+                    <Badge variant="secondary" className="font-display">
+                      {service.modelsCount} MODÈLES
+                    </Badge>
+                    {service.models.slice(0, 2).map((model, idx) => (
+                      <Badge key={idx} variant="outline" className="font-display text-xs">
+                        {model}
+                      </Badge>
+                    ))}
+                    {service.models.length > 2 && (
+                      <Badge variant="outline" className="font-display text-xs">
+                        +{service.models.length - 2}
+                      </Badge>
+                    )}
+                  </div>
 
                   {/* Actions */}
                   <div className="flex gap-2 mt-auto pt-3 border-t border-border/30">
