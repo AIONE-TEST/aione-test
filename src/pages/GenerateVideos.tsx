@@ -2,8 +2,9 @@ import { useState, useMemo, useRef, useCallback } from "react";
 import { Video, Sparkles, Camera, Film, Type, Upload, Image, File } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { ModelSelector } from "@/components/ModelSelector";
-import { ModelGrid } from "@/components/ModelGrid";
+import { AppTileCard } from "@/components/AppTileCard";
 import { MediaResultPopup } from "@/components/MediaResultPopup";
+import { APIKeyModal } from "@/components/APIKeyModal";
 import { AIModel, getModelsByCategory } from "@/data/aiModels";
 import { useAPIStatus } from "@/hooks/useAPIStatus";
 import { Button } from "@/components/ui/button";
@@ -33,7 +34,14 @@ const GenerateVideos = () => {
   const [quality, setQuality] = useState("1080p");
   const [isDragging, setIsDragging] = useState(false);
   const [showResultPopup, setShowResultPopup] = useState(false);
+  const [apiKeyModalOpen, setApiKeyModalOpen] = useState(false);
+  const [selectedApiKeyName, setSelectedApiKeyName] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleOpenAPIKeyModal = (apiKeyName: string) => {
+    setSelectedApiKeyName(apiKeyName);
+    setApiKeyModalOpen(true);
+  };
 
   const models = useMemo(() => {
     const categoryModels = getModelsByCategory("videos");
@@ -269,17 +277,23 @@ const GenerateVideos = () => {
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-4">
             <Film className="h-5 w-5 text-[hsl(280,100%,65%)]" />
-            <h2 className="font-display text-lg font-bold">TOUS LES MODÈLES</h2>
+            <h2 className="font-display text-lg font-bold">MODÈLES VIDÉO COMPATIBLES</h2>
             <Badge variant="outline" className="text-sm">{models.length}</Badge>
           </div>
 
-          <ModelGrid
-            models={models}
-            category="videos"
-            favorites={favorites}
-            onToggleFavorite={toggleFavorite}
-            onSelectModel={setSelectedModel}
-          />
+          {/* Grid avec le même style que APPLIS IA */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {models.map((model) => (
+              <AppTileCard
+                key={model.id}
+                model={model}
+                viewMode="grid"
+                horizontal
+                onOpenAPIKeyModal={handleOpenAPIKeyModal}
+                onClick={() => setSelectedModel(model)}
+              />
+            ))}
+          </div>
         </div>
       </main>
 
@@ -291,6 +305,13 @@ const GenerateVideos = () => {
         mediaType="video"
         prompt={prompt}
         model={selectedModel?.name}
+      />
+
+      {/* API Key Modal */}
+      <APIKeyModal
+        isOpen={apiKeyModalOpen}
+        onClose={() => setApiKeyModalOpen(false)}
+        apiKeyName={selectedApiKeyName}
       />
     </div>
   );

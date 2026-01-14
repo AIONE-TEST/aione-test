@@ -77,7 +77,7 @@ const navItems: NavItem[] = [
     id: "coding", 
     label: "CODAGE", 
     icon: <Code className="h-10 w-10" />, 
-    path: "/code",
+    path: "/coding",
     colorClass: "text-[hsl(140,70%,50%)]",
     btn3dClass: "btn-3d-green",
     glowClass: "glow-green"

@@ -2,8 +2,9 @@ import { useState, useMemo, useRef, useCallback } from "react";
 import { ImageIcon, Sparkles, Zap, Upload, Type, Download, Image, Video, File, LayoutGrid, Gift, ShieldOff, Tag } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { ModelSelector } from "@/components/ModelSelector";
-import { ModelGrid } from "@/components/ModelGrid";
+import { AppTileCard } from "@/components/AppTileCard";
 import { MediaResultPopup } from "@/components/MediaResultPopup";
+import { APIKeyModal } from "@/components/APIKeyModal";
 import { AIModel, getModelsByCategory } from "@/data/aiModels";
 import { useAPIStatus } from "@/hooks/useAPIStatus";
 import { Button } from "@/components/ui/button";
@@ -36,7 +37,14 @@ const GenerateImages = () => {
   const [quality, setQuality] = useState("standard");
   const [isDragging, setIsDragging] = useState(false);
   const [activeFilter, setActiveFilter] = useState<ImageFilter>("all");
+  const [apiKeyModalOpen, setApiKeyModalOpen] = useState(false);
+  const [selectedApiKeyName, setSelectedApiKeyName] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleOpenAPIKeyModal = (apiKeyName: string) => {
+    setSelectedApiKeyName(apiKeyName);
+    setApiKeyModalOpen(true);
+  };
 
   const allModels = useMemo(() => {
     const categoryModels = getModelsByCategory("images");
@@ -356,23 +364,29 @@ const GenerateImages = () => {
           </div>
         </div>
 
-        {/* Models Grid */}
+        {/* Models Grid - Style APPLIS IA */}
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-6">
             <ImageIcon className="h-6 w-6 text-[hsl(320,100%,60%)]" />
-            <h2 className="font-display text-2xl font-bold">TOUS LES MODÈLES D'IMAGES</h2>
+            <h2 className="font-display text-2xl font-bold">MODÈLES IMAGES COMPATIBLES</h2>
             <Badge variant="outline" className="text-base px-3">
               {filteredModels.length}
             </Badge>
           </div>
 
-          <ModelGrid
-            models={filteredModels}
-            category="images"
-            favorites={favorites}
-            onToggleFavorite={toggleFavorite}
-            onSelectModel={setSelectedModel}
-          />
+          {/* Grid avec le même style que APPLIS IA */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {filteredModels.map((model) => (
+              <AppTileCard
+                key={model.id}
+                model={model}
+                viewMode="grid"
+                horizontal
+                onOpenAPIKeyModal={handleOpenAPIKeyModal}
+                onClick={() => setSelectedModel(model)}
+              />
+            ))}
+          </div>
         </div>
       </main>
 
@@ -382,6 +396,13 @@ const GenerateImages = () => {
         onClose={() => setShowResultPopup(false)}
         mediaUrl={generatedContent}
         mediaType="image"
+      />
+
+      {/* API Key Modal */}
+      <APIKeyModal
+        isOpen={apiKeyModalOpen}
+        onClose={() => setApiKeyModalOpen(false)}
+        apiKeyName={selectedApiKeyName}
       />
     </div>
   );
