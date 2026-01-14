@@ -286,9 +286,9 @@ export function AppTileCard({ model, onOpenAPIKeyModal, onClick, viewMode = "gri
             )}
           </div>
 
-          {/* App Name & Provider */}
+          {/* App Name & Provider - AGRANDI +50% */}
           <div className="min-w-[180px]">
-            <h3 className="font-display text-lg font-bold truncate tracking-wider">{model.name}</h3>
+            <h3 className="font-display text-xl font-bold truncate tracking-wider">{model.name}</h3>
             <p className="text-sm text-muted-foreground truncate font-display">{model.provider}</p>
           </div>
 
@@ -434,13 +434,13 @@ export function AppTileCard({ model, onOpenAPIKeyModal, onClick, viewMode = "gri
         {/* LED Status */}
         <StatusLED isActive={isActive} size="md" />
         
-        {/* Nom de l'app DOUBLÉ en taille */}
+        {/* Nom de l'app AGRANDI +50% */}
         <div className="flex-1 text-center">
-          <h3 className="font-display text-lg font-black text-foreground tracking-wider truncate">
+          <h3 className="font-display text-xl font-black text-foreground tracking-wider truncate">
             {model.name}
           </h3>
-          <h4 className="font-display text-xs text-muted-foreground tracking-wider truncate">
-            {model.name}
+          <h4 className="font-display text-sm text-muted-foreground tracking-wider truncate">
+            {model.provider}
           </h4>
         </div>
         
