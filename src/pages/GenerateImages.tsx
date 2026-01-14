@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useCallback } from "react";
-import { ImageIcon, Sparkles, Zap, Upload, Type, Download, Image, Video, File, ZoomIn } from "lucide-react";
+import { ImageIcon, Sparkles, Zap, Upload, Type, Download, Image, Video, File, ZoomIn, LayoutGrid, Gift, ShieldOff, Tag } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { ModelSelector } from "@/components/ModelSelector";
 import { ModelGrid } from "@/components/ModelGrid";
@@ -19,6 +19,8 @@ const mediaTypes = [
 const aspectRatios = ["1:1", "4:3", "3:4", "9:16", "16:9", "21:9"];
 const qualities = ["standard", "hd", "ultra"];
 
+type ImageFilter = "all" | "services" | "free" | "uncensored";
+
 const GenerateImages = () => {
   const { getModelsWithStatus } = useAPIStatus();
   const [selectedModel, setSelectedModel] = useState<AIModel | null>(null);
@@ -31,14 +33,48 @@ const GenerateImages = () => {
   const [aspectRatio, setAspectRatio] = useState("1:1");
   const [quality, setQuality] = useState("standard");
   const [isDragging, setIsDragging] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<ImageFilter>("all");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const models = useMemo(() => {
+  const allModels = useMemo(() => {
     const categoryModels = getModelsByCategory("images");
     return getModelsWithStatus(categoryModels);
   }, [getModelsWithStatus]);
 
-  const freeModelsCount = models.filter(m => m.isFree).length;
+  const filteredModels = useMemo(() => {
+    switch (activeFilter) {
+      case "services":
+        return allModels.filter(m => m.apiStatus === "active");
+      case "free":
+        return allModels.filter(m => m.isFree || m.apiStatus === "free");
+      case "uncensored":
+        return allModels.filter(m => 
+          m.badges.some(b => b.toLowerCase().includes("uncensored") || b.toLowerCase().includes("nsfw") || b === "18+") ||
+          m.name.toLowerCase().includes("uncensored")
+        );
+      default:
+        return allModels;
+    }
+  }, [allModels, activeFilter]);
+
+  const filterCounts = useMemo(() => ({
+    all: allModels.length,
+    services: allModels.filter(m => m.apiStatus === "active").length,
+    free: allModels.filter(m => m.isFree || m.apiStatus === "free").length,
+    uncensored: allModels.filter(m => 
+      m.badges.some(b => b.toLowerCase().includes("uncensored") || b.toLowerCase().includes("nsfw") || b === "18+") ||
+      m.name.toLowerCase().includes("uncensored")
+    ).length,
+  }), [allModels]);
+
+  const freeModelsCount = filteredModels.filter(m => m.isFree).length;
+
+  const filters: { id: ImageFilter; label: string; icon: React.ReactNode }[] = [
+    { id: "all", label: "Catégories", icon: <LayoutGrid className="h-4 w-4" /> },
+    { id: "services", label: "Services", icon: <Tag className="h-4 w-4" /> },
+    { id: "free", label: "Gratuits", icon: <Gift className="h-4 w-4" /> },
+    { id: "uncensored", label: "Sans Censure", icon: <ShieldOff className="h-4 w-4" /> },
+  ];
 
   const handleGenerate = async () => {
     if (!selectedModel || !prompt.trim()) return;
@@ -106,7 +142,7 @@ const GenerateImages = () => {
                 GÉNÉRATION D'IMAGES
               </h1>
               <p className="text-lg text-muted-foreground tracking-wide">
-                Créez des images uniques avec l'IA • <span className="text-[hsl(var(--primary))] font-bold">{models.length} modèles</span> disponibles
+                Créez des images uniques avec l'IA • <span className="text-[hsl(var(--primary))] font-bold">{filteredModels.length} modèles</span> disponibles
               </p>
             </div>
           </div>
@@ -297,7 +333,7 @@ const GenerateImages = () => {
                 MOTEUR DE GÉNÉRATION AI
               </label>
               <ModelSelector
-                models={models}
+                models={filteredModels}
                 selectedModel={selectedModel}
                 onSelectModel={setSelectedModel}
                 category="images"
@@ -378,12 +414,12 @@ const GenerateImages = () => {
             <ImageIcon className="h-6 w-6 text-[hsl(320,100%,60%)]" />
             <h2 className="font-display text-2xl font-bold">TOUS LES MODÈLES D'IMAGES</h2>
             <Badge variant="outline" className="text-base px-3">
-              {models.length}
+              {filteredModels.length}
             </Badge>
           </div>
 
           <ModelGrid
-            models={models}
+            models={filteredModels}
             category="images"
             favorites={favorites}
             onToggleFavorite={toggleFavorite}
