@@ -106,15 +106,15 @@ const categoryStyles: Record<string, {
   },
 };
 
-// Icônes des capacités - DOUBLED SIZE (h-8 w-8)
+// Icônes des capacités - DOUBLED SIZE (h-8 w-8) avec labels écrits
 const capabilityIcons: Record<string, { icon: React.ReactNode; label: string }> = {
-  "image": { icon: <ImageIcon className="h-8 w-8" />, label: "Images" },
-  "video": { icon: <Video className="h-8 w-8" />, label: "Vidéos" },
-  "audio": { icon: <Music className="h-8 w-8" />, label: "Audio" },
-  "text": { icon: <MessageSquare className="h-8 w-8" />, label: "Texte" },
-  "3d": { icon: <Box className="h-8 w-8" />, label: "3D" },
-  "code": { icon: <Code className="h-8 w-8" />, label: "Code" },
-  "retouch": { icon: <Wand2 className="h-8 w-8" />, label: "Retouche" },
+  "image": { icon: <ImageIcon className="h-6 w-6" />, label: "IMAGE" },
+  "video": { icon: <Video className="h-6 w-6" />, label: "VIDÉO" },
+  "audio": { icon: <Music className="h-6 w-6" />, label: "AUDIO" },
+  "text": { icon: <MessageSquare className="h-6 w-6" />, label: "TEXTE" },
+  "3d": { icon: <Box className="h-6 w-6" />, label: "3D" },
+  "code": { icon: <Code className="h-6 w-6" />, label: "CODE" },
+  "retouch": { icon: <Wand2 className="h-6 w-6" />, label: "RETOUCHE" },
 };
 
 // Max generations per model with free generations info and prices in EUR
@@ -425,20 +425,26 @@ export function AppTileCard({ model, onOpenAPIKeyModal, onClick, viewMode = "gri
         flexDirection: "column"
       }}
     >
-      {/* TOP ZONE - App Name + LED + Flame (dedicated zone) */}
+      {/* TOP ZONE - App Name DOUBLED + LED + Flame */}
       <div className={cn(
-        "px-3 py-3 border-b shrink-0 flex items-center justify-between gap-2",
+        "px-3 py-2 border-b shrink-0 flex items-center justify-between gap-2",
         style.borderColor,
         "bg-black/20"
       )}>
-        {/* LED Status - Always visible */}
+        {/* LED Status */}
         <StatusLED isActive={isActive} size="md" />
         
-        <h3 className="font-display text-sm font-bold text-foreground tracking-wider truncate text-center flex-1">
-          {model.name}
-        </h3>
+        {/* Nom de l'app DOUBLÉ en taille */}
+        <div className="flex-1 text-center">
+          <h3 className="font-display text-lg font-black text-foreground tracking-wider truncate">
+            {model.name}
+          </h3>
+          <h4 className="font-display text-xs text-muted-foreground tracking-wider truncate">
+            {model.name}
+          </h4>
+        </div>
         
-        {/* Flame + Hot for adult content - Always visible */}
+        {/* Flame + Hot for adult content */}
         <div className="flex items-center gap-1">
           {isAdult && <AnimatedFlame size="md" />}
           {isHotVideoGenerator && (
@@ -479,20 +485,25 @@ export function AppTileCard({ model, onOpenAPIKeyModal, onClick, viewMode = "gri
             {model.provider}
           </p>
           
-          {/* Capabilities Icons Row - DOUBLED SIZE */}
-          <div className="flex gap-2 flex-wrap">
+          {/* Capabilities Icons Row with TEXT labels */}
+          <div className="flex gap-1 flex-wrap">
             {capabilities.slice(0, 4).map(cap => (
               <div 
                 key={cap}
                 className={cn(
-                  "h-10 w-10 rounded-md flex items-center justify-center",
+                  "flex flex-col items-center gap-0.5",
+                  "rounded-md p-1",
                   "bg-gradient-to-br from-white/10 to-black/20",
                   "shadow-[inset_-1px_-1px_2px_rgba(0,0,0,0.3),inset_1px_1px_2px_rgba(255,255,255,0.1)]",
                   style.textColor
                 )}
-                title={capabilityIcons[cap]?.label}
               >
                 {capabilityIcons[cap]?.icon}
+                <span className="text-[8px] font-display font-bold">{capabilityIcons[cap]?.label}</span>
+                {/* Prix par génération sous l'icône */}
+                <span className="text-[7px] text-muted-foreground">
+                  {priceDisplay === "GRATUIT" ? "0€" : priceDisplay || "?"}
+                </span>
               </div>
             ))}
           </div>
@@ -567,11 +578,11 @@ export function AppTileCard({ model, onOpenAPIKeyModal, onClick, viewMode = "gri
           )}
         </div>
 
-        {/* Center - Adult content badge */}
+        {/* GROS TAMPON -18 rouge pour contenu adulte */}
         {isAdult && (
-          <span className="font-display text-[10px] font-black text-[hsl(0,100%,50%)] tracking-wider">
-            -18
-          </span>
+          <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center w-16 h-16 rounded-full border-4 border-[hsl(0,100%,50%)] bg-[hsl(0,100%,50%)]/20 rotate-[-15deg]">
+            <span className="font-display text-xl font-black text-[hsl(0,100%,50%)]">-18</span>
+          </div>
         )}
 
         {/* Right - Status/Button */}

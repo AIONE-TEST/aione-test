@@ -1,31 +1,58 @@
 import { AIModel } from "@/data/aiModels";
 
-// Priority order for categories - NEW ORDER as requested
+// Priority order for categories - NOUVEL ORDRE: vidéo, image, retouche, adult, audio, llms, code
 const categoryPriority: Record<string, number> = {
   videos: 1,
   images: 2,
   retouch: 3,
-  adult: 4,  // Renamed from uncensored
+  adult: 4,
   audio: 5,
   llms: 6,
   "3d": 7,
   code: 8,
 };
 
+// Prix de base approximatifs pour le tri (en centimes EUR)
+const getApproxPrice = (model: AIModel): number => {
+  if (model.isFree) return 0;
+  if (!model.price) return 9999; // Prix inconnu = en bas
+  
+  const priceStr = model.price.toLowerCase();
+  
+  // Extraire le nombre du prix
+  const match = priceStr.match(/[\d.,]+/);
+  if (!match) return 9999;
+  
+  const num = parseFloat(match[0].replace(',', '.'));
+  
+  // Convertir en centimes pour uniformiser
+  if (priceStr.includes('/mois') || priceStr.includes('month')) {
+    return num * 100; // Prix mensuel
+  } else if (priceStr.includes('/image') || priceStr.includes('/gen')) {
+    return num * 10000; // Prix par génération (plus cher = score plus élevé)
+  } else {
+    return num * 100;
+  }
+};
+
 /**
  * Sort AI models according to the priority rules:
- * 1. By category priority: vidéo, image, retouche, contenu adulte, musique, chat
- * 2. Unlimited and free apps first within each category
- * 3. Then by price (cheapest first)
- * 4. Coding apps last
+ * 1. Par catégorie dans l'ordre: vidéo, image, retouche, adulte, audio, chat, code
+ * 2. Dans chaque catégorie: illimités/gratuits d'abord
+ * 3. Puis par prix croissant (moins cher au plus cher)
+ * 4. Apps nécessitant une connexion obligatoire en fin de liste
  */
 export function sortAIModels(models: AIModel[]): AIModel[] {
   return [...models].sort((a, b) => {
-    // First: Active/Free status
-    const aIsActive = a.apiStatus === "active" || a.isFree;
-    const bIsActive = b.apiStatus === "active" || b.isFree;
+    // 1. Par catégorie d'abord
+    const aPriority = categoryPriority[a.category] || 10;
+    const bPriority = categoryPriority[b.category] || 10;
     
-    // Unlimited free apps get highest priority
+    if (aPriority !== bPriority) {
+      return aPriority - bPriority;
+    }
+    
+    // 2. Dans la même catégorie: illimités et gratuits en premier
     const aIsUnlimitedFree = a.isFree && (
       a.badges?.includes("UNLIMITED") || 
       a.badges?.includes("NO SIGNUP") ||
@@ -40,32 +67,26 @@ export function sortAIModels(models: AIModel[]): AIModel[] {
     if (aIsUnlimitedFree && !bIsUnlimitedFree) return -1;
     if (!aIsUnlimitedFree && bIsUnlimitedFree) return 1;
     
-    // Then free apps
+    // 3. Puis gratuits
     if (a.isFree && !b.isFree) return -1;
     if (!a.isFree && b.isFree) return 1;
     
-    // Then by category priority
-    const aPriority = categoryPriority[a.category] || 10;
-    const bPriority = categoryPriority[b.category] || 10;
+    // 4. Puis par prix croissant
+    const aPrice = getApproxPrice(a);
+    const bPrice = getApproxPrice(b);
     
-    if (aPriority !== bPriority) {
-      return aPriority - bPriority;
+    if (aPrice !== bPrice) {
+      return aPrice - bPrice;
     }
     
-    // Within same category: active first
+    // 5. Apps actives avant inactives
+    const aIsActive = a.apiStatus === "active";
+    const bIsActive = b.apiStatus === "active";
+    
     if (aIsActive && !bIsActive) return -1;
     if (!aIsActive && bIsActive) return 1;
     
-    // Then adult retouch apps
-    const aIsAdultRetouch = a.category === "adult" && 
-      (a.features?.some(f => f.toLowerCase().includes("retouch") || f.toLowerCase().includes("edit")));
-    const bIsAdultRetouch = b.category === "adult" && 
-      (b.features?.some(f => f.toLowerCase().includes("retouch") || f.toLowerCase().includes("edit")));
-    
-    if (aIsAdultRetouch && !bIsAdultRetouch) return -1;
-    if (!aIsAdultRetouch && bIsAdultRetouch) return 1;
-    
-    // Alphabetical as tiebreaker
+    // Alphabétique en dernier recours
     return a.name.localeCompare(b.name);
   });
 }
@@ -75,7 +96,7 @@ export function sortAIModels(models: AIModel[]): AIModel[] {
  */
 export function sortModelsInCategory(models: AIModel[]): AIModel[] {
   return [...models].sort((a, b) => {
-    // Unlimited free first
+    // Illimités gratuits d'abord
     const aIsUnlimitedFree = a.isFree && (
       a.badges?.includes("UNLIMITED") || 
       a.badges?.includes("NO SIGNUP")
@@ -88,11 +109,19 @@ export function sortModelsInCategory(models: AIModel[]): AIModel[] {
     if (aIsUnlimitedFree && !bIsUnlimitedFree) return -1;
     if (!aIsUnlimitedFree && bIsUnlimitedFree) return 1;
     
-    // Then free
+    // Puis gratuits
     if (a.isFree && !b.isFree) return -1;
     if (!a.isFree && b.isFree) return 1;
     
-    // Then active
+    // Puis par prix croissant
+    const aPrice = getApproxPrice(a);
+    const bPrice = getApproxPrice(b);
+    
+    if (aPrice !== bPrice) {
+      return aPrice - bPrice;
+    }
+    
+    // Puis actifs
     const aIsActive = a.apiStatus === "active";
     const bIsActive = b.apiStatus === "active";
     

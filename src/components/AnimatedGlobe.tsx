@@ -32,14 +32,14 @@ const generateSatellites = (): Satellite[] => {
     "hsl(200,100%,60%)",
   ];
   
-  return Array.from({ length: 6 }, (_, i) => ({
+  return Array.from({ length: 8 }, (_, i) => ({
     id: i + 1,
-    orbitRadius: 1.2 + Math.random() * 0.5,
-    orbitDuration: 4 + Math.random() * 8,
-    size: 2 + Math.random() * 2,
-    delay: Math.random() * 5,
+    orbitRadius: 0.6 + Math.random() * 0.25, // Plus proches de la Terre (0.6-0.85)
+    orbitDuration: 3 + Math.random() * 6,
+    size: 3 + Math.random() * 3, // Plus gros satellites
+    delay: Math.random() * 3,
     color: colors[i % colors.length],
-    orbitTilt: -60 + Math.random() * 120,
+    orbitTilt: -45 + Math.random() * 90,
     direction: Math.random() > 0.5 ? 1 : -1,
   }));
 };

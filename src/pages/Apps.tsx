@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { APIKeyModal } from "@/components/APIKeyModal";
 import { AdultDisclaimerModal } from "@/components/AdultDisclaimerModal";
+import { AppDetailModal } from "@/components/AppDetailModal";
 import { AppTileCard } from "@/components/AppTileCard";
 import { cn } from "@/lib/utils";
 
@@ -108,6 +109,8 @@ const Apps = () => {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [adultModalOpen, setAdultModalOpen] = useState(false);
   const [pendingAdultModel, setPendingAdultModel] = useState<AIModel | null>(null);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [selectedDetailModel, setSelectedDetailModel] = useState<AIModel | null>(null);
 
   // Get ALL models including those from API Keys
   const allModels = useMemo(() => {
@@ -211,11 +214,19 @@ const Apps = () => {
     if (model.category === "adult") {
       setPendingAdultModel(model);
       setAdultModalOpen(true);
+    } else {
+      // Ouvrir le modal de détails pour les apps non-adultes
+      setSelectedDetailModel(model);
+      setDetailModalOpen(true);
     }
   };
 
   const handleAdultConfirm = () => {
     setAdultModalOpen(false);
+    if (pendingAdultModel) {
+      setSelectedDetailModel(pendingAdultModel);
+      setDetailModalOpen(true);
+    }
     setPendingAdultModel(null);
   };
 

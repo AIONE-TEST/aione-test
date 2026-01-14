@@ -209,164 +209,130 @@ const GenerateVideos = () => {
             </div>
           </div>
 
-          {/* 3. ÉDITEUR DE PROMPT - En dessous */}
-          <div className="panel-3d p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Type className="h-5 w-5 text-[hsl(var(--primary))]" />
-              <span className="font-display text-lg font-bold">ÉDITEUR DE PROMPT</span>
+          {/* 3. ÉDITEUR DE PROMPT - Compact */}
+          <div className="panel-3d p-3">
+            <div className="flex items-center gap-2 mb-2">
+              <Type className="h-4 w-4 text-[hsl(var(--primary))]" />
+              <span className="font-display text-sm font-bold">PROMPT</span>
+              <Badge className="bg-[hsl(142,76%,50%)]/20 text-[hsl(142,76%,50%)] border-[hsl(142,76%,50%)]/30 text-xs px-2">
+                {freeModelsCount} GRATUITS
+              </Badge>
             </div>
             
-            <Textarea
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              placeholder="Décrivez la vidéo que vous souhaitez créer... Ex: Un château steampunk avec des engrenages dorés, cinématique 4K"
-              className="input-3d min-h-[100px] text-lg resize-none mb-4"
-            />
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Badge className="bg-[hsl(142,76%,50%)]/20 text-[hsl(142,76%,50%)] border-[hsl(142,76%,50%)]/30 text-base px-3 py-1">
-                  {freeModelsCount} GRATUITS
-                </Badge>
-              </div>
-              
-              <div className="flex items-center gap-4">
-                <Button
-                  onClick={handleGenerate}
-                  disabled={!canGenerate || isGenerating}
-                  className="btn-3d-purple text-lg px-8 py-6 font-display font-bold tracking-wider"
-                >
-                  {isGenerating ? "GÉNÉRATION..." : "GÉNÉRER"}
-                </Button>
-              </div>
+            <div className="flex gap-2">
+              <Textarea
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                placeholder="Décrivez la vidéo... Ex: Château steampunk, cinématique 4K"
+                className="input-3d min-h-[60px] text-sm resize-none flex-1"
+              />
+              <Button
+                onClick={handleGenerate}
+                disabled={!canGenerate || isGenerating}
+                className="btn-3d-purple px-4 py-2 font-display font-bold tracking-wider h-auto"
+              >
+                {isGenerating ? "..." : "GO"}
+              </Button>
             </div>
           </div>
 
-          {/* 4. MOTEUR DE GÉNÉRATION & OPTIONS - En bas */}
-          <div className="panel-3d p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Sparkles className="h-5 w-5 text-[hsl(var(--secondary))]" />
-              <span className="font-display text-lg font-bold">MOTEUR DE GÉNÉRATION & OPTIONS</span>
+          {/* 4. MOTEUR & OPTIONS - Compact */}
+          <div className="panel-3d p-3">
+            <div className="flex items-center gap-2 mb-2">
+              <Sparkles className="h-4 w-4 text-[hsl(var(--secondary))]" />
+              <span className="font-display text-sm font-bold">MOTEUR & OPTIONS</span>
             </div>
 
-            {/* Gros bouton d'import média */}
-            <div className="mb-6">
-              <label className="font-display text-sm text-muted-foreground mb-3 block">
-                IMPORTER UN MÉDIA
-              </label>
-              
-              {/* Sélection type de média */}
-              <div className="flex flex-wrap gap-2 mb-4">
-                {mediaTypes.map((type) => (
-                  <Button
-                    key={type.id}
-                    size="sm"
-                    variant={selectedMediaType === type.id ? "default" : "outline"}
-                    onClick={() => setSelectedMediaType(type.id)}
-                    className={cn(
-                      "gap-2",
-                      selectedMediaType === type.id ? "btn-3d-cyan" : "btn-3d"
-                    )}
-                  >
-                    {type.icon}
-                    {type.label}
-                  </Button>
-                ))}
-              </div>
-
-              {/* Bouton d'import */}
-              <Button
-                onClick={handleImportClick}
-                className="w-full h-16 btn-3d-purple gap-3 text-lg font-display font-bold tracking-wider"
-              >
-                <Upload className="h-6 w-6" />
-                IMPORTER {currentMediaType?.label.toUpperCase()}
-              </Button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept={currentMediaType?.accept}
-                className="hidden"
-                onChange={handleFileSelect}
-              />
-            </div>
-
-            {/* Sélecteur de modèle */}
-            <div className="mb-6">
-              <label className="font-display text-sm text-muted-foreground mb-3 block">
-                MOTEUR DE GÉNÉRATION AI
-              </label>
-              <ModelSelector
-                models={models}
-                selectedModel={selectedModel}
-                onSelectModel={setSelectedModel}
-                category="videos"
-                className="w-full"
-              />
-
-              <div className="mt-4 space-y-2 text-sm">
-                <div className="flex items-center gap-2">
-                  <StatusLED isActive={!!selectedModel} />
-                  <span className="text-muted-foreground">
-                    {selectedModel ? selectedModel.name : "Aucun modèle sélectionné"}
-                  </span>
+            <div className="grid grid-cols-2 gap-3">
+              {/* Colonne gauche - Modèle + Import */}
+              <div className="space-y-2">
+                <ModelSelector
+                  models={models}
+                  selectedModel={selectedModel}
+                  onSelectModel={setSelectedModel}
+                  category="videos"
+                  className="w-full h-10 text-sm"
+                />
+                
+                <div className="flex gap-1">
+                  {mediaTypes.map((type) => (
+                    <Button
+                      key={type.id}
+                      size="sm"
+                      variant={selectedMediaType === type.id ? "default" : "outline"}
+                      onClick={() => setSelectedMediaType(type.id)}
+                      className={cn(
+                        "flex-1 h-8 text-xs gap-1 px-2",
+                        selectedMediaType === type.id ? "btn-3d-cyan" : "btn-3d"
+                      )}
+                    >
+                      {type.icon}
+                    </Button>
+                  ))}
                 </div>
+                
+                <Button
+                  onClick={handleImportClick}
+                  className="w-full h-8 btn-3d-purple gap-2 text-xs font-display"
+                >
+                  <Upload className="h-4 w-4" />
+                  IMPORT
+                </Button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept={currentMediaType?.accept}
+                  className="hidden"
+                  onChange={handleFileSelect}
+                />
               </div>
-            </div>
 
-            {/* Aspect Ratio */}
-            <div className="mb-4">
-              <label className="font-display text-sm text-muted-foreground mb-2 block">
-                FORMATS
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {aspectRatios.map((ratio) => (
-                  <Button
-                    key={ratio}
-                    size="sm"
-                    variant={aspectRatio === ratio ? "default" : "outline"}
-                    onClick={() => setAspectRatio(ratio)}
-                    className={aspectRatio === ratio ? "btn-3d-pink" : "btn-3d"}
-                  >
-                    {ratio}
-                  </Button>
-                ))}
-              </div>
-            </div>
+              {/* Colonne droite - Formats + Qualité */}
+              <div className="space-y-2">
+                <div>
+                  <label className="font-display text-[10px] text-muted-foreground block mb-1">FORMAT</label>
+                  <div className="flex flex-wrap gap-1">
+                    {aspectRatios.slice(0, 4).map((ratio) => (
+                      <Button
+                        key={ratio}
+                        size="sm"
+                        variant={aspectRatio === ratio ? "default" : "outline"}
+                        onClick={() => setAspectRatio(ratio)}
+                        className={cn(
+                          "h-6 px-2 text-[10px]",
+                          aspectRatio === ratio ? "btn-3d-pink" : "btn-3d"
+                        )}
+                      >
+                        {ratio}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
 
-            {/* Quality */}
-            <div className="mb-4">
-              <label className="font-display text-sm text-muted-foreground mb-2 block">
-                QUALITÉ
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {qualities.map((q) => (
-                  <Button
-                    key={q}
-                    size="sm"
-                    variant={quality === q ? "default" : "outline"}
-                    onClick={() => setQuality(q)}
-                    className={quality === q ? "btn-3d-green" : "btn-3d"}
-                  >
-                    {q}
-                  </Button>
-                ))}
-              </div>
-            </div>
+                <div>
+                  <label className="font-display text-[10px] text-muted-foreground block mb-1">QUALITÉ</label>
+                  <div className="flex flex-wrap gap-1">
+                    {qualities.map((q) => (
+                      <Button
+                        key={q}
+                        size="sm"
+                        variant={quality === q ? "default" : "outline"}
+                        onClick={() => setQuality(q)}
+                        className={cn(
+                          "h-6 px-2 text-[10px]",
+                          quality === q ? "btn-3d-green" : "btn-3d"
+                        )}
+                      >
+                        {q}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
 
-            {/* Options supplémentaires */}
-            <div className="pt-4 border-t border-border/50 space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Résolution max</span>
-                <span className="font-bold text-foreground">1920x1080</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Types d'entrée</span>
-                <span className="font-bold text-foreground">TEXT / IMAGE</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Quota restant</span>
-                <span className="font-bold text-[hsl(142,76%,50%)]">50 générations</span>
+                <div className="flex justify-between text-[10px] pt-1 border-t border-border/30">
+                  <span className="text-muted-foreground">Quota</span>
+                  <span className="font-bold text-[hsl(142,76%,50%)]">50 restants</span>
+                </div>
               </div>
             </div>
           </div>
