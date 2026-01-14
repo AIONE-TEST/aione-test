@@ -41,7 +41,7 @@ const APIKeys = () => {
   const [editingKey, setEditingKey] = useState<{ name: string; value: string } | null>(null);
 
   // Master password - 4 characters
-  const MASTER_PASSWORD = "1234"; // User should change this
+  const MASTER_PASSWORD = "0000";
 
   // Get configured API services with their details - including all active APIs
   const configuredServices = useMemo(() => {
