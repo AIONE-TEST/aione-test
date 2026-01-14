@@ -22,6 +22,7 @@ interface ModelSelectorProps {
   category: AICategory;
   className?: string;
   onRefresh?: () => void;
+  defaultModelId?: string;
 }
 
 export function ModelSelector({
@@ -31,11 +32,37 @@ export function ModelSelector({
   category,
   className,
   onRefresh,
+  defaultModelId,
 }: ModelSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [apiKeyModalOpen, setApiKeyModalOpen] = useState(false);
   const [selectedApiKeyName, setSelectedApiKeyName] = useState<string>("");
+  const [hasInitialized, setHasInitialized] = useState(false);
+
+  // Auto-select default model on first render
+  useMemo(() => {
+    if (!hasInitialized && !selectedModel && models.length > 0) {
+      // Try to find specified default model or first available free/active model
+      let defaultModel: AIModel | undefined;
+      
+      if (defaultModelId) {
+        defaultModel = models.find(m => m.id === defaultModelId);
+      }
+      
+      if (!defaultModel) {
+        // Prioritize free models, then active models
+        defaultModel = models.find(m => m.isFree || m.apiStatus === "free") 
+          || models.find(m => m.apiStatus === "active")
+          || models[0];
+      }
+      
+      if (defaultModel) {
+        onSelectModel(defaultModel);
+        setHasInitialized(true);
+      }
+    }
+  }, [models, selectedModel, defaultModelId, hasInitialized, onSelectModel]);
 
   // Group models by status - activated and free models FIRST
   const groupedModels = useMemo(() => {
@@ -197,7 +224,7 @@ export function ModelSelector({
                 </div>
               </div>
             ) : (
-              <span className="text-muted-foreground font-display tracking-wider">SÉLECTIONNER UN MODÈLE...</span>
+              <span className="text-muted-foreground font-display tracking-wider">CHOISISSEZ VOTRE APPLI IA...</span>
             )}
             <ChevronDown className="ml-2 h-5 w-5 shrink-0 opacity-50" />
           </Button>
