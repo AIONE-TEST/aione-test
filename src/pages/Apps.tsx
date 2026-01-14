@@ -1,16 +1,14 @@
 import { useState, useMemo, useCallback } from "react";
-import { AppWindow, Sparkles, ExternalLink, Key, Check, Zap, Flame, Search, LayoutGrid, List, Image, Video, MessageSquare, Music, Wand2, Box, Code } from "lucide-react";
+import { AppWindow, Sparkles, Key, Check, Zap, Flame, Search, LayoutGrid, List, Image, Video, MessageSquare, Music, Wand2, Box, Code } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
-import { AIModel, aiModels, apiConfigs, AICategory } from "@/data/aiModels";
+import { AIModel, aiModels } from "@/data/aiModels";
 import { useAPIStatus } from "@/hooks/useAPIStatus";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { APIKeyModal } from "@/components/APIKeyModal";
 import { AdultDisclaimerModal } from "@/components/AdultDisclaimerModal";
-import { getModelLogo } from "@/data/modelLogos";
-import { StatusLED } from "@/components/StatusLED";
-import { VintageStamp } from "@/components/VintageStamp";
+import { AppTileCard } from "@/components/AppTileCard";
 import { cn } from "@/lib/utils";
 
 interface CategoryConfig {
@@ -22,6 +20,7 @@ interface CategoryConfig {
   borderColor: string;
 }
 
+// 8 catégories distinctes avec couleurs différentes
 const categoryConfigs: CategoryConfig[] = [
   { id: "all", label: "TOUS", icon: <AppWindow className="h-6 w-6" />, color: "text-[hsl(174,100%,50%)]", bgColor: "bg-[hsl(174,100%,50%)]/10", borderColor: "border-[hsl(174,100%,50%)]/30" },
   { id: "activated", label: "APPLIS OK", icon: <Check className="h-6 w-6" />, color: "text-[hsl(142,76%,50%)]", bgColor: "bg-[hsl(142,76%,50%)]/10", borderColor: "border-[hsl(142,76%,50%)]/30" },
@@ -43,6 +42,7 @@ const Apps = () => {
   const [adultModalOpen, setAdultModalOpen] = useState(false);
   const [pendingAdultModel, setPendingAdultModel] = useState<AIModel | null>(null);
 
+  // Get ALL models including those from API Keys
   const allModels = useMemo(() => {
     return getModelsWithStatus(aiModels);
   }, [getModelsWithStatus]);
@@ -106,7 +106,6 @@ const Apps = () => {
 
   // Callback pour rafraîchir instantanément après activation
   const handleAPIKeySuccess = useCallback(() => {
-    // Refetch immédiatement les APIs configurées
     refetch();
   }, [refetch]);
 
@@ -208,7 +207,7 @@ const Apps = () => {
             </Badge>
           </div>
 
-          {/* Category Filters */}
+          {/* 8 Category Filters with distinct colors */}
           <div className="flex flex-wrap gap-2 mb-8">
             {categoryConfigs.map((cat) => {
               const isSelected = selectedCategory === cat.id;
@@ -237,7 +236,7 @@ const Apps = () => {
           </div>
         </div>
 
-        {/* Models Grid */}
+        {/* Models Grid - Using AppTileCard */}
         <div className={cn(
           "gap-4",
           viewMode === "grid" 
@@ -245,7 +244,7 @@ const Apps = () => {
             : "flex flex-col"
         )}>
           {filteredModels.map((model) => (
-            <AppModelCard
+            <AppTileCard
               key={model.id}
               model={model}
               viewMode={viewMode}
@@ -280,203 +279,5 @@ const Apps = () => {
     </div>
   );
 };
-
-interface AppModelCardProps {
-  model: AIModel;
-  viewMode: "grid" | "list";
-  onOpenAPIKeyModal: (apiKeyName: string) => void;
-  onClick: () => void;
-}
-
-function AppModelCard({ model, viewMode, onOpenAPIKeyModal, onClick }: AppModelCardProps) {
-  const [imageError, setImageError] = useState(false);
-  const logoUrl = getModelLogo(model.id, model.provider);
-  const config = model.apiKeyName ? apiConfigs[model.apiKeyName] : null;
-  const isActive = model.apiStatus === "active" || model.isFree;
-  const isUncensored = model.category === "uncensored";
-
-  const getCategoryColor = (category: string) => {
-    const colors: Record<string, string> = {
-      images: "text-[hsl(320,100%,60%)]",
-      videos: "text-[hsl(280,100%,65%)]",
-      llms: "text-[hsl(45,100%,55%)]",
-      audio: "text-[hsl(25,100%,55%)]",
-      retouch: "text-[hsl(174,100%,50%)]",
-      "3d": "text-[hsl(142,76%,50%)]",
-      code: "text-[hsl(210,100%,60%)]",
-      uncensored: "text-[hsl(0,100%,60%)]",
-    };
-    return colors[category] || "text-muted-foreground";
-  };
-
-  if (viewMode === "list") {
-    return (
-      <div 
-        className="panel-3d p-4 flex items-center gap-4 cursor-pointer hover:scale-[1.01] transition-all duration-300"
-        onClick={onClick}
-      >
-        <StatusLED isActive={isActive} size="lg" />
-        
-        <div className="h-12 w-12 rounded-xl bg-muted/50 border border-border/50 overflow-hidden shrink-0">
-          {!imageError ? (
-            <img
-              src={logoUrl}
-              alt={model.provider}
-              className="h-full w-full object-contain p-2"
-              onError={() => setImageError(true)}
-            />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center text-xl font-bold text-muted-foreground font-display">
-              {model.provider.charAt(0)}
-            </div>
-          )}
-        </div>
-
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <h3 className="font-display text-lg font-bold truncate tracking-wider">{model.name}</h3>
-            {isUncensored && <Flame className="h-4 w-4 text-[hsl(0,100%,60%)]" />}
-          </div>
-          <p className="text-sm text-muted-foreground truncate font-display">{model.provider}</p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {model.isFree && (
-            <Badge className="bg-[hsl(142,76%,50%)]/20 text-[hsl(142,76%,50%)] border-[hsl(142,76%,50%)]/30 font-display">
-              FREE
-            </Badge>
-          )}
-          <Badge variant="outline" className={cn("font-display", getCategoryColor(model.category))}>
-            {model.category.toUpperCase()}
-          </Badge>
-          {model.price && !model.isFree && (
-            <span className="text-sm text-[hsl(45,100%,55%)] font-display">{model.price}</span>
-          )}
-        </div>
-
-        {!isActive && model.apiKeyName && (
-          <Button
-            size="sm"
-            className="btn-3d-orange gap-2 font-display tracking-wider"
-            onClick={(e) => {
-              e.stopPropagation();
-              onOpenAPIKeyModal(model.apiKeyName!);
-            }}
-          >
-            <Key className="h-4 w-4" />
-            {model.isFree ? "AJOUTER" : "ACHETER"}
-          </Button>
-        )}
-
-        {isActive && <VintageStamp />}
-      </div>
-    );
-  }
-
-  // GRID VIEW - Cartes réduites avec logo en haut à droite
-  return (
-    <div 
-      className={cn(
-        "panel-3d p-3 flex flex-col cursor-pointer hover:scale-[1.02] transition-all duration-300 relative overflow-hidden",
-        !isActive && "opacity-80"
-      )}
-      onClick={onClick}
-      style={{ minHeight: "240px" }}
-    >
-      {/* Status LED - Top left */}
-      <div className="absolute top-2 left-2">
-        <StatusLED isActive={isActive} />
-      </div>
-
-      {/* Logo - Top right - Double size */}
-      <div className="absolute top-2 right-2 h-16 w-16 rounded-lg bg-muted/70 border border-border/50 overflow-hidden">
-        {!imageError ? (
-          <img
-            src={logoUrl}
-            alt={model.provider}
-            className="h-full w-full object-contain p-2"
-            onError={() => setImageError(true)}
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center text-lg font-bold text-muted-foreground font-display">
-            {model.provider.charAt(0)}
-          </div>
-        )}
-      </div>
-
-      {/* Flame for uncensored */}
-      {isUncensored && (
-        <div className="absolute top-14 right-2">
-          <Flame className="h-4 w-4 text-[hsl(0,100%,60%)] animate-pulse" />
-        </div>
-      )}
-
-      {/* Vintage Stamp for active */}
-      {isActive && (
-        <div className="absolute bottom-12 right-1">
-          <VintageStamp />
-        </div>
-      )}
-
-      {/* Content - Centered */}
-      <div className="pt-12 flex flex-col items-center text-center flex-1">
-        {/* Name - Double size */}
-        <h3 className="font-display text-lg font-bold text-foreground mb-1 line-clamp-2 tracking-wider leading-tight">
-          {model.name}
-        </h3>
-        <p className="text-sm text-muted-foreground mb-2 font-display">{model.provider}</p>
-
-        {/* Category Badge - Double size */}
-        <Badge variant="outline" className={cn("text-sm mb-2 font-display px-3 py-1", getCategoryColor(model.category))}>
-          {model.category.toUpperCase()}
-        </Badge>
-
-        {/* Free/Price Badge */}
-        {model.isFree ? (
-          <Badge className="bg-[hsl(142,76%,50%)]/20 text-[hsl(142,76%,50%)] border-[hsl(142,76%,50%)]/30 text-[10px] font-display">
-            FREE
-          </Badge>
-        ) : model.price && (
-          <span className="text-[10px] text-[hsl(45,100%,55%)] font-display">{model.price}</span>
-        )}
-      </div>
-
-      {/* Action Button or ACTIF label */}
-      <div className="pt-2 border-t border-border/30">
-        {isActive ? (
-          <div className="w-full h-8 flex items-center justify-center">
-            <span className="font-display text-lg font-black text-[hsl(142,76%,50%)] tracking-wider">
-              ACTIF
-            </span>
-          </div>
-        ) : model.isFree ? (
-          <Button
-            size="sm"
-            className="w-full h-8 text-xs font-bold btn-3d-orange gap-1.5 hover:scale-105 transition-transform font-display tracking-wider"
-            onClick={(e) => {
-              e.stopPropagation();
-              if (model.apiKeyName) onOpenAPIKeyModal(model.apiKeyName);
-            }}
-          >
-            <Zap className="h-3 w-3" />
-            AJOUTER
-          </Button>
-        ) : (
-          <Button
-            size="sm"
-            className="w-full h-8 text-sm font-bold bg-[hsl(30,100%,60%)] hover:bg-[hsl(30,100%,65%)] text-black gap-1.5 hover:scale-105 transition-transform font-display tracking-wider"
-            onClick={(e) => {
-              e.stopPropagation();
-              if (model.apiKeyName) onOpenAPIKeyModal(model.apiKeyName);
-            }}
-          >
-            <Key className="h-4 w-4" />
-            ACHETER
-          </Button>
-        )}
-      </div>
-    </div>
-  );
-}
 
 export default Apps;
