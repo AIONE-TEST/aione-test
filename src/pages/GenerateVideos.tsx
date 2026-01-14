@@ -55,7 +55,7 @@ const GenerateVideos = () => {
     <div className="min-h-screen bg-background">
       <Sidebar />
 
-      <main className="ml-[200px] min-h-screen p-6">
+      <main className="ml-[280px] min-h-screen p-6">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-2">

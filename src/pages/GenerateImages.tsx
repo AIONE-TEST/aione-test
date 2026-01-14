@@ -42,7 +42,7 @@ const GenerateImages = () => {
     <div className="min-h-screen bg-background">
       <Sidebar />
 
-      <main className="ml-[200px] min-h-screen p-6">
+      <main className="ml-[280px] min-h-screen p-6">
         {/* Header */}
         <div className="flex items-center gap-4 mb-6">
           <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[hsl(320,100%,60%)] to-[hsl(280,100%,65%)] glow-pink">
