@@ -1,8 +1,8 @@
 import { useState, useMemo } from "react";
-import { ChevronDown, Check, Zap, X, ExternalLink, Key, Search, Image, Video, Music, Wand2, Type, AlertCircle, Square, Tv, Smartphone, Monitor, Film } from "lucide-react";
+import { ChevronDown, Check, Zap, X, ExternalLink, Key, Search, Image, Video, Music, Wand2, Type, AlertCircle } from "lucide-react";
 import { AIModel, AICategory, apiConfigs } from "@/data/aiModels";
 import { getModelLogo } from "@/data/modelLogos";
-import { getModelCapabilities, ModelCapabilities, GenerationMode, AspectRatio, modeLabels, aspectRatioLabels, supportsVideoExtension } from "@/data/modelCapabilities";
+import { getModelCapabilities, ModelCapabilities } from "@/data/modelCapabilities";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -18,9 +18,9 @@ import { cn } from "@/lib/utils";
 
 // Mode icons
 const modeIcons: Record<string, React.ReactNode> = {
-  "txt-to-image": <><Type className="h-3 w-3" /><span>→</span><Image className="h-3 w-3" /></>,
-  "txt-to-video": <><Type className="h-3 w-3" /><span>→</span><Video className="h-3 w-3" /></>,
+  "text-to-image": <><Type className="h-3 w-3" /><span>→</span><Image className="h-3 w-3" /></>,
   "image-to-image": <><Image className="h-3 w-3" /><span>→</span><Image className="h-3 w-3" /></>,
+  "text-to-video": <><Type className="h-3 w-3" /><span>→</span><Video className="h-3 w-3" /></>,
   "image-to-video": <><Image className="h-3 w-3" /><span>→</span><Video className="h-3 w-3" /></>,
   "text-to-audio": <><Type className="h-3 w-3" /><span>→</span><Music className="h-3 w-3" /></>,
   "inpainting": <Wand2 className="h-3 w-3" />,
@@ -28,22 +28,14 @@ const modeIcons: Record<string, React.ReactNode> = {
   "upscale": <Wand2 className="h-3 w-3" />,
 };
 
-// Format icons for aspect ratios avec composants lucide
-const formatIcons: Record<string, React.ReactNode> = {
-  "1:1": <Square className="h-3 w-3" />,
-  "4:3": <Tv className="h-3 w-3" />,
-  "3:4": <Smartphone className="h-3 w-3" />,
-  "16:9": <Monitor className="h-3 w-3" />,
-  "9:16": <Smartphone className="h-3 w-3" />,
-  "21:9": <Film className="h-3 w-3" />,
-};
-
-// Mode labels en français
-const modeFrenchLabels: Record<GenerationMode, string> = {
-  'txt-to-image': 'Texte→Image',
-  'txt-to-video': 'Texte→Vidéo',
-  'image-to-image': 'Image→Image',
-  'image-to-video': 'Image→Vidéo'
+// Format icons for aspect ratios
+const formatIcons: Record<string, string> = {
+  "1:1": "⬜",
+  "4:3": "📺",
+  "3:4": "📱",
+  "16:9": "🖥️",
+  "9:16": "📲",
+  "21:9": "🎬",
 };
 
 interface AIModelSelectorProps {
@@ -55,8 +47,6 @@ interface AIModelSelectorProps {
   onRefresh?: () => void;
   defaultModelId?: string;
   showCapabilities?: boolean;
-  selectedMode?: GenerationMode;
-  onModeChange?: (mode: GenerationMode) => void;
 }
 
 export function AIModelSelector({
@@ -68,27 +58,12 @@ export function AIModelSelector({
   onRefresh,
   defaultModelId,
   showCapabilities = true,
-  selectedMode,
-  onModeChange,
 }: AIModelSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [apiKeyModalOpen, setApiKeyModalOpen] = useState(false);
   const [selectedApiKeyName, setSelectedApiKeyName] = useState<string>("");
   const [hasInitialized, setHasInitialized] = useState(false);
-
-  // Get capabilities for selected model
-  const selectedCapabilities = selectedModel ? getModelCapabilities(selectedModel.id) : null;
-  
-  // Check if selected mode is possible
-  const canGenerate = useMemo(() => {
-    if (!selectedModel || !selectedCapabilities) return false;
-    if (!selectedMode) return true;
-    return selectedCapabilities.supportedModes.includes(selectedMode);
-  }, [selectedModel, selectedCapabilities, selectedMode]);
-
-  // Check video extension capability
-  const hasVideoExtension = selectedModel ? supportsVideoExtension(selectedModel.id) : false;
 
   // Auto-select default model on first render
   useMemo(() => {
@@ -151,6 +126,8 @@ export function AIModelSelector({
     return <X className="h-4 w-4 text-muted-foreground" />;
   };
 
+  // Get capabilities for selected model
+  const selectedCapabilities = selectedModel ? getModelCapabilities(selectedModel.id) : null;
 
   const ModelItem = ({ model }: { model: AIModel }) => {
     const logoUrl = getModelLogo(model.id, model.provider);
@@ -229,122 +206,39 @@ export function AIModelSelector({
           )}
         </div>
 
-        {/* Capabilities row with green/grey buttons */}
+        {/* Capabilities row */}
         {showCapabilities && (
           <div className="flex flex-wrap gap-1 ml-12">
-            {/* Modes - vert si supporté, grisé sinon */}
-            {(['txt-to-image', 'txt-to-video', 'image-to-image', 'image-to-video'] as GenerationMode[]).map((mode) => {
-              const isSupported = capabilities.supportedModes.includes(mode);
-              return (
-                <Badge 
-                  key={mode}
-                  variant="outline" 
-                  className={cn(
-                    "text-[9px] px-1.5 py-0 h-5 gap-1",
-                    isSupported 
-                      ? "bg-[hsl(142,76%,50%)]/20 text-[hsl(142,76%,50%)] border-[hsl(142,76%,50%)]/30 cursor-pointer hover:bg-[hsl(142,76%,50%)]/30"
-                      : "bg-muted/30 text-muted-foreground/50 border-muted/20 cursor-not-allowed opacity-50"
-                  )}
-                  onClick={(e) => {
-                    if (isSupported && onModeChange) {
-                      e.stopPropagation();
-                      onModeChange(mode);
-                    }
-                  }}
-                >
-                  {modeIcons[mode] || modeFrenchLabels[mode]}
-                </Badge>
-              );
-            })}
-            {/* Formats avec icônes */}
-            {(['16:9', '4:3', '1:1', '9:16'] as AspectRatio[]).map((ratio) => {
-              const isSupported = capabilities.supportedAspectRatios.includes(ratio);
-              return (
-                <Badge 
-                  key={ratio}
-                  variant="outline" 
-                  className={cn(
-                    "text-[9px] px-1.5 py-0 h-5 gap-1",
-                    isSupported 
-                      ? "bg-[hsl(320,100%,60%)]/20 text-[hsl(320,100%,60%)] border-[hsl(320,100%,60%)]/30"
-                      : "bg-muted/30 text-muted-foreground/50 border-muted/20 opacity-50"
-                  )}
-                >
-                  {formatIcons[ratio]} {ratio}
-                </Badge>
-              );
-            })}
-            {/* Extension vidéo si supportée */}
-            {supportsVideoExtension(model.id) && (
+            {/* Modes */}
+            {capabilities.supportedModes.map((mode) => (
               <Badge 
+                key={mode}
                 variant="outline" 
-                className="text-[9px] px-1.5 py-0 h-5 gap-1 bg-[hsl(280,100%,65%)]/20 text-[hsl(280,100%,65%)] border-[hsl(280,100%,65%)]/30"
+                className="text-[9px] px-1.5 py-0 h-5 gap-1 bg-[hsl(280,100%,65%)]/10 text-[hsl(280,100%,65%)] border-[hsl(280,100%,65%)]/30"
               >
-                📹 Extension
+                {modeIcons[mode] || mode}
               </Badge>
-            )}
+            ))}
+            {/* Formats */}
+            {capabilities.supportedAspectRatios.slice(0, 4).map((ratio) => (
+              <Badge 
+                key={ratio}
+                variant="outline" 
+                className="text-[9px] px-1.5 py-0 h-5 bg-[hsl(320,100%,60%)]/10 text-[hsl(320,100%,60%)] border-[hsl(320,100%,60%)]/30"
+              >
+                {formatIcons[ratio] || ratio}
+              </Badge>
+            ))}
             {/* Quota */}
             {capabilities.freeQuota !== undefined && (
               <Badge 
                 variant="outline" 
-                className={cn(
-                  "text-[9px] px-1.5 py-0 h-5",
-                  capabilities.freeQuota > 0 
-                    ? "bg-[hsl(142,76%,50%)]/10 text-[hsl(142,76%,50%)] border-[hsl(142,76%,50%)]/30"
-                    : "bg-[hsl(30,100%,50%)]/10 text-[hsl(30,100%,50%)] border-[hsl(30,100%,50%)]/30"
-                )}
+                className="text-[9px] px-1.5 py-0 h-5 bg-[hsl(142,76%,50%)]/10 text-[hsl(142,76%,50%)] border-[hsl(142,76%,50%)]/30"
               >
-                {capabilities.freeQuota > 0 ? `${capabilities.freeQuota} restants` : "0 crédits"}
+                {capabilities.freeQuota} restants
               </Badge>
             )}
           </div>
-        )}
-      </div>
-    );
-  };
-
-  // Mode selection buttons
-  const ModeButtons = () => {
-    if (!selectedCapabilities) return null;
-    
-    return (
-      <div className="flex flex-wrap gap-1 mt-2">
-        {(['txt-to-image', 'txt-to-video', 'image-to-image', 'image-to-video'] as GenerationMode[]).map((mode) => {
-          const isSupported = selectedCapabilities.supportedModes.includes(mode);
-          const isSelected = selectedMode === mode;
-          return (
-            <Button
-              key={mode}
-              size="sm"
-              variant="outline"
-              disabled={!isSupported}
-              onClick={(e) => {
-                e.stopPropagation();
-                if (isSupported && onModeChange) {
-                  onModeChange(mode);
-                }
-              }}
-              className={cn(
-                "h-6 px-2 text-[10px] font-display gap-1",
-                isSelected && isSupported && "bg-[hsl(142,76%,50%)] text-black border-[hsl(142,76%,50%)]",
-                !isSelected && isSupported && "bg-[hsl(142,76%,50%)]/20 text-[hsl(142,76%,50%)] border-[hsl(142,76%,50%)]/30 hover:bg-[hsl(142,76%,50%)]/30",
-                !isSupported && "bg-muted/20 text-muted-foreground/40 border-muted/20 cursor-not-allowed"
-              )}
-            >
-              {modeIcons[mode]}
-              <span className="hidden sm:inline">{modeFrenchLabels[mode]}</span>
-            </Button>
-          );
-        })}
-        {/* Extension vidéo button */}
-        {hasVideoExtension && (
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-6 px-2 text-[10px] font-display gap-1 bg-[hsl(280,100%,65%)]/20 text-[hsl(280,100%,65%)] border-[hsl(280,100%,65%)]/30"
-          >
-            📹 Étendre Vidéo
-          </Button>
         )}
       </div>
     );
@@ -380,40 +274,20 @@ export function AIModelSelector({
                   <ChevronDown className="h-5 w-5 shrink-0 opacity-50" />
                 </div>
                 
-                {/* Selected model capabilities avec boutons de mode */}
+                {/* Selected model capabilities */}
                 {showCapabilities && selectedCapabilities && (
-                  <div className="mt-2 w-full space-y-2">
-                    {/* Mode buttons */}
-                    <ModeButtons />
-                    
-                    {/* Format icons */}
-                    <div className="flex flex-wrap gap-1">
-                      {selectedCapabilities.supportedAspectRatios.map((ratio) => (
-                        <Badge 
-                          key={ratio}
-                          className="text-[9px] px-1.5 py-0 h-5 gap-1 bg-[hsl(320,100%,60%)]/20 text-[hsl(320,100%,60%)]"
-                        >
-                          {formatIcons[ratio]} {ratio}
-                        </Badge>
-                      ))}
-                    </div>
-                    
-                    {/* Credits display */}
-                    <div className="flex items-center gap-2">
-                      <Badge className={cn(
-                        "text-[9px] px-1.5 py-0 h-5",
-                        (selectedCapabilities.freeQuota ?? 0) > 0 
-                          ? "bg-[hsl(142,76%,50%)]/20 text-[hsl(142,76%,50%)]"
-                          : "bg-[hsl(30,100%,50%)]/20 text-[hsl(30,100%,50%)]"
-                      )}>
-                        {selectedCapabilities.freeQuota ?? 0} crédits restants
+                  <div className="flex flex-wrap gap-1 mt-2 w-full">
+                    {selectedCapabilities.supportedModes.map((mode) => (
+                      <Badge 
+                        key={mode}
+                        className="text-[9px] px-1.5 py-0 h-5 gap-1 bg-[hsl(280,100%,65%)]/20 text-[hsl(280,100%,65%)]"
+                      >
+                        {modeIcons[mode] || mode}
                       </Badge>
-                      {hasVideoExtension && (
-                        <Badge className="text-[9px] px-1.5 py-0 h-5 bg-[hsl(280,100%,65%)]/20 text-[hsl(280,100%,65%)]">
-                          📹 Extension vidéo
-                        </Badge>
-                      )}
-                    </div>
+                    ))}
+                    <Badge className="text-[9px] px-1.5 py-0 h-5 bg-[hsl(142,76%,50%)]/20 text-[hsl(142,76%,50%)]">
+                      {selectedCapabilities.freeQuota ?? 0} crédits
+                    </Badge>
                   </div>
                 )}
               </div>

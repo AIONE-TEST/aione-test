@@ -98,7 +98,7 @@ const Generate3D = () => {
             <div className="panel-3d p-4 space-y-3">
               <label className="font-display text-sm text-[hsl(142,76%,50%)] tracking-wider flex items-center gap-2">
                 <Sparkles className="h-4 w-4" />
-                MODÈLE AI
+                MOTEUR DE GÉNÉRATION
               </label>
               <ModelSelector
                 models={models}

@@ -76,7 +76,7 @@ export function GenerationOptions({
           <button className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/30 transition-colors">
             <div className="flex items-center gap-2">
               <Settings2 className="h-4 w-4 text-[hsl(var(--secondary))]" />
-              <span className="font-medium text-sm">Modèle AI & Options</span>
+              <span className="font-medium text-sm">Moteur de Génération & Options</span>
             </div>
             {isOpen ? (
               <ChevronUp className="h-4 w-4 text-muted-foreground" />

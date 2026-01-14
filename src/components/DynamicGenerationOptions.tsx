@@ -123,7 +123,7 @@ export function DynamicGenerationOptions({
           <button className="w-full flex items-center justify-between px-4 py-4 hover:bg-muted/30 transition-colors border-b border-border/30">
             <div className="flex items-center gap-3">
               <Settings2 className="h-5 w-5 text-[hsl(var(--primary))]" />
-              <span className="font-display text-lg font-bold tracking-wider">MODÈLES AI & OPTIONS</span>
+              <span className="font-display text-lg font-bold tracking-wider">MOTEUR DE GÉNÉRATION & OPTIONS</span>
             </div>
             <div className="flex items-center gap-3">
               {selectedModel && (

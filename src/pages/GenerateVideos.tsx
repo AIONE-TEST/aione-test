@@ -193,7 +193,7 @@ const GenerateVideos = () => {
           <div className="panel-3d p-3 space-y-3">
             <div className="flex items-center gap-2 mb-2">
               <Sparkles className="h-4 w-4 text-[hsl(var(--secondary))]" />
-              <span className="font-display text-sm font-bold">MODÈLES AI</span>
+              <span className="font-display text-sm font-bold">MOTEUR</span>
             </div>
 
             <ModelSelector
