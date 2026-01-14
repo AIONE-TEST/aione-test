@@ -8,7 +8,18 @@ interface Satellite {
   delay: number;
   color: string;
   orbitTilt: number;
-  direction: number; // 1 or -1 for direction
+  direction: number;
+}
+
+interface FloatingObject {
+  id: number;
+  emoji: string;
+  orbitRadius: number;
+  orbitDuration: number;
+  size: number;
+  delay: number;
+  orbitTilt: number;
+  direction: number;
 }
 
 interface Star {
@@ -21,6 +32,15 @@ interface Star {
   delay: number;
 }
 
+// Liste d'objets loufoques
+const funnyEmojis = [
+  "🚀", "🛸", "🌟", "⭐", "🪐", "☄️", "🌙", "🔮",
+  "👽", "🤖", "👨‍🚀", "👩‍🚀", "🛰️", "🔭", "🎯", "💫",
+  "🦄", "🐉", "🦋", "🐙", "🦑", "🐬", "🐋", "🦕",
+  "🍕", "🍩", "🎸", "🎮", "💎", "🏆", "⚡", "🌈",
+  "🎪", "🎭", "🎨", "🔥", "❄️", "🍀", "🌸", "🦅"
+];
+
 // Generate random satellites
 const generateSatellites = (): Satellite[] => {
   const colors = [
@@ -32,14 +52,28 @@ const generateSatellites = (): Satellite[] => {
     "hsl(200,100%,60%)",
   ];
   
-  return Array.from({ length: 8 }, (_, i) => ({
+  return Array.from({ length: 6 }, (_, i) => ({
     id: i + 1,
-    orbitRadius: 0.6 + Math.random() * 0.25, // Plus proches de la Terre (0.6-0.85)
-    orbitDuration: 3 + Math.random() * 6,
-    size: 3 + Math.random() * 3, // Plus gros satellites
+    orbitRadius: 0.55 + Math.random() * 0.3,
+    orbitDuration: 4 + Math.random() * 6,
+    size: 4 + Math.random() * 4,
     delay: Math.random() * 3,
     color: colors[i % colors.length],
-    orbitTilt: -45 + Math.random() * 90,
+    orbitTilt: -60 + Math.random() * 120,
+    direction: Math.random() > 0.5 ? 1 : -1,
+  }));
+};
+
+// Generate random floating objects
+const generateFloatingObjects = (): FloatingObject[] => {
+  return Array.from({ length: 20 }, (_, i) => ({
+    id: i + 100,
+    emoji: funnyEmojis[Math.floor(Math.random() * funnyEmojis.length)],
+    orbitRadius: 0.5 + Math.random() * 0.45,
+    orbitDuration: 8 + Math.random() * 15,
+    size: 14 + Math.random() * 12,
+    delay: Math.random() * 10,
+    orbitTilt: -80 + Math.random() * 160,
     direction: Math.random() > 0.5 ? 1 : -1,
   }));
 };
@@ -60,7 +94,8 @@ const generateStars = (count: number): Star[] => {
 export function AnimatedGlobe({ size = 80 }: { size?: number }) {
   const [rotation, setRotation] = useState(0);
   const [satellites] = useState(() => generateSatellites());
-  const [stars] = useState(() => generateStars(30));
+  const [floatingObjects] = useState(() => generateFloatingObjects());
+  const [stars] = useState(() => generateStars(40));
   const animationRef = useRef<number>();
   const lastTimeRef = useRef<number>(0);
 
@@ -69,7 +104,7 @@ export function AnimatedGlobe({ size = 80 }: { size?: number }) {
       if (lastTimeRef.current === 0) lastTimeRef.current = time;
       const delta = time - lastTimeRef.current;
       
-      if (delta > 30) { // ~33fps for smooth animation
+      if (delta > 30) {
         setRotation(prev => (prev + 0.8) % 360);
         lastTimeRef.current = time;
       }
@@ -89,8 +124,8 @@ export function AnimatedGlobe({ size = 80 }: { size?: number }) {
     <div 
       className="relative"
       style={{ 
-        width: size * 1.8, 
-        height: size * 1.8,
+        width: size * 2, 
+        height: size * 2,
       }}
     >
       {/* Background Stars */}
@@ -114,23 +149,37 @@ export function AnimatedGlobe({ size = 80 }: { size?: number }) {
             }}
           />
         ))}
-        {/* Distant asteroids/debris */}
-        {[...Array(5)].map((_, i) => (
-          <ellipse
-            key={`asteroid-${i}`}
-            cx={15 + i * 18}
-            cy={10 + (i % 3) * 35}
-            rx={1}
-            ry={0.6}
-            fill="hsl(30, 30%, 60%)"
-            opacity={0.4}
-            style={{
-              transform: `rotate(${i * 30}deg)`,
-              transformOrigin: `${15 + i * 18}px ${10 + (i % 3) * 35}px`,
-            }}
-          />
-        ))}
       </svg>
+
+      {/* Floating funny objects */}
+      {floatingObjects.map((obj) => (
+        <div
+          key={obj.id}
+          className="absolute pointer-events-none"
+          style={{
+            width: size * 2,
+            height: size * 2,
+            top: 0,
+            left: 0,
+            animation: `spin-satellite-${obj.direction > 0 ? 'cw' : 'ccw'} ${obj.orbitDuration}s linear infinite`,
+            animationDelay: `${obj.delay}s`,
+            transform: `rotateX(${obj.orbitTilt}deg)`,
+          }}
+        >
+          <div
+            className="absolute"
+            style={{
+              fontSize: obj.size,
+              top: "50%",
+              left: `${50 - obj.orbitRadius * 50}%`,
+              transform: "translateY(-50%)",
+              filter: "drop-shadow(0 0 4px rgba(255,255,255,0.5))",
+            }}
+          >
+            {obj.emoji}
+          </div>
+        </div>
+      ))}
 
       {/* Satellites with random orbits */}
       {satellites.map((sat) => (
@@ -138,8 +187,8 @@ export function AnimatedGlobe({ size = 80 }: { size?: number }) {
           key={sat.id}
           className="absolute"
           style={{
-            width: size * 1.8,
-            height: size * 1.8,
+            width: size * 2,
+            height: size * 2,
             top: 0,
             left: 0,
             animation: `spin-satellite-${sat.direction > 0 ? 'cw' : 'ccw'} ${sat.orbitDuration}s linear infinite`,
@@ -147,7 +196,6 @@ export function AnimatedGlobe({ size = 80 }: { size?: number }) {
             transform: `rotateX(${sat.orbitTilt}deg)`,
           }}
         >
-          {/* Satellite body */}
           <div
             className="absolute rounded-full"
             style={{
@@ -160,9 +208,8 @@ export function AnimatedGlobe({ size = 80 }: { size?: number }) {
               transform: "translateY(-50%)",
             }}
           />
-          {/* Orbit trail (subtle) */}
           <div
-            className="absolute rounded-full border opacity-15"
+            className="absolute rounded-full border opacity-10"
             style={{
               width: `${sat.orbitRadius * 100}%`,
               height: `${sat.orbitRadius * 100}%`,
@@ -216,9 +263,7 @@ export function AnimatedGlobe({ size = 80 }: { size?: number }) {
             perspective: "1000px"
           }}
         >
-          {/* Continent shapes */}
           <svg viewBox="0 0 100 100" className="w-full h-full">
-            {/* North America */}
             <ellipse 
               cx={25 + Math.sin(rotation * Math.PI / 180) * 20} 
               cy="30" 
@@ -227,7 +272,6 @@ export function AnimatedGlobe({ size = 80 }: { size?: number }) {
               fill="hsl(142,50%,35%)"
               opacity={Math.cos(rotation * Math.PI / 180) > -0.3 ? 0.9 : 0.3}
             />
-            {/* South America */}
             <ellipse 
               cx={30 + Math.sin(rotation * Math.PI / 180) * 18} 
               cy="60" 
@@ -236,7 +280,6 @@ export function AnimatedGlobe({ size = 80 }: { size?: number }) {
               fill="hsl(142,50%,40%)"
               opacity={Math.cos(rotation * Math.PI / 180) > -0.3 ? 0.9 : 0.3}
             />
-            {/* Europe/Africa */}
             <ellipse 
               cx={55 + Math.sin((rotation + 120) * Math.PI / 180) * 15} 
               cy="40" 
@@ -245,7 +288,6 @@ export function AnimatedGlobe({ size = 80 }: { size?: number }) {
               fill="hsl(45,40%,40%)"
               opacity={Math.cos((rotation + 120) * Math.PI / 180) > -0.3 ? 0.9 : 0.3}
             />
-            {/* Asia */}
             <ellipse 
               cx={70 + Math.sin((rotation + 180) * Math.PI / 180) * 20} 
               cy="35" 
@@ -254,7 +296,6 @@ export function AnimatedGlobe({ size = 80 }: { size?: number }) {
               fill="hsl(25,50%,45%)"
               opacity={Math.cos((rotation + 180) * Math.PI / 180) > -0.3 ? 0.9 : 0.3}
             />
-            {/* Australia */}
             <ellipse 
               cx={80 + Math.sin((rotation + 220) * Math.PI / 180) * 12} 
               cy="65" 

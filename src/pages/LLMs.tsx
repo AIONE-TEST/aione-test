@@ -2,11 +2,13 @@ import { useState, useMemo, useRef, useEffect } from "react";
 import { Bot, Sparkles, Send, Loader2, User, MessageSquare, Zap, Brain, Code, FileText, LayoutGrid, Gift, ShieldOff, Tag } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { ModelSelector } from "@/components/ModelSelector";
+import { ModelGrid } from "@/components/ModelGrid";
 import { AIModel, getModelsByCategory } from "@/data/aiModels";
 import { useAPIStatus } from "@/hooks/useAPIStatus";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -20,49 +22,33 @@ interface Message {
 
 type LLMFilter = "all" | "services" | "free" | "uncensored";
 
-// Map model IDs to their corresponding edge function endpoints
 const getEdgeFunctionForModel = (modelId: string): string | null => {
   const modelToFunction: Record<string, string> = {
-    // OpenAI models
     "gpt-4o": "chat-openai",
     "gpt-4o-mini": "chat-openai",
     "gpt-4-turbo": "chat-openai",
     "o1-preview": "chat-openai",
     "o1-mini": "chat-openai",
-    // Claude models
     "claude-3-opus": "chat-claude",
     "claude-3-sonnet": "chat-claude",
     "claude-3-haiku": "chat-claude",
     "claude-35-sonnet": "chat-claude",
-    // Mistral models
     "mistral-large": "chat-mistral",
     "mistral-medium": "chat-mistral",
     "mistral-small": "chat-mistral",
     "mixtral-8x7b": "chat-mistral",
-    // Groq models
     "groq-llama-70b": "chat-groq",
     "groq-llama-8b": "chat-groq",
     "groq-mixtral": "chat-groq",
-    // Grok models
     "grok-beta": "chat-grok",
     "grok-2": "chat-grok",
   };
   
-  // Check for partial matches
   for (const [key, value] of Object.entries(modelToFunction)) {
     if (modelId.toLowerCase().includes(key.toLowerCase()) || key.toLowerCase().includes(modelId.toLowerCase())) {
       return value;
     }
   }
-  
-  // Fallback based on provider
-  const providerMap: Record<string, string> = {
-    openai: "chat-openai",
-    anthropic: "chat-claude",
-    mistral: "chat-mistral",
-    groq: "chat-groq",
-    xai: "chat-grok",
-  };
   
   return null;
 };
@@ -74,6 +60,7 @@ const LLMs = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [activeFilter, setActiveFilter] = useState<LLMFilter>("all");
+  const [favorites, setFavorites] = useState<string[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const allModels = useMemo(() => {
@@ -115,6 +102,14 @@ const LLMs = () => {
     scrollToBottom();
   }, [messages]);
 
+  const toggleFavorite = (modelId: string) => {
+    setFavorites((prev) =>
+      prev.includes(modelId)
+        ? prev.filter((id) => id !== modelId)
+        : [...prev, modelId]
+    );
+  };
+
   const handleSend = async () => {
     if (!input.trim() || !selectedModel || isLoading) return;
 
@@ -130,10 +125,8 @@ const LLMs = () => {
     setIsLoading(true);
 
     try {
-      // Determine which edge function to call based on the model
       let functionName = getEdgeFunctionForModel(selectedModel.id);
       
-      // Fallback based on provider name
       if (!functionName) {
         const providerLower = selectedModel.provider.toLowerCase();
         if (providerLower.includes("openai")) functionName = "chat-openai";
@@ -144,7 +137,6 @@ const LLMs = () => {
       }
 
       if (!functionName) {
-        // No API configured for this model, show error
         toast({
           title: "Modèle non disponible",
           description: `L'API pour ${selectedModel.name} n'est pas encore configurée.`,
@@ -154,7 +146,6 @@ const LLMs = () => {
         return;
       }
 
-      // Build messages array for the API
       const apiMessages = [
         { role: "system", content: "Tu es un assistant IA utile et amical. Réponds en français de manière concise et claire." },
         ...messages.map(m => ({ role: m.role, content: m.content })),
@@ -176,7 +167,6 @@ const LLMs = () => {
         return;
       }
 
-      // Extract the response content
       const responseContent = data?.choices?.[0]?.message?.content || 
                               data?.message?.content ||
                               data?.content ||
@@ -209,219 +199,164 @@ const LLMs = () => {
   };
 
   const filters: { id: LLMFilter; label: string; icon: React.ReactNode }[] = [
-    { id: "all", label: "Catégories", icon: <LayoutGrid className="h-4 w-4" /> },
-    { id: "services", label: "Services", icon: <Tag className="h-4 w-4" /> },
-    { id: "free", label: "Gratuits", icon: <Gift className="h-4 w-4" /> },
-    { id: "uncensored", label: "Sans Censure", icon: <ShieldOff className="h-4 w-4" /> },
+    { id: "all", label: "Tous", icon: <LayoutGrid className="h-3 w-3" /> },
+    { id: "services", label: "Actifs", icon: <Tag className="h-3 w-3" /> },
+    { id: "free", label: "Gratuits", icon: <Gift className="h-3 w-3" /> },
+    { id: "uncensored", label: "-18", icon: <ShieldOff className="h-3 w-3" /> },
   ];
 
   return (
     <div className="min-h-screen bg-background">
       <Sidebar />
 
-      <main className="ml-[373px] min-h-screen p-6 flex flex-col">
-        {/* Header */}
-        <div className="flex items-center gap-4 mb-6">
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[hsl(45,100%,55%)] to-[hsl(25,100%,55%)] glow-yellow">
-            <Bot className="h-8 w-8 text-white" />
+      <main className="ml-[373px] min-h-screen p-4 flex flex-col">
+        {/* Header compact */}
+        <div className="flex items-center gap-3 mb-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[hsl(45,100%,55%)] to-[hsl(25,100%,55%)] glow-yellow">
+            <Bot className="h-5 w-5 text-white" />
           </div>
-          <div>
-            <h1 className="font-display text-3xl font-black tracking-wider" style={{
+          <div className="flex-1">
+            <h1 className="font-display text-xl font-black" style={{
               background: "linear-gradient(135deg, hsl(45,100%,55%), hsl(25,100%,55%))",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent"
             }}>
               CHAT LLM
             </h1>
-            <p className="text-lg text-muted-foreground">
-              <span className="text-[hsl(45,100%,55%)] font-bold">{filteredModels.length}</span> MODÈLES DISPONIBLES
-            </p>
+          </div>
+          {/* Filtres compacts */}
+          <div className="flex gap-1">
+            {filters.map((filter) => (
+              <Button
+                key={filter.id}
+                variant={activeFilter === filter.id ? "default" : "outline"}
+                size="sm"
+                onClick={() => setActiveFilter(filter.id)}
+                className={cn(
+                  "gap-1 text-xs h-7 px-2",
+                  activeFilter === filter.id ? "btn-3d-yellow" : ""
+                )}
+              >
+                {filter.icon}
+                {filter.label}
+                <span className="text-[10px] opacity-70">{filterCounts[filter.id]}</span>
+              </Button>
+            ))}
           </div>
         </div>
 
-        {/* Filter Buttons */}
-        <div className="flex flex-wrap gap-3 mb-6">
-          {filters.map((filter) => (
-            <Button
-              key={filter.id}
-              variant={activeFilter === filter.id ? "default" : "outline"}
-              size="sm"
-              onClick={() => setActiveFilter(filter.id)}
-              className={cn(
-                "gap-2 text-sm font-semibold transition-all",
-                activeFilter === filter.id 
-                  ? "btn-3d-yellow" 
-                  : "hover:border-[hsl(45,100%,55%)]/50"
-              )}
-            >
-              {filter.icon}
-              {filter.label}
-              <span className={cn(
-                "ml-1 px-1.5 py-0.5 rounded-full text-xs",
-                activeFilter === filter.id 
-                  ? "bg-black/20 text-white" 
-                  : "bg-muted text-muted-foreground"
-              )}>
-                {filterCounts[filter.id]}
-              </span>
-            </Button>
-          ))}
-        </div>
+        {/* Chat pleine largeur - réduit d'1/4 */}
+        <div className="panel-3d flex flex-col overflow-hidden" style={{ height: "calc(75vh - 100px)" }}>
+          {/* Model Selector compact */}
+          <div className="p-3 border-b border-border/50 flex items-center gap-3">
+            <Sparkles className="h-4 w-4 text-[hsl(45,100%,55%)]" />
+            <ModelSelector
+              models={filteredModels}
+              selectedModel={selectedModel}
+              onSelectModel={setSelectedModel}
+              category="llms"
+              className="flex-1"
+            />
+          </div>
 
-        {/* Quick Actions */}
-        <div className="flex gap-3 mb-6">
-          <Button className="btn-3d-yellow gap-2 text-base hover:scale-105 transition-transform">
-            <MessageSquare className="h-5 w-5" />
-            CHAT
-          </Button>
-          <Button className="btn-3d gap-2 text-base hover:scale-105 transition-transform">
-            <Brain className="h-5 w-5" />
-            RAISONNEMENT
-          </Button>
-          <Button className="btn-3d gap-2 text-base hover:scale-105 transition-transform">
-            <Code className="h-5 w-5" />
-            CODE
-          </Button>
-          <Button className="btn-3d gap-2 text-base hover:scale-105 transition-transform">
-            <FileText className="h-5 w-5" />
-            ANALYSE
-          </Button>
-        </div>
-
-        {/* Chat Interface */}
-        <div className="flex-1 grid grid-cols-1 xl:grid-cols-[1fr_380px] gap-6 min-h-0">
-          {/* Chat Area */}
-          <div className="panel-3d flex flex-col overflow-hidden">
-            {/* Model Selector */}
-            <div className="p-4 border-b border-border/50">
-              <div className="flex items-center gap-3">
-                <Sparkles className="h-5 w-5 text-[hsl(45,100%,55%)]" />
-                <label className="font-display text-sm text-[hsl(45,100%,55%)] tracking-wider">
-                  MODÈLE IA
-                </label>
-              </div>
-              <ModelSelector
-                models={filteredModels}
-                selectedModel={selectedModel}
-                onSelectModel={setSelectedModel}
-                category="llms"
-                className="mt-2"
-              />
-            </div>
-
-            {/* Messages */}
-            <ScrollArea className="flex-1 p-4">
-              {messages.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full text-center py-12">
-                  <div className="h-20 w-20 rounded-full bg-gradient-to-br from-[hsl(45,100%,55%)] to-[hsl(25,100%,55%)] flex items-center justify-center mb-4 glow-yellow">
-                    <Sparkles className="h-10 w-10 text-white" />
-                  </div>
-                  <h3 className="font-display text-xl text-foreground mb-2">PRÊT À DISCUTER</h3>
-                  <p className="text-base text-muted-foreground max-w-md">
-                    SÉLECTIONNEZ UN MODÈLE ET COMMENCEZ UNE CONVERSATION
-                  </p>
+          {/* Messages */}
+          <ScrollArea className="flex-1 p-4">
+            {messages.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-center py-8">
+                <div className="h-16 w-16 rounded-full bg-gradient-to-br from-[hsl(45,100%,55%)] to-[hsl(25,100%,55%)] flex items-center justify-center mb-3 glow-yellow">
+                  <Sparkles className="h-8 w-8 text-white" />
                 </div>
-              ) : (
-                <div className="space-y-4">
-                  {messages.map((message) => (
+                <h3 className="font-display text-lg text-foreground mb-1">PRÊT À DISCUTER</h3>
+                <p className="text-sm text-muted-foreground">Sélectionnez un modèle et commencez</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {messages.map((message) => (
+                  <div
+                    key={message.id}
+                    className={cn(
+                      "flex gap-2",
+                      message.role === "user" ? "justify-end" : ""
+                    )}
+                  >
+                    {message.role === "assistant" && (
+                      <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-[hsl(45,100%,55%)] to-[hsl(25,100%,55%)] flex items-center justify-center shrink-0">
+                        <Bot className="h-4 w-4 text-white" />
+                      </div>
+                    )}
                     <div
-                      key={message.id}
                       className={cn(
-                        "flex gap-3",
-                        message.role === "user" ? "justify-end" : ""
+                        "max-w-[80%] rounded-lg px-3 py-2 panel-3d text-sm",
+                        message.role === "user"
+                          ? "bg-[hsl(45,100%,55%)]/20 border-[hsl(45,100%,55%)]/30"
+                          : ""
                       )}
                     >
-                      {message.role === "assistant" && (
-                        <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-[hsl(45,100%,55%)] to-[hsl(25,100%,55%)] flex items-center justify-center shrink-0">
-                          <Bot className="h-5 w-5 text-white" />
-                        </div>
-                      )}
-                      <div
-                        className={cn(
-                          "max-w-[80%] rounded-xl px-4 py-3 panel-3d",
-                          message.role === "user"
-                            ? "bg-[hsl(45,100%,55%)]/20 border-[hsl(45,100%,55%)]/30"
-                            : ""
-                        )}
-                      >
-                        <p className="text-base whitespace-pre-wrap">{message.content}</p>
-                      </div>
-                      {message.role === "user" && (
-                        <div className="h-10 w-10 rounded-xl bg-muted flex items-center justify-center shrink-0">
-                          <User className="h-5 w-5" />
-                        </div>
-                      )}
+                      <p className="whitespace-pre-wrap">{message.content}</p>
                     </div>
-                  ))}
-                  {isLoading && (
-                    <div className="flex gap-3">
-                      <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-[hsl(45,100%,55%)] to-[hsl(25,100%,55%)] flex items-center justify-center shrink-0">
-                        <Bot className="h-5 w-5 text-white" />
+                    {message.role === "user" && (
+                      <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                        <User className="h-4 w-4" />
                       </div>
-                      <div className="panel-3d rounded-xl px-4 py-3">
-                        <Loader2 className="h-5 w-5 animate-spin" />
-                      </div>
+                    )}
+                  </div>
+                ))}
+                {isLoading && (
+                  <div className="flex gap-2">
+                    <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-[hsl(45,100%,55%)] to-[hsl(25,100%,55%)] flex items-center justify-center shrink-0">
+                      <Bot className="h-4 w-4 text-white" />
                     </div>
-                  )}
-                  <div ref={messagesEndRef} />
-                </div>
-              )}
-            </ScrollArea>
-
-            {/* Input */}
-            <div className="p-4 border-t border-border/50">
-              <div className="flex gap-3">
-                <Textarea
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder={selectedModel ? "ÉCRIVEZ VOTRE MESSAGE..." : "SÉLECTIONNEZ D'ABORD UN MODÈLE..."}
-                  disabled={!selectedModel || isLoading}
-                  className="input-3d min-h-[70px] max-h-[200px] resize-none text-base"
-                />
-                <Button
-                  onClick={handleSend}
-                  disabled={!selectedModel || !input.trim() || isLoading}
-                  className="btn-3d-yellow h-auto px-6 hover:scale-105 transition-transform disabled:opacity-50"
-                >
-                  {isLoading ? (
-                    <Loader2 className="h-6 w-6 animate-spin" />
-                  ) : (
-                    <Send className="h-6 w-6" />
-                  )}
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          {/* Model Info */}
-          <div className="space-y-4">
-            {selectedModel && (
-              <div className="panel-3d p-5">
-                <h3 className="font-display text-sm text-[hsl(45,100%,55%)] mb-3">MODÈLE SÉLECTIONNÉ</h3>
-                <div className="space-y-3">
-                  <p className="font-display text-lg font-bold">{selectedModel.name}</p>
-                  <p className="text-sm text-muted-foreground">{selectedModel.provider}</p>
-                  <p className="text-base text-muted-foreground">{selectedModel.description}</p>
-                </div>
+                    <div className="panel-3d rounded-lg px-3 py-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    </div>
+                  </div>
+                )}
+                <div ref={messagesEndRef} />
               </div>
             )}
+          </ScrollArea>
 
-            {/* Quick Tips */}
-            <div className="panel-3d p-5">
-              <h3 className="font-display text-sm text-muted-foreground mb-3">CONSEILS</h3>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li className="flex items-start gap-2">
-                  <Zap className="h-4 w-4 text-[hsl(45,100%,55%)] mt-0.5" />
-                  APPUYEZ ENTRÉE POUR ENVOYER
-                </li>
-                <li className="flex items-start gap-2">
-                  <Zap className="h-4 w-4 text-[hsl(45,100%,55%)] mt-0.5" />
-                  SHIFT+ENTRÉE POUR NOUVELLE LIGNE
-                </li>
-              </ul>
+          {/* Input compact */}
+          <div className="p-3 border-t border-border/50">
+            <div className="flex gap-2">
+              <Textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={selectedModel ? "Écrivez votre message..." : "Sélectionnez un modèle..."}
+                disabled={!selectedModel || isLoading}
+                className="input-3d min-h-[50px] max-h-[120px] resize-none text-sm"
+              />
+              <Button
+                onClick={handleSend}
+                disabled={!selectedModel || !input.trim() || isLoading}
+                className="btn-3d-yellow h-auto px-4"
+              >
+                {isLoading ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <Send className="h-5 w-5" />
+                )}
+              </Button>
             </div>
           </div>
+        </div>
+
+        {/* Grille des modèles LLM */}
+        <div className="mt-4">
+          <div className="flex items-center gap-3 mb-3">
+            <MessageSquare className="h-5 w-5 text-[hsl(45,100%,55%)]" />
+            <h2 className="font-display text-lg font-bold">MODÈLES CHAT</h2>
+            <Badge variant="outline" className="text-sm">{filteredModels.length}</Badge>
+          </div>
+
+          <ModelGrid
+            models={filteredModels}
+            category="llms"
+            favorites={favorites}
+            onToggleFavorite={toggleFavorite}
+            onSelectModel={setSelectedModel}
+          />
         </div>
       </main>
     </div>
