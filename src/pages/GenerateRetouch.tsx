@@ -1,11 +1,14 @@
 import { useState, useMemo, useCallback, useRef } from "react";
-import { Wand2, Sparkles, Upload, Maximize, Brush, Eraser, Palette, ImagePlus, Layers, Scissors, Type, Image, Video, File, Archive, Music, Download, ZoomIn } from "lucide-react";
+import { Wand2, Sparkles, Upload, Maximize, Brush, Eraser, Palette, ImagePlus, Layers, Scissors, Type, Image, Video, File, Archive, Music, Download, ZoomIn, Paperclip } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { ModelSelector } from "@/components/ModelSelector";
 import { ModelGrid } from "@/components/ModelGrid";
 import { MediaResultPopup } from "@/components/MediaResultPopup";
+import { CreditsDisplay } from "@/components/CreditsDisplay";
+import { GenerateButton } from "@/components/GenerateButton";
 import { AIModel, getModelsByCategory } from "@/data/aiModels";
 import { useAPIStatus } from "@/hooks/useAPIStatus";
+import { useCredits } from "@/hooks/useCredits";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -40,6 +43,7 @@ const mediaTypes = [
 
 const GenerateRetouch = () => {
   const { getModelsWithStatus } = useAPIStatus();
+  const { getCreditsForService, getTotalCreditsForService, canGenerate: hasCreditsForService, useCredit } = useCredits();
   const [selectedModel, setSelectedModel] = useState<AIModel | null>(null);
   const [prompt, setPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
@@ -59,10 +63,20 @@ const GenerateRetouch = () => {
 
   const freeModelsCount = models.filter(m => m.isFree).length;
 
+  // Get credits for selected model
+  const serviceName = selectedModel?.provider || "retouch";
+  const credits = getCreditsForService(serviceName, "standard");
+  const totalCredits = getTotalCreditsForService(serviceName, "standard");
+  const hasCredits = hasCreditsForService(serviceName, "standard");
+
   const handleGenerate = async () => {
-    if (!selectedModel || !uploadedImage) return;
+    if (!selectedModel || !uploadedImage || !hasCredits) return;
     
     setIsGenerating(true);
+    
+    // Use credit
+    await useCredit(serviceName, "standard");
+    
     setTimeout(() => {
       setIsGenerating(false);
       setResultImage(uploadedImage);
@@ -107,7 +121,7 @@ const GenerateRetouch = () => {
     fileInputRef.current?.click();
   };
 
-  const canGenerate = Boolean(selectedModel) && Boolean(uploadedImage);
+  const canGenerateNow = Boolean(selectedModel) && Boolean(uploadedImage);
 
   const currentMediaType = mediaTypes.find(m => m.id === selectedMediaType);
 
@@ -269,17 +283,19 @@ const GenerateRetouch = () => {
             />
 
             <div className="flex items-center justify-between">
-              <Badge className="bg-[hsl(142,76%,50%)]/20 text-[hsl(142,76%,50%)] border-[hsl(142,76%,50%)]/30 text-sm px-2 py-0.5">
-                {freeModelsCount} GRATUITS
-              </Badge>
+              <div className="flex items-center gap-3">
+                <Button variant="ghost" size="icon" className="h-10 w-10">
+                  <Paperclip className="h-5 w-5 text-muted-foreground" />
+                </Button>
+                <CreditsDisplay credits={credits} totalCredits={totalCredits} compact />
+              </div>
               
-              <Button
+              <GenerateButton
                 onClick={handleGenerate}
-                disabled={!canGenerate || isGenerating}
-                className="btn-3d-cyan text-base px-6 py-4 font-display font-bold"
-              >
-                {isGenerating ? "..." : "GÉNÉRER"}
-              </Button>
+                isGenerating={isGenerating}
+                canGenerate={canGenerateNow}
+                hasCredits={hasCredits}
+              />
             </div>
           </div>
 

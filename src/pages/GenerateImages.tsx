@@ -1,12 +1,15 @@
 import { useState, useMemo, useRef, useCallback } from "react";
-import { ImageIcon, Sparkles, Zap, Upload, Type, Download, Image, Video, File, LayoutGrid, Gift, ShieldOff, Tag } from "lucide-react";
+import { ImageIcon, Sparkles, Zap, Upload, Type, Download, Image, Video, File, LayoutGrid, Gift, ShieldOff, Tag, Paperclip } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { ModelSelector } from "@/components/ModelSelector";
 import { AppTileCard } from "@/components/AppTileCard";
 import { MediaResultPopup } from "@/components/MediaResultPopup";
 import { APIKeyModal } from "@/components/APIKeyModal";
+import { CreditsDisplay } from "@/components/CreditsDisplay";
+import { GenerateButton } from "@/components/GenerateButton";
 import { AIModel, getModelsByCategory } from "@/data/aiModels";
 import { useAPIStatus } from "@/hooks/useAPIStatus";
+import { useCredits } from "@/hooks/useCredits";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +28,7 @@ type ImageFilter = "all" | "services" | "free" | "uncensored";
 
 const GenerateImages = () => {
   const { getModelsWithStatus } = useAPIStatus();
+  const { getCreditsForService, getTotalCreditsForService, canGenerate: hasCreditsForService, useCredit } = useCredits();
   const [selectedModel, setSelectedModel] = useState<AIModel | null>(null);
   const [prompt, setPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
@@ -86,10 +90,20 @@ const GenerateImages = () => {
     { id: "uncensored", label: "Sans Censure", icon: <ShieldOff className="h-4 w-4" /> },
   ];
 
+  // Get credits for selected model
+  const serviceName = selectedModel?.provider || "image";
+  const credits = getCreditsForService(serviceName, quality);
+  const totalCredits = getTotalCreditsForService(serviceName, quality);
+  const hasCredits = hasCreditsForService(serviceName, quality);
+
   const handleGenerate = async () => {
-    if (!selectedModel || !prompt.trim()) return;
+    if (!selectedModel || !prompt.trim() || !hasCredits) return;
     
     setIsGenerating(true);
+    
+    // Use credit
+    await useCredit(serviceName, quality);
+    
     setTimeout(() => {
       setIsGenerating(false);
       setGeneratedContent("https://placehold.co/1024x1024/1a1a2e/00d4aa?text=Generated+Image");
@@ -134,7 +148,7 @@ const GenerateImages = () => {
     fileInputRef.current?.click();
   };
 
-  const canGenerate = Boolean(selectedModel) && prompt.trim().length > 0;
+  const canGenerateNow = Boolean(selectedModel) && prompt.trim().length > 0;
   const currentMediaType = mediaTypes.find(m => m.id === selectedMediaType);
 
   return (
@@ -233,17 +247,19 @@ const GenerateImages = () => {
             />
 
             <div className="flex items-center justify-between">
-              <Badge className="bg-[hsl(142,76%,50%)]/20 text-[hsl(142,76%,50%)] border-[hsl(142,76%,50%)]/30 text-sm px-2 py-0.5">
-                {freeModelsCount} GRATUITS
-              </Badge>
+              <div className="flex items-center gap-3">
+                <Button variant="ghost" size="icon" className="h-10 w-10">
+                  <Paperclip className="h-5 w-5 text-muted-foreground" />
+                </Button>
+                <CreditsDisplay credits={credits} totalCredits={totalCredits} compact />
+              </div>
               
-              <Button
+              <GenerateButton
                 onClick={handleGenerate}
-                disabled={!canGenerate || isGenerating}
-                className="btn-3d-pink text-base px-6 py-4 font-display font-bold"
-              >
-                {isGenerating ? "GÉNÉRATION..." : "GÉNÉRER"}
-              </Button>
+                isGenerating={isGenerating}
+                canGenerate={canGenerateNow}
+                hasCredits={hasCredits}
+              />
             </div>
           </div>
 

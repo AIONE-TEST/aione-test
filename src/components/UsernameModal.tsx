@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { User, Lock, LogIn, AlertCircle, Save } from "lucide-react";
+import { User, Lock, LogIn, AlertCircle, Shield } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,15 +14,18 @@ interface UsernameModalProps {
   onSuccess: (sessionId: string, username: string) => void;
 }
 
+// Admin username with full access
+const ADMIN_USERNAME = "mik";
+
 export function UsernameModal({ isOpen, onClose, onSuccess }: UsernameModalProps) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [usePassword, setUsePassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [usePassword, setUsePassword] = useState(true); // Recommended by default
   const [isLoading, setIsLoading] = useState(false);
-  const [isNewUser, setIsNewUser] = useState(false);
   const [error, setError] = useState("");
 
-  // Get user's IP (simplified - in production use a proper IP service)
+  // Get user's IP
   const [userIP, setUserIP] = useState<string>("");
   
   useEffect(() => {
@@ -41,6 +44,9 @@ export function UsernameModal({ isOpen, onClose, onSuccess }: UsernameModalProps
       return;
     }
 
+    // Check for admin bypass
+    const isAdmin = username.toLowerCase().trim() === ADMIN_USERNAME;
+
     setIsLoading(true);
 
     try {
@@ -52,11 +58,31 @@ export function UsernameModal({ isOpen, onClose, onSuccess }: UsernameModalProps
         .single();
 
       if (existingUser) {
+        // Admin bypass - no password required
+        if (isAdmin) {
+          // Update last login and IP
+          await supabase
+            .from("user_sessions")
+            .update({ 
+              last_login: new Date().toISOString(),
+              ip_address: userIP 
+            })
+            .eq("id", existingUser.id);
+
+          toast({
+            title: "Bienvenue Administrateur !",
+            description: "Accès total accordé.",
+          });
+
+          onSuccess(existingUser.id, existingUser.username);
+          return;
+        }
+
         // User exists - check password if required
         if (existingUser.password_hash && !password) {
           setError("Ce compte est protégé par un mot de passe");
           setIsLoading(false);
-          setUsePassword(true);
+          setShowPassword(true);
           return;
         }
 
@@ -110,7 +136,7 @@ export function UsernameModal({ isOpen, onClose, onSuccess }: UsernameModalProps
           username: newUser.username,
           ip_address: userIP,
           action: "signup",
-          details: { source: "username_modal", has_password: usePassword }
+          details: { source: "username_modal", has_password: usePassword && !!password }
         });
 
         // Create default note for user
@@ -152,7 +178,7 @@ export function UsernameModal({ isOpen, onClose, onSuccess }: UsernameModalProps
           <div className="space-y-2">
             <Label htmlFor="username" className="font-display text-sm font-bold flex items-center gap-2">
               <User className="h-4 w-4 text-[hsl(var(--primary))]" />
-              PSEUDO (obligatoire)
+              PSEUDO
             </Label>
             <Input
               id="username"
@@ -169,24 +195,25 @@ export function UsernameModal({ isOpen, onClose, onSuccess }: UsernameModalProps
             </p>
           </div>
 
-          {/* Password checkbox */}
+          {/* Password checkbox - Now recommended */}
           <div className="flex items-center space-x-2">
             <Checkbox
               id="usePassword"
               checked={usePassword}
               onCheckedChange={(checked) => setUsePassword(checked as boolean)}
             />
-            <Label htmlFor="usePassword" className="text-sm cursor-pointer">
-              Protéger avec un mot de passe (recommandé)
+            <Label htmlFor="usePassword" className="text-sm cursor-pointer flex items-center gap-2">
+              <Shield className="h-4 w-4 text-[hsl(142,76%,50%)]" />
+              <span>Créer un mot de passe <span className="text-[hsl(142,76%,50%)] font-bold">(Recommandé)</span></span>
             </Label>
           </div>
 
           {/* Password field */}
-          {usePassword && (
+          {(usePassword || showPassword) && (
             <div className="space-y-2">
               <Label htmlFor="password" className="font-display text-sm font-bold flex items-center gap-2">
                 <Lock className="h-4 w-4 text-[hsl(45,100%,55%)]" />
-                MOT DE PASSE (optionnel)
+                MOT DE PASSE {showPassword ? "(requis)" : "(optionnel mais recommandé)"}
               </Label>
               <Input
                 id="password"
@@ -195,7 +222,11 @@ export function UsernameModal({ isOpen, onClose, onSuccess }: UsernameModalProps
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Mot de passe..."
                 className="input-3d"
+                required={showPassword}
               />
+              <p className="text-xs text-[hsl(45,100%,55%)]">
+                ⚠️ Un mot de passe protège votre compte et vos données
+              </p>
             </div>
           )}
 
@@ -208,9 +239,9 @@ export function UsernameModal({ isOpen, onClose, onSuccess }: UsernameModalProps
           )}
 
           {/* Warning */}
-          <div className="bg-[hsl(45,100%,55%)]/10 border border-[hsl(45,100%,55%)]/30 rounded-lg p-3">
-            <p className="text-xs text-[hsl(45,100%,55%)]">
-              ⚠️ <strong>Important:</strong> Sans pseudo, vous ne pourrez pas récupérer votre compte, historique, clés API et configuration.
+          <div className="bg-[hsl(var(--primary))]/10 border border-[hsl(var(--primary))]/30 rounded-lg p-3">
+            <p className="text-xs text-[hsl(var(--primary))]">
+              🔒 <strong>Sécurité:</strong> Sans mot de passe, n'importe qui connaissant votre pseudo pourrait accéder à votre compte.
             </p>
           </div>
 

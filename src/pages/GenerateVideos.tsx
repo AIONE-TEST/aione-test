@@ -1,12 +1,15 @@
 import { useState, useMemo, useRef, useCallback } from "react";
-import { Video, Sparkles, Camera, Film, Type, Upload, Image, File } from "lucide-react";
+import { Video, Sparkles, Camera, Film, Type, Upload, Image, File, Paperclip } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { ModelSelector } from "@/components/ModelSelector";
 import { AppTileCard } from "@/components/AppTileCard";
 import { MediaResultPopup } from "@/components/MediaResultPopup";
 import { APIKeyModal } from "@/components/APIKeyModal";
+import { CreditsDisplay } from "@/components/CreditsDisplay";
+import { GenerateButton } from "@/components/GenerateButton";
 import { AIModel, getModelsByCategory } from "@/data/aiModels";
 import { useAPIStatus } from "@/hooks/useAPIStatus";
+import { useCredits } from "@/hooks/useCredits";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +26,7 @@ const qualities = ["720p", "1080p", "4K"];
 
 const GenerateVideos = () => {
   const { getModelsWithStatus } = useAPIStatus();
+  const { getCreditsForService, getTotalCreditsForService, canGenerate: hasCreditsForService, useCredit } = useCredits();
   const [selectedModel, setSelectedModel] = useState<AIModel | null>(null);
   const [prompt, setPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
@@ -50,10 +54,20 @@ const GenerateVideos = () => {
 
   const freeModelsCount = models.filter(m => m.isFree).length;
 
+  // Get credits for selected model
+  const serviceName = selectedModel?.provider || "video";
+  const credits = getCreditsForService(serviceName, quality);
+  const totalCredits = getTotalCreditsForService(serviceName, quality);
+  const hasCredits = hasCreditsForService(serviceName, quality);
+
   const handleGenerate = async () => {
-    if (!selectedModel || !prompt.trim()) return;
+    if (!selectedModel || !prompt.trim() || !hasCredits) return;
     
     setIsGenerating(true);
+    
+    // Use credit
+    await useCredit(serviceName, quality);
+    
     setTimeout(() => {
       setIsGenerating(false);
       // Simulated result for demo
@@ -95,7 +109,7 @@ const GenerateVideos = () => {
     }
   };
 
-  const canGenerate = Boolean(selectedModel) && prompt.trim().length > 0;
+  const canGenerateNow = Boolean(selectedModel) && prompt.trim().length > 0;
   const currentMediaType = mediaTypes.find(m => m.id === selectedMediaType);
 
   return (
@@ -167,24 +181,22 @@ const GenerateVideos = () => {
 
             {/* Prompt compact */}
             <div className="panel-3d p-3">
-              <div className="flex gap-2">
+              <div className="flex gap-2 items-start">
+                <Button variant="ghost" size="icon" className="h-10 w-10 flex-shrink-0">
+                  <Paperclip className="h-5 w-5 text-muted-foreground" />
+                </Button>
                 <Textarea
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
                   placeholder="Décrivez la vidéo... Ex: Château steampunk, cinématique 4K"
                   className="input-3d min-h-[50px] text-sm resize-none flex-1"
                 />
-                <Button
+                <GenerateButton
                   onClick={handleGenerate}
-                  disabled={!canGenerate || isGenerating}
-                  className="btn-3d-purple px-6 font-display font-bold h-auto"
-                >
-                  {isGenerating ? (
-                    <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  ) : (
-                    "GÉNÉRER"
-                  )}
-                </Button>
+                  isGenerating={isGenerating}
+                  canGenerate={canGenerateNow}
+                  hasCredits={hasCredits}
+                />
               </div>
             </div>
           </div>
@@ -193,7 +205,7 @@ const GenerateVideos = () => {
           <div className="panel-3d p-3 space-y-3">
             <div className="flex items-center gap-2 mb-2">
               <Sparkles className="h-4 w-4 text-[hsl(var(--secondary))]" />
-              <span className="font-display text-sm font-bold">MOTEUR</span>
+              <span className="font-display text-sm font-bold">MODÈLES AI</span>
             </div>
 
             <ModelSelector
@@ -265,11 +277,13 @@ const GenerateVideos = () => {
               </div>
             </div>
 
-            {/* Quota */}
-            <div className="flex justify-between text-xs pt-2 border-t border-border/30">
-              <span className="text-muted-foreground">Quota restant</span>
-              <span className="font-bold text-[hsl(142,76%,50%)]">50 / 100</span>
-            </div>
+            {/* Credits Display */}
+            <CreditsDisplay 
+              credits={credits} 
+              totalCredits={totalCredits} 
+              serviceName={selectedModel?.name}
+              compact
+            />
           </div>
         </div>
 
