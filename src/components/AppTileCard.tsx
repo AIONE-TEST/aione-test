@@ -101,13 +101,13 @@ const categoryStyles: Record<string, {
 
 // Icônes des capacités - Double taille
 const capabilityIcons: Record<string, { icon: React.ReactNode; label: string }> = {
-  "image": { icon: <Image className="h-8 w-8" />, label: "Images" },
-  "video": { icon: <Video className="h-8 w-8" />, label: "Vidéos" },
-  "audio": { icon: <Music className="h-8 w-8" />, label: "Audio" },
-  "text": { icon: <MessageSquare className="h-8 w-8" />, label: "Texte" },
-  "3d": { icon: <Box className="h-8 w-8" />, label: "3D" },
-  "code": { icon: <Code className="h-8 w-8" />, label: "Code" },
-  "retouch": { icon: <Wand2 className="h-8 w-8" />, label: "Retouche" },
+  "image": { icon: <Image className="h-6 w-6" />, label: "Images" },
+  "video": { icon: <Video className="h-6 w-6" />, label: "Vidéos" },
+  "audio": { icon: <Music className="h-6 w-6" />, label: "Audio" },
+  "text": { icon: <MessageSquare className="h-6 w-6" />, label: "Texte" },
+  "3d": { icon: <Box className="h-6 w-6" />, label: "3D" },
+  "code": { icon: <Code className="h-6 w-6" />, label: "Code" },
+  "retouch": { icon: <Wand2 className="h-6 w-6" />, label: "Retouche" },
 };
 
 interface AppTileCardProps {
@@ -153,7 +153,6 @@ export function AppTileCard({ model, onOpenAPIKeyModal, onClick, viewMode = "gri
           "border-2",
           style.borderColor,
           "hover:scale-[1.01] hover:shadow-lg hover:shadow-current/10",
-          // 3D depth effect
           "shadow-[inset_0_1px_0_hsl(0_0%_100%/0.1),_0_4px_12px_hsl(220_20%_4%/0.4)]"
         )}
         onClick={onClick}
@@ -188,18 +187,18 @@ export function AppTileCard({ model, onOpenAPIKeyModal, onClick, viewMode = "gri
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <h3 className="font-display text-xl font-bold truncate tracking-wider">{model.name}</h3>
-              {isUncensored && <Flame className="h-6 w-6 text-[hsl(0,100%,60%)] animate-pulse" />}
+              {isUncensored && <Flame className="h-8 w-8 text-[hsl(0,100%,60%)] animate-flame-slow" />}
             </div>
             <p className="text-sm text-muted-foreground truncate font-display">{model.provider}</p>
           </div>
 
-          {/* Capabilities Icons - Double size */}
+          {/* Capabilities Icons */}
           <div className="flex items-center gap-2">
             {capabilities.map(cap => (
               <div 
                 key={cap}
                 className={cn(
-                  "h-14 w-14 rounded-lg flex items-center justify-center",
+                  "h-10 w-10 rounded-lg flex items-center justify-center",
                   style.badgeBg,
                   style.textColor
                 )}
@@ -213,7 +212,12 @@ export function AppTileCard({ model, onOpenAPIKeyModal, onClick, viewMode = "gri
           {/* Status Badge or API Key Button */}
           <div className="flex items-center gap-2">
             {isActive ? (
-              <VintageStamp />
+              <>
+                <VintageStamp />
+                <span className="font-display text-xl font-black text-[hsl(142,76%,50%)] tracking-wider ml-2">
+                  ACTIF
+                </span>
+              </>
             ) : model.apiKeyName ? (
               <Button
                 size="sm"
@@ -233,7 +237,7 @@ export function AppTileCard({ model, onOpenAPIKeyModal, onClick, viewMode = "gri
     );
   }
 
-  // Grid view - Tile mosaic style with depth
+  // Grid view - Name ABOVE logo, big flame icon for uncensored
   return (
     <div 
       className={cn(
@@ -243,82 +247,68 @@ export function AppTileCard({ model, onOpenAPIKeyModal, onClick, viewMode = "gri
         "border-2",
         style.borderColor,
         "hover:scale-[1.03] hover:shadow-xl",
-        // Enhanced 3D mosaic tile effect with depth
         "shadow-[inset_0_2px_0_hsl(0_0%_100%/0.15),_inset_0_-4px_8px_hsl(0_0%_0%/0.2),_0_8px_24px_hsl(220_20%_4%/0.5),_0_4px_8px_hsl(220_20%_4%/0.3)]",
         "hover:shadow-[inset_0_2px_0_hsl(0_0%_100%/0.2),_inset_0_-4px_8px_hsl(0_0%_0%/0.15),_0_12px_32px_hsl(220_20%_4%/0.6),_0_6px_12px_hsl(220_20%_4%/0.4)]"
       )}
       onClick={onClick}
-      style={{ minHeight: "280px" }}
+      style={{ minHeight: "300px" }}
     >
       {/* LED Status - Top Left */}
       <div className="absolute top-3 left-3 z-10">
         <StatusLED isActive={isActive} size="lg" />
       </div>
 
-      {/* Logo - Top Center with contrasting background - Double size */}
-      <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10">
-        <div className={cn(
-          "h-20 w-20 rounded-xl overflow-hidden",
-          "bg-gradient-to-br from-background/90 to-background/70",
-          "border-2",
-          style.borderColor,
-          "shadow-lg shadow-black/30",
-          "transition-transform group-hover:scale-110"
-        )}>
-          {!imageError ? (
-            <img
-              src={logoUrl}
-              alt={model.provider}
-              className="h-full w-full object-contain p-3"
-              onError={() => setImageError(true)}
-            />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center text-2xl font-bold text-muted-foreground font-display">
-              {model.provider.charAt(0)}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Uncensored flame indicator */}
+      {/* Big Flame icon for uncensored - Top Right */}
       {isUncensored && (
         <div className="absolute top-3 right-3 z-10">
-          <Flame className="h-8 w-8 text-[hsl(0,100%,60%)] animate-pulse drop-shadow-lg" />
+          <Flame className="h-10 w-10 text-[hsl(0,100%,60%)] animate-flame-slow drop-shadow-lg" />
         </div>
       )}
 
-      {/* Active Stamp or API Button */}
-      {isActive ? (
-        <div className="absolute top-16 right-2 z-10">
-          <VintageStamp />
-        </div>
-      ) : model.apiKeyName && (
-        <div className="absolute top-3 right-3 z-10">
-          <Badge className={cn("font-display text-xs", style.badgeBg, style.textColor)}>
-            API
-          </Badge>
-        </div>
-      )}
-
-      {/* Main Content - Below logo */}
-      <div className="pt-26 px-4 pb-4 flex flex-col h-full">
-        {/* Name & Provider - Double size */}
+      {/* Main Content */}
+      <div className="pt-10 px-4 pb-4 flex flex-col h-full">
+        {/* Name - ABOVE LOGO - Double size */}
         <div className="text-center mb-3">
-          <h3 className="font-display text-lg font-bold text-foreground mb-1 line-clamp-2 tracking-wider leading-tight">
+          <h3 className="font-display text-xl font-bold text-foreground line-clamp-2 tracking-wider leading-tight">
             {model.name}
           </h3>
-          <p className="text-sm text-muted-foreground font-display truncate">
+          <p className="text-sm text-muted-foreground font-display truncate mt-1">
             {model.provider}
           </p>
         </div>
 
-        {/* Capability Icons - Large and centered - Double size */}
-        <div className="flex items-center justify-center gap-3 mb-3">
+        {/* Logo - Center with contrasting background */}
+        <div className="flex justify-center mb-3">
+          <div className={cn(
+            "h-20 w-20 rounded-xl overflow-hidden",
+            "bg-gradient-to-br from-background/90 to-background/70",
+            "border-2",
+            style.borderColor,
+            "shadow-lg shadow-black/30",
+            "transition-transform group-hover:scale-110"
+          )}>
+            {!imageError ? (
+              <img
+                src={logoUrl}
+                alt={model.provider}
+                className="h-full w-full object-contain p-3"
+                onError={() => setImageError(true)}
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center text-2xl font-bold text-muted-foreground font-display">
+                {model.provider.charAt(0)}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Capability Icons - Large and centered */}
+        <div className="flex items-center justify-center gap-2 mb-3">
           {capabilities.map(cap => (
             <div 
               key={cap}
               className={cn(
-                "h-14 w-14 rounded-lg flex items-center justify-center",
+                "h-10 w-10 rounded-lg flex items-center justify-center",
                 style.badgeBg,
                 style.textColor,
                 "shadow-inner"
@@ -331,7 +321,7 @@ export function AppTileCard({ model, onOpenAPIKeyModal, onClick, viewMode = "gri
         </div>
 
         {/* Category Badge */}
-        <div className="flex justify-center mb-3">
+        <div className="flex justify-center mb-2">
           <Badge className={cn(
             "font-display text-xs px-3 py-1",
             style.badgeBg,
@@ -348,7 +338,7 @@ export function AppTileCard({ model, onOpenAPIKeyModal, onClick, viewMode = "gri
         <div className="flex-1" />
 
         {/* Price or Free tag */}
-        <div className="text-center">
+        <div className="text-center mb-2">
           {model.isFree ? (
             <Badge className="bg-[hsl(142,76%,50%)]/20 text-[hsl(142,76%,50%)] border-[hsl(142,76%,50%)]/30 font-display">
               GRATUIT
@@ -360,19 +350,29 @@ export function AppTileCard({ model, onOpenAPIKeyModal, onClick, viewMode = "gri
           ) : null}
         </div>
 
-        {!isActive && model.apiKeyName && (
-          <Button
-            size="sm"
-            className="bg-[hsl(30,100%,60%)] hover:bg-[hsl(30,100%,65%)] text-black gap-2 font-display tracking-wider w-full mt-3 text-base"
-            onClick={(e) => {
-              e.stopPropagation();
-              onOpenAPIKeyModal?.(model.apiKeyName!);
-            }}
-          >
-            <Key className="h-5 w-5" />
-            ACHETER
-          </Button>
-        )}
+        {/* Action Button or ACTIF label */}
+        <div className="pt-2 border-t border-border/30">
+          {isActive ? (
+            <div className="w-full h-10 flex items-center justify-center gap-2">
+              <VintageStamp />
+              <span className="font-display text-xl font-black text-[hsl(142,76%,50%)] tracking-wider">
+                ACTIF
+              </span>
+            </div>
+          ) : model.apiKeyName && (
+            <Button
+              size="sm"
+              className="w-full h-10 text-sm font-bold bg-[hsl(30,100%,60%)] hover:bg-[hsl(30,100%,65%)] text-black gap-2 hover:scale-105 transition-transform font-display tracking-wider"
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpenAPIKeyModal?.(model.apiKeyName!);
+              }}
+            >
+              <Key className="h-5 w-5" />
+              ACHETER
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );
