@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 interface Message {
   id: string;
@@ -17,6 +19,53 @@ interface Message {
 }
 
 type LLMFilter = "all" | "services" | "free" | "uncensored";
+
+// Map model IDs to their corresponding edge function endpoints
+const getEdgeFunctionForModel = (modelId: string): string | null => {
+  const modelToFunction: Record<string, string> = {
+    // OpenAI models
+    "gpt-4o": "chat-openai",
+    "gpt-4o-mini": "chat-openai",
+    "gpt-4-turbo": "chat-openai",
+    "o1-preview": "chat-openai",
+    "o1-mini": "chat-openai",
+    // Claude models
+    "claude-3-opus": "chat-claude",
+    "claude-3-sonnet": "chat-claude",
+    "claude-3-haiku": "chat-claude",
+    "claude-35-sonnet": "chat-claude",
+    // Mistral models
+    "mistral-large": "chat-mistral",
+    "mistral-medium": "chat-mistral",
+    "mistral-small": "chat-mistral",
+    "mixtral-8x7b": "chat-mistral",
+    // Groq models
+    "groq-llama-70b": "chat-groq",
+    "groq-llama-8b": "chat-groq",
+    "groq-mixtral": "chat-groq",
+    // Grok models
+    "grok-beta": "chat-grok",
+    "grok-2": "chat-grok",
+  };
+  
+  // Check for partial matches
+  for (const [key, value] of Object.entries(modelToFunction)) {
+    if (modelId.toLowerCase().includes(key.toLowerCase()) || key.toLowerCase().includes(modelId.toLowerCase())) {
+      return value;
+    }
+  }
+  
+  // Fallback based on provider
+  const providerMap: Record<string, string> = {
+    openai: "chat-openai",
+    anthropic: "chat-claude",
+    mistral: "chat-mistral",
+    groq: "chat-groq",
+    xai: "chat-grok",
+  };
+  
+  return null;
+};
 
 const LLMs = () => {
   const { getModelsWithStatus } = useAPIStatus();
@@ -80,16 +129,76 @@ const LLMs = () => {
     setInput("");
     setIsLoading(true);
 
-    setTimeout(() => {
+    try {
+      // Determine which edge function to call based on the model
+      let functionName = getEdgeFunctionForModel(selectedModel.id);
+      
+      // Fallback based on provider name
+      if (!functionName) {
+        const providerLower = selectedModel.provider.toLowerCase();
+        if (providerLower.includes("openai")) functionName = "chat-openai";
+        else if (providerLower.includes("anthropic") || providerLower.includes("claude")) functionName = "chat-claude";
+        else if (providerLower.includes("mistral")) functionName = "chat-mistral";
+        else if (providerLower.includes("groq")) functionName = "chat-groq";
+        else if (providerLower.includes("xai") || providerLower.includes("grok")) functionName = "chat-grok";
+      }
+
+      if (!functionName) {
+        // No API configured for this model, show error
+        toast({
+          title: "Modèle non disponible",
+          description: `L'API pour ${selectedModel.name} n'est pas encore configurée.`,
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      // Build messages array for the API
+      const apiMessages = [
+        { role: "system", content: "Tu es un assistant IA utile et amical. Réponds en français de manière concise et claire." },
+        ...messages.map(m => ({ role: m.role, content: m.content })),
+        { role: "user", content: userMessage.content }
+      ];
+
+      const { data, error } = await supabase.functions.invoke(functionName, {
+        body: { messages: apiMessages }
+      });
+
+      if (error) {
+        console.error("Edge function error:", error);
+        toast({
+          title: "Erreur API",
+          description: error.message || "Impossible de contacter l'API",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      // Extract the response content
+      const responseContent = data?.choices?.[0]?.message?.content || 
+                              data?.message?.content ||
+                              data?.content ||
+                              "Réponse reçue mais format inattendu.";
+
       const assistantMessage: Message = {
         id: crypto.randomUUID(),
         role: "assistant",
-        content: `Ceci est une réponse simulée de ${selectedModel.name}. Dans une implémentation réelle, cette réponse viendrait de l'API du modèle sélectionné.`,
+        content: responseContent,
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, assistantMessage]);
+    } catch (err) {
+      console.error("Chat error:", err);
+      toast({
+        title: "Erreur",
+        description: "Une erreur s'est produite lors de l'envoi du message.",
+        variant: "destructive",
+      });
+    } finally {
       setIsLoading(false);
-    }, 2000);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {

@@ -442,9 +442,15 @@ function AppModelCard({ model, viewMode, onOpenAPIKeyModal, onClick }: AppModelC
         )}
       </div>
 
-      {/* Action Button */}
+      {/* Action Button or ACTIF label */}
       <div className="pt-2 border-t border-border/30">
-        {model.isFree ? (
+        {isActive ? (
+          <div className="w-full h-8 flex items-center justify-center">
+            <span className="font-display text-lg font-black text-[hsl(142,76%,50%)] tracking-wider">
+              ACTIF
+            </span>
+          </div>
+        ) : model.isFree ? (
           <Button
             size="sm"
             className="w-full h-8 text-xs font-bold btn-3d-orange gap-1.5 hover:scale-105 transition-transform font-display tracking-wider"
