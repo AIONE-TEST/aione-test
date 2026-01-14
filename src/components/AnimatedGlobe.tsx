@@ -11,15 +11,16 @@ interface Satellite {
   direction: number;
 }
 
-interface FloatingObject {
+interface TraversingObject {
   id: number;
   emoji: string;
-  orbitRadius: number;
-  orbitDuration: number;
-  size: number;
+  startX: number;
+  startY: number;
+  endX: number;
+  endY: number;
+  duration: number;
   delay: number;
-  orbitTilt: number;
-  direction: number;
+  size: number;
 }
 
 interface Star {
@@ -41,7 +42,7 @@ const funnyEmojis = [
   "🎪", "🎭", "🎨", "🔥", "❄️", "🍀", "🌸", "🦅"
 ];
 
-// Generate random satellites
+// Generate random satellites (classic orbiting around the planet)
 const generateSatellites = (): Satellite[] => {
   const colors = [
     "hsl(174,100%,50%)",
@@ -64,18 +65,52 @@ const generateSatellites = (): Satellite[] => {
   }));
 };
 
-// Generate random floating objects
-const generateFloatingObjects = (): FloatingObject[] => {
-  return Array.from({ length: 20 }, (_, i) => ({
-    id: i + 100,
-    emoji: funnyEmojis[Math.floor(Math.random() * funnyEmojis.length)],
-    orbitRadius: 0.5 + Math.random() * 0.45,
-    orbitDuration: 8 + Math.random() * 15,
-    size: 14 + Math.random() * 12,
-    delay: Math.random() * 10,
-    orbitTilt: -80 + Math.random() * 160,
-    direction: Math.random() > 0.5 ? 1 : -1,
-  }));
+// Generate random traversing objects (crossing the galaxy from end to end)
+const generateTraversingObjects = (): TraversingObject[] => {
+  return Array.from({ length: 25 }, (_, i) => {
+    // Random start and end positions (from edge to edge)
+    const startSide = Math.floor(Math.random() * 4); // 0=top, 1=right, 2=bottom, 3=left
+    let startX = 0, startY = 0, endX = 0, endY = 0;
+    
+    switch(startSide) {
+      case 0: // Start from top
+        startX = Math.random() * 100;
+        startY = -10;
+        endX = Math.random() * 100;
+        endY = 110;
+        break;
+      case 1: // Start from right
+        startX = 110;
+        startY = Math.random() * 100;
+        endX = -10;
+        endY = Math.random() * 100;
+        break;
+      case 2: // Start from bottom
+        startX = Math.random() * 100;
+        startY = 110;
+        endX = Math.random() * 100;
+        endY = -10;
+        break;
+      case 3: // Start from left
+        startX = -10;
+        startY = Math.random() * 100;
+        endX = 110;
+        endY = Math.random() * 100;
+        break;
+    }
+    
+    return {
+      id: i + 100,
+      emoji: funnyEmojis[Math.floor(Math.random() * funnyEmojis.length)],
+      startX,
+      startY,
+      endX,
+      endY,
+      duration: 8 + Math.random() * 20,
+      delay: Math.random() * 15,
+      size: 12 + Math.random() * 10,
+    };
+  });
 };
 
 // Generate random stars
@@ -94,7 +129,7 @@ const generateStars = (count: number): Star[] => {
 export function AnimatedGlobe({ size = 80 }: { size?: number }) {
   const [rotation, setRotation] = useState(0);
   const [satellites] = useState(() => generateSatellites());
-  const [floatingObjects] = useState(() => generateFloatingObjects());
+  const [traversingObjects] = useState(() => generateTraversingObjects());
   const [stars] = useState(() => generateStars(40));
   const animationRef = useRef<number>();
   const lastTimeRef = useRef<number>(0);
@@ -151,37 +186,24 @@ export function AnimatedGlobe({ size = 80 }: { size?: number }) {
         ))}
       </svg>
 
-      {/* Floating funny objects */}
-      {floatingObjects.map((obj) => (
+      {/* Traversing funny objects (crossing the galaxy from end to end) */}
+      {traversingObjects.map((obj) => (
         <div
           key={obj.id}
           className="absolute pointer-events-none"
           style={{
-            width: size * 2,
-            height: size * 2,
-            top: 0,
-            left: 0,
-            animation: `spin-satellite-${obj.direction > 0 ? 'cw' : 'ccw'} ${obj.orbitDuration}s linear infinite`,
+            fontSize: obj.size,
+            animation: `traverse-${obj.id} ${obj.duration}s linear infinite`,
             animationDelay: `${obj.delay}s`,
-            transform: `rotateX(${obj.orbitTilt}deg)`,
+            filter: "drop-shadow(0 0 4px rgba(255,255,255,0.5))",
+            zIndex: 5,
           }}
         >
-          <div
-            className="absolute"
-            style={{
-              fontSize: obj.size,
-              top: "50%",
-              left: `${50 - obj.orbitRadius * 50}%`,
-              transform: "translateY(-50%)",
-              filter: "drop-shadow(0 0 4px rgba(255,255,255,0.5))",
-            }}
-          >
-            {obj.emoji}
-          </div>
+          {obj.emoji}
         </div>
       ))}
 
-      {/* Satellites with random orbits */}
+      {/* Satellites with classic orbits around the planet */}
       {satellites.map((sat) => (
         <div
           key={sat.id}
@@ -237,7 +259,8 @@ export function AnimatedGlobe({ size = 80 }: { size?: number }) {
             inset ${size/6}px ${size/6}px ${size/4}px hsl(200,100%,60%,0.3),
             0 0 ${size/2}px hsl(200,100%,50%,0.3),
             0 0 ${size}px hsl(174,100%,50%,0.2)
-          `
+          `,
+          zIndex: 10,
         }}
       >
         {/* Ocean base */}
@@ -348,7 +371,7 @@ export function AnimatedGlobe({ size = 80 }: { size?: number }) {
         />
       </div>
 
-      {/* CSS Animation for satellites */}
+      {/* CSS Animation for satellites and traversing objects */}
       <style>{`
         @keyframes spin-satellite-cw {
           from { transform: rotateX(var(--tilt, 0deg)) rotateZ(0deg); }
@@ -358,6 +381,26 @@ export function AnimatedGlobe({ size = 80 }: { size?: number }) {
           from { transform: rotateX(var(--tilt, 0deg)) rotateZ(360deg); }
           to { transform: rotateX(var(--tilt, 0deg)) rotateZ(0deg); }
         }
+        ${traversingObjects.map(obj => `
+          @keyframes traverse-${obj.id} {
+            0% {
+              left: ${obj.startX}%;
+              top: ${obj.startY}%;
+              opacity: 0;
+            }
+            5% {
+              opacity: 1;
+            }
+            95% {
+              opacity: 1;
+            }
+            100% {
+              left: ${obj.endX}%;
+              top: ${obj.endY}%;
+              opacity: 0;
+            }
+          }
+        `).join('\n')}
       `}</style>
     </div>
   );

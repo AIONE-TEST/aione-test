@@ -1,8 +1,9 @@
 import { useState, useMemo, useCallback, useRef } from "react";
-import { Wand2, Sparkles, Upload, Maximize, Brush, Eraser, Palette, ImagePlus, Layers, Scissors, ZoomIn, Download, Type, Image, Video, File, Archive, Music } from "lucide-react";
+import { Wand2, Sparkles, Upload, Maximize, Brush, Eraser, Palette, ImagePlus, Layers, Scissors, Type, Image, Video, File, Archive, Music, Download, ZoomIn } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { ModelSelector } from "@/components/ModelSelector";
 import { ModelGrid } from "@/components/ModelGrid";
+import { MediaResultPopup } from "@/components/MediaResultPopup";
 import { AIModel, getModelsByCategory } from "@/data/aiModels";
 import { useAPIStatus } from "@/hooks/useAPIStatus";
 import { Button } from "@/components/ui/button";
@@ -46,6 +47,7 @@ const GenerateRetouch = () => {
   const [selectedTool, setSelectedTool] = useState<string>("upscale");
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [resultImage, setResultImage] = useState<string | null>(null);
+  const [showResultPopup, setShowResultPopup] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [selectedMediaType, setSelectedMediaType] = useState("image");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -64,6 +66,7 @@ const GenerateRetouch = () => {
     setTimeout(() => {
       setIsGenerating(false);
       setResultImage(uploadedImage);
+      setShowResultPopup(true);
     }, 3000);
   };
 

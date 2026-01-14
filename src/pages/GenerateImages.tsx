@@ -1,8 +1,9 @@
 import { useState, useMemo, useRef, useCallback } from "react";
-import { ImageIcon, Sparkles, Zap, Upload, Type, Download, Image, Video, File, ZoomIn, LayoutGrid, Gift, ShieldOff, Tag } from "lucide-react";
+import { ImageIcon, Sparkles, Zap, Upload, Type, Download, Image, Video, File, LayoutGrid, Gift, ShieldOff, Tag } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { ModelSelector } from "@/components/ModelSelector";
 import { ModelGrid } from "@/components/ModelGrid";
+import { MediaResultPopup } from "@/components/MediaResultPopup";
 import { AIModel, getModelsByCategory } from "@/data/aiModels";
 import { useAPIStatus } from "@/hooks/useAPIStatus";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,7 @@ const GenerateImages = () => {
   const [prompt, setPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedContent, setGeneratedContent] = useState<string | null>(null);
+  const [showResultPopup, setShowResultPopup] = useState(false);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [selectedMediaType, setSelectedMediaType] = useState("image");
@@ -83,6 +85,7 @@ const GenerateImages = () => {
     setTimeout(() => {
       setIsGenerating(false);
       setGeneratedContent("https://placehold.co/1024x1024/1a1a2e/00d4aa?text=Generated+Image");
+      setShowResultPopup(true);
     }, 3000);
   };
 
@@ -207,45 +210,7 @@ const GenerateImages = () => {
             </div>
           </div>
 
-          {/* 2. RÉSULTAT - En dessous */}
-          <div className="panel-3d p-6">
-            <div className="flex items-center justify-between mb-4">
-              <span className="font-display text-xl font-bold text-foreground">RÉSULTAT</span>
-              {generatedContent && (
-                <Button variant="ghost" size="sm" className="gap-2">
-                  <Download className="h-4 w-4" />
-                  Télécharger
-                </Button>
-              )}
-            </div>
-            
-            <div className="canvas-3d aspect-video flex items-center justify-center">
-              {isGenerating ? (
-                <div className="flex flex-col items-center gap-4">
-                  <div className="h-16 w-16 rounded-full border-4 border-[hsl(320,100%,60%)]/30 border-t-[hsl(320,100%,60%)] animate-spin" />
-                  <p className="font-display text-lg text-muted-foreground animate-pulse">
-                    Génération en cours...
-                  </p>
-                </div>
-              ) : generatedContent ? (
-                <img src={generatedContent} alt="Result" className="w-full h-full object-contain" />
-              ) : (
-                <div className="flex flex-col items-center gap-4 text-center px-8">
-                  <div className="h-20 w-20 rounded-full bg-muted/50 flex items-center justify-center">
-                    <ZoomIn className="h-10 w-10 text-muted-foreground" />
-                  </div>
-                  <p className="font-display text-lg text-muted-foreground">
-                    L'image générée apparaîtra ici
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Entrez un prompt et lancez la génération
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* 3. ÉDITEUR DE PROMPT - Compact */}
+          {/* 2. ÉDITEUR DE PROMPT - Compact */}
           <div className="panel-3d p-4">
             <div className="flex items-center gap-2 mb-2">
               <Type className="h-4 w-4 text-[hsl(var(--primary))]" />
@@ -269,12 +234,12 @@ const GenerateImages = () => {
                 disabled={!canGenerate || isGenerating}
                 className="btn-3d-pink text-base px-6 py-4 font-display font-bold"
               >
-                {isGenerating ? "..." : "GÉNÉRER"}
+                {isGenerating ? "GÉNÉRATION..." : "GÉNÉRER"}
               </Button>
             </div>
           </div>
 
-          {/* 4. MOTEUR DE GÉNÉRATION & OPTIONS - Compact */}
+          {/* 3. MOTEUR DE GÉNÉRATION & OPTIONS - Compact */}
           <div className="panel-3d p-4">
             <div className="flex items-center gap-2 mb-3">
               <Sparkles className="h-4 w-4 text-[hsl(var(--secondary))]" />
@@ -410,6 +375,14 @@ const GenerateImages = () => {
           />
         </div>
       </main>
+
+      {/* Result Popup */}
+      <MediaResultPopup
+        isOpen={showResultPopup}
+        onClose={() => setShowResultPopup(false)}
+        mediaUrl={generatedContent}
+        mediaType="image"
+      />
     </div>
   );
 };
