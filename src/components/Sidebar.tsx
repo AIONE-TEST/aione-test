@@ -142,7 +142,7 @@ export function Sidebar() {
               key={item.id}
               to={item.path}
               className={cn(
-                "flex items-center justify-center gap-3 px-4 py-3 rounded-lg font-display text-base font-bold tracking-wider transition-all duration-300 transform",
+                "flex items-center justify-center gap-4 px-3 py-2 rounded-lg font-display text-2xl font-black tracking-wider transition-all duration-300 transform",
                 isActive 
                   ? cn(item.btn3dClass, "text-white scale-102", item.glowClass) 
                   : "btn-3d text-[hsl(215,20%,65%)] hover:text-white hover:scale-101"
@@ -152,9 +152,9 @@ export function Sidebar() {
                 "transition-all duration-300",
                 isActive ? "text-white drop-shadow-lg" : item.colorClass
               )}>
-                {React.cloneElement(item.icon as React.ReactElement, { className: "h-7 w-7" })}
+                {React.cloneElement(item.icon as React.ReactElement, { className: "h-8 w-8" })}
               </span>
-              <span className="flex-1 text-center text-base font-bold">{item.label}</span>
+              <span className="flex-1 text-center text-2xl font-black">{item.label}</span>
             </Link>
           );
         })}
