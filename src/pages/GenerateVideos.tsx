@@ -1,17 +1,17 @@
 import { useState, useMemo, useRef, useCallback } from "react";
-import { Video, Sparkles, Camera, Film, Type, Upload, Image, File, Paperclip } from "lucide-react";
+import { Video, Sparkles, Camera, Film, Upload, Image, File } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { ModelSelector } from "@/components/ModelSelector";
 import { AppTileCard } from "@/components/AppTileCard";
 import { MediaResultPopup } from "@/components/MediaResultPopup";
 import { APIKeyModal } from "@/components/APIKeyModal";
 import { CreditsDisplay } from "@/components/CreditsDisplay";
-import { GenerateButton } from "@/components/GenerateButton";
+import { PromptEditorEnhanced } from "@/components/PromptEditorEnhanced";
+import { ViewModeToggle } from "@/components/ViewModeToggle";
 import { AIModel, getModelsByCategory } from "@/data/aiModels";
 import { useAPIStatus } from "@/hooks/useAPIStatus";
 import { useCredits } from "@/hooks/useCredits";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
@@ -40,6 +40,8 @@ const GenerateVideos = () => {
   const [showResultPopup, setShowResultPopup] = useState(false);
   const [apiKeyModalOpen, setApiKeyModalOpen] = useState(false);
   const [selectedApiKeyName, setSelectedApiKeyName] = useState<string>("");
+  const [negativePrompt, setNegativePrompt] = useState("");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleOpenAPIKeyModal = (apiKeyName: string) => {
@@ -179,26 +181,19 @@ const GenerateVideos = () => {
               />
             </div>
 
-            {/* Prompt compact */}
-            <div className="panel-3d p-3">
-              <div className="flex gap-2 items-start">
-                <Button variant="ghost" size="icon" className="h-10 w-10 flex-shrink-0">
-                  <Paperclip className="h-5 w-5 text-muted-foreground" />
-                </Button>
-                <Textarea
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  placeholder="Décrivez la vidéo... Ex: Château steampunk, cinématique 4K"
-                  className="input-3d min-h-[50px] text-sm resize-none flex-1"
-                />
-                <GenerateButton
-                  onClick={handleGenerate}
-                  isGenerating={isGenerating}
-                  canGenerate={canGenerateNow}
-                  hasCredits={hasCredits}
-                />
-              </div>
-            </div>
+            {/* Prompt avec aide intégrée */}
+            <PromptEditorEnhanced
+              prompt={prompt}
+              onPromptChange={setPrompt}
+              negativePrompt={negativePrompt}
+              onNegativePromptChange={setNegativePrompt}
+              onGenerate={handleGenerate}
+              isGenerating={isGenerating}
+              canGenerate={canGenerateNow}
+              hasCredits={hasCredits}
+              placeholder="Décrivez la vidéo... Ex: Château steampunk, cinématique 4K"
+              category="videos"
+            />
           </div>
 
           {/* Colonne droite - Options compactes */}
@@ -293,6 +288,9 @@ const GenerateVideos = () => {
             <Film className="h-5 w-5 text-[hsl(280,100%,65%)]" />
             <h2 className="font-display text-lg font-bold">MODÈLES VIDÉO COMPATIBLES</h2>
             <Badge variant="outline" className="text-sm">{models.length}</Badge>
+            <div className="ml-auto">
+              <ViewModeToggle viewMode={viewMode} onViewModeChange={setViewMode} />
+            </div>
           </div>
 
           {/* Grid avec le même style que APPLIS IA */}
