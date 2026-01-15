@@ -58,8 +58,12 @@ export function UsernameModal({ isOpen, onClose, onSuccess }: UsernameModalProps
         .maybeSingle();
 
       if (existingUser) {
-        // Admin bypass - no password required
-        if (isAdmin) {
+        // Check if user has a password set using secure RPC
+        const { data: hasPassword } = await supabase
+          .rpc("session_has_password", { session_username: username.toLowerCase().trim() });
+        
+        // Admin bypass OR user without password - direct login
+        if (isAdmin || !hasPassword) {
           // Update last login and IP
           await supabase
             .from("user_sessions")
@@ -69,21 +73,26 @@ export function UsernameModal({ isOpen, onClose, onSuccess }: UsernameModalProps
             })
             .eq("id", existingUser.id);
 
-          toast({
-            title: "Bienvenue Administrateur !",
-            description: "Accès total accordé.",
+          // Log activity
+          await supabase.from("activity_logs").insert({
+            session_id: existingUser.id,
+            username: existingUser.username,
+            ip_address: userIP,
+            action: "login",
+            details: { source: "username_modal", admin: isAdmin }
           });
 
-          onSuccess(existingUser.id, existingUser.username);
+          toast({
+            title: isAdmin ? "Bienvenue Administrateur !" : "Bienvenue !",
+            description: isAdmin ? "Accès total accordé." : `Ravi de vous revoir, ${existingUser.username} !`,
+          });
+
+          onSuccess(existingUser.id!, existingUser.username!);
           return;
         }
 
-        // Check if user has a password set using secure RPC
-        const { data: hasPassword } = await supabase
-          .rpc("session_has_password", { session_username: username.toLowerCase().trim() });
-        
-        // User exists - check password if required
-        if (hasPassword && !password) {
+        // User exists with password - check password if required
+        if (!password) {
           setError("Ce compte est protégé par un mot de passe");
           setIsLoading(false);
           setShowPassword(true);
@@ -91,18 +100,16 @@ export function UsernameModal({ isOpen, onClose, onSuccess }: UsernameModalProps
         }
 
         // Verify password using secure RPC (never exposes hash)
-        if (hasPassword) {
-          const { data: isValid } = await supabase
-            .rpc("verify_session_password", { 
-              session_username: username.toLowerCase().trim(), 
-              input_password: password 
-            });
-          
-          if (!isValid) {
-            setError("Mot de passe incorrect");
-            setIsLoading(false);
-            return;
-          }
+        const { data: isValid } = await supabase
+          .rpc("verify_session_password", { 
+            session_username: username.toLowerCase().trim(), 
+            input_password: password 
+          });
+        
+        if (!isValid) {
+          setError("Mot de passe incorrect");
+          setIsLoading(false);
+          return;
         }
 
         // Update last login and IP
