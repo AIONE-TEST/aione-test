@@ -130,14 +130,14 @@ const GenerateAudio = () => {
         </div>
 
         {/* Layout: Vertical - Options sous le prompt */}
-        <div className="w-full max-w-4xl space-y-3 mb-6">
-          {/* Zone Upload (principale) - taille réduite */}
+        <div className="w-full max-w-6xl space-y-3 mb-6">
+          {/* Zone Upload (principale) */}
           <div
             className={cn(
-              "panel-3d p-3 aspect-video flex items-center justify-center transition-all duration-300 cursor-pointer",
+              "panel-3d p-4 aspect-video flex items-center justify-center transition-all duration-300 cursor-pointer",
               isDragging && "border-[hsl(var(--primary))] bg-[hsl(var(--primary))]/5"
             )}
-            style={{ maxHeight: "35vh" }}
+            style={{ maxHeight: "60vh" }}
             onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
             onDragLeave={() => setIsDragging(false)}
             onDrop={handleDrop}
