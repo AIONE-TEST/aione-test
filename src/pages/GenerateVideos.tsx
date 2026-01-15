@@ -135,7 +135,7 @@ const GenerateVideos = () => {
         </div>
 
         {/* Layout: Vertical - Options sous le prompt */}
-        <div className="max-w-4xl space-y-3 mb-6">
+        <div className="w-full max-w-[calc(100%-2rem)] space-y-3 mb-6" style={{ maxWidth: "calc((100vh - 200px) * 16 / 9)" }}>
           {/* Zone Upload (principale) */}
           <div
             className={cn(

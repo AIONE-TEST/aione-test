@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useCallback } from "react";
-import { Volume2, Sparkles, Music, Mic, Radio, Headphones, Upload, Play, Pause, Download } from "lucide-react";
+import { Volume2, Sparkles, Music, Mic, Radio, Headphones, Upload, Play, Pause, Download, Film } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { ModelSelector } from "@/components/ModelSelector";
 import { AppTileCard } from "@/components/AppTileCard";
@@ -130,69 +130,69 @@ const GenerateAudio = () => {
         </div>
 
         {/* Layout: Vertical - Options sous le prompt */}
-        <div className="max-w-4xl space-y-3 mb-6">
-          {/* Source + Résultat */}
-          <div className="grid grid-cols-2 gap-3">
-            {/* Source Audio */}
-            <div
-              className={cn(
-                "panel-3d p-3 h-32 flex items-center justify-center cursor-pointer",
-                isDragging && "border-[hsl(var(--primary))] bg-[hsl(var(--primary))]/5"
-              )}
-              onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-              onDragLeave={() => setIsDragging(false)}
-              onDrop={handleDrop}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              {uploadedAudio ? (
-                <div className="flex items-center gap-3 w-full px-4">
-                  <Button
-                    size="icon"
-                    className="h-10 w-10 rounded-full btn-3d-orange"
-                    onClick={(e) => { e.stopPropagation(); setIsPlaying(!isPlaying); }}
-                  >
-                    {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
-                  </Button>
-                  <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
-                    <div className="h-full w-1/3 bg-gradient-to-r from-[hsl(25,100%,55%)] to-[hsl(45,100%,55%)]" />
-                  </div>
+        <div className="w-full max-w-[calc(100%-2rem)] space-y-3 mb-6" style={{ maxWidth: "calc((100vh - 200px) * 16 / 9)" }}>
+          {/* Zone Upload (principale) - 16:9 */}
+          <div
+            className={cn(
+              "panel-3d p-4 aspect-[16/9] flex items-center justify-center transition-all duration-300 cursor-pointer",
+              isDragging && "border-[hsl(var(--primary))] bg-[hsl(var(--primary))]/5"
+            )}
+            onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+            onDragLeave={() => setIsDragging(false)}
+            onDrop={handleDrop}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            {uploadedAudio ? (
+              <div className="flex items-center gap-6 w-full px-8">
+                <Button
+                  size="icon"
+                  className="h-16 w-16 rounded-full btn-3d-orange"
+                  onClick={(e) => { e.stopPropagation(); setIsPlaying(!isPlaying); }}
+                >
+                  {isPlaying ? <Pause className="h-8 w-8" /> : <Play className="h-8 w-8" />}
+                </Button>
+                <div className="flex-1 h-3 bg-muted rounded-full overflow-hidden">
+                  <div className="h-full w-1/3 bg-gradient-to-r from-[hsl(25,100%,55%)] to-[hsl(45,100%,55%)]" />
                 </div>
-              ) : (
-                <div className="flex flex-col items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="bg-black/50 hover:bg-black/70"
+                  onClick={(e) => { e.stopPropagation(); setUploadedAudio(null); }}
+                >
+                  Changer
+                </Button>
+              </div>
+            ) : generatedContent ? (
+              <div className="flex items-center gap-6 w-full px-8">
+                <Button size="icon" className="h-16 w-16 rounded-full btn-3d-green">
+                  <Play className="h-8 w-8" />
+                </Button>
+                <div className="flex-1 h-3 bg-muted rounded-full" />
+                <Button size="icon" variant="ghost" className="h-12 w-12">
+                  <Download className="h-6 w-6" />
+                </Button>
+              </div>
+            ) : isGenerating ? (
+              <div className="h-16 w-16 rounded-full border-4 border-[hsl(25,100%,55%)]/30 border-t-[hsl(25,100%,55%)] animate-spin" />
+            ) : (
+              <div className="flex flex-col items-center gap-3 text-center">
+                <div className="h-16 w-16 rounded-full bg-gradient-to-br from-[hsl(25,100%,55%)]/20 to-[hsl(45,100%,55%)]/20 flex items-center justify-center">
                   <Upload className="h-8 w-8 text-[hsl(25,100%,55%)]" />
-                  <p className="font-display text-sm">SOURCE (optionnel)</p>
                 </div>
-              )}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="audio/*"
-                className="hidden"
-                onChange={handleFileSelect}
-              />
-            </div>
-
-            {/* Résultat */}
-            <div className="panel-3d p-3 h-32 flex items-center justify-center">
-              {isGenerating ? (
-                <div className="h-10 w-10 rounded-full border-4 border-[hsl(25,100%,55%)]/30 border-t-[hsl(25,100%,55%)] animate-spin" />
-              ) : generatedContent ? (
-                <div className="flex items-center gap-3 w-full px-4">
-                  <Button size="icon" className="h-10 w-10 rounded-full btn-3d-green">
-                    <Play className="h-5 w-5" />
-                  </Button>
-                  <div className="flex-1 h-2 bg-muted rounded-full" />
-                  <Button size="icon" variant="ghost">
-                    <Download className="h-4 w-4" />
-                  </Button>
+                <div>
+                  <p className="font-display text-lg text-foreground">Audio source (optionnel)</p>
+                  <p className="text-sm text-muted-foreground">Glissez ou cliquez</p>
                 </div>
-              ) : (
-                <div className="flex flex-col items-center gap-2">
-                  <Music className="h-8 w-8 text-muted-foreground" />
-                  <p className="font-display text-sm text-muted-foreground">RÉSULTAT</p>
-                </div>
-              )}
-            </div>
+              </div>
+            )}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="audio/*"
+              className="hidden"
+              onChange={handleFileSelect}
+            />
           </div>
 
           {/* Prompt avec aide */}
@@ -235,7 +235,7 @@ const GenerateAudio = () => {
                     variant={duration === d ? "default" : "outline"}
                     onClick={() => setDuration(d)}
                     className={cn(
-                      "flex-1 text-xs",
+                      "flex-1 text-xs h-7",
                       duration === d ? "btn-3d-orange" : "btn-3d"
                     )}
                   >
@@ -258,24 +258,20 @@ const GenerateAudio = () => {
         {/* Grille des modèles */}
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-4">
-            <Volume2 className="h-5 w-5 text-[hsl(25,100%,55%)]" />
-            <h2 className="font-display text-lg font-bold">MODÈLES AUDIO</h2>
+            <Film className="h-5 w-5 text-[hsl(25,100%,55%)]" />
+            <h2 className="font-display text-lg font-bold">MODÈLES AUDIO COMPATIBLES</h2>
             <Badge variant="outline" className="text-sm">{models.length}</Badge>
             <div className="ml-auto">
               <ViewModeToggle viewMode={viewMode} onViewModeChange={setViewMode} />
             </div>
           </div>
 
-          <div className={cn(
-            viewMode === "list" 
-              ? "flex flex-col gap-3" 
-              : "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
-          )}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {models.map((model) => (
               <AppTileCard
                 key={model.id}
                 model={model}
-                viewMode={viewMode}
+                viewMode="grid"
                 horizontal
                 onOpenAPIKeyModal={handleOpenAPIKeyModal}
                 onClick={() => setSelectedModel(model)}
