@@ -135,13 +135,14 @@ const GenerateVideos = () => {
         </div>
 
         {/* Layout: Vertical - Options sous le prompt */}
-        <div className="w-full max-w-[calc(100%-2rem)] space-y-3 mb-6" style={{ maxWidth: "calc((100vh - 200px) * 16 / 9)" }}>
-          {/* Zone Upload (principale) */}
+        <div className="w-full max-w-4xl space-y-3 mb-6">
+          {/* Zone Upload (principale) - taille réduite */}
           <div
             className={cn(
-              "panel-3d p-4 aspect-[16/9] flex items-center justify-center transition-all duration-300 cursor-pointer",
+              "panel-3d p-3 aspect-video flex items-center justify-center transition-all duration-300 cursor-pointer",
               isDragging && "border-[hsl(var(--primary))] bg-[hsl(var(--primary))]/5"
             )}
+            style={{ maxHeight: "35vh" }}
             onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
             onDragLeave={() => setIsDragging(false)}
             onDrop={handleDrop}
@@ -160,13 +161,13 @@ const GenerateVideos = () => {
                 </Button>
               </div>
             ) : (
-              <div className="flex flex-col items-center gap-3 text-center">
-                <div className="h-16 w-16 rounded-full bg-gradient-to-br from-[hsl(280,100%,65%)]/20 to-[hsl(320,100%,60%)]/20 flex items-center justify-center">
-                  <Upload className="h-8 w-8 text-[hsl(280,100%,65%)]" />
+              <div className="flex flex-col items-center gap-2 text-center">
+                <div className="h-12 w-12 rounded-full bg-gradient-to-br from-[hsl(280,100%,65%)]/20 to-[hsl(320,100%,60%)]/20 flex items-center justify-center">
+                  <Upload className="h-6 w-6 text-[hsl(280,100%,65%)]" />
                 </div>
                 <div>
-                  <p className="font-display text-lg text-foreground">Glissez une image ici</p>
-                  <p className="text-sm text-muted-foreground">ou cliquez pour sélectionner</p>
+                  <p className="font-display text-base text-foreground">Glissez une image ici</p>
+                  <p className="text-xs text-muted-foreground">ou cliquez pour sélectionner</p>
                 </div>
               </div>
             )}
@@ -177,6 +178,28 @@ const GenerateVideos = () => {
               className="hidden"
               onChange={handleFileSelect}
             />
+          </div>
+
+          {/* Icônes de type sous la zone d'upload */}
+          <div className="flex justify-center gap-4">
+            {mediaTypes.map((type) => (
+              <div
+                key={type.id}
+                className={cn(
+                  "flex flex-col items-center gap-1 cursor-pointer transition-all",
+                  selectedMediaType === type.id ? "text-[hsl(var(--primary))]" : "text-muted-foreground hover:text-foreground"
+                )}
+                onClick={() => setSelectedMediaType(type.id)}
+              >
+                <div className={cn(
+                  "p-2 rounded-lg transition-all",
+                  selectedMediaType === type.id ? "bg-[hsl(var(--primary))]/20" : "bg-muted/50"
+                )}>
+                  {type.icon}
+                </div>
+                <span className="text-xs font-medium">{type.label}</span>
+              </div>
+            ))}
           </div>
 
           {/* Prompt avec aide intégrée */}
@@ -208,30 +231,9 @@ const GenerateVideos = () => {
               className="w-full"
             />
 
-            {/* Type de média + Format + Qualité en ligne */}
-            <div className="grid grid-cols-3 gap-3">
-              {/* Type de média */}
-              <div>
-                <label className="font-display text-xs text-muted-foreground block mb-1">TYPE</label>
-                <div className="flex gap-1">
-                  {mediaTypes.map((type) => (
-                    <Button
-                      key={type.id}
-                      size="sm"
-                      variant={selectedMediaType === type.id ? "default" : "outline"}
-                      onClick={() => setSelectedMediaType(type.id)}
-                      className={cn(
-                        "flex-1 h-8 text-xs gap-1",
-                        selectedMediaType === type.id ? "btn-3d-cyan" : "btn-3d"
-                      )}
-                    >
-                      {type.icon}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Format */}
+            {/* Format + Qualité en ligne */}
+            <div className="grid grid-cols-2 gap-3">
+              {/* Format avec icônes */}
               <div>
                 <label className="font-display text-xs text-muted-foreground block mb-1">FORMAT</label>
                 <div className="flex gap-1">
@@ -242,11 +244,18 @@ const GenerateVideos = () => {
                       variant={aspectRatio === ratio ? "default" : "outline"}
                       onClick={() => setAspectRatio(ratio)}
                       className={cn(
-                        "flex-1 h-7 px-1 text-xs",
+                        "flex-1 h-8 px-1 text-xs flex-col gap-0.5",
                         aspectRatio === ratio ? "btn-3d-pink" : "btn-3d"
                       )}
                     >
-                      {ratio}
+                      <div className={cn(
+                        "border border-current rounded-sm",
+                        ratio === "1:1" && "w-3 h-3",
+                        ratio === "4:3" && "w-3 h-2.5",
+                        ratio === "9:16" && "w-2 h-3",
+                        ratio === "16:9" && "w-4 h-2"
+                      )} />
+                      <span className="text-[10px]">{ratio}</span>
                     </Button>
                   ))}
                 </div>
@@ -263,7 +272,7 @@ const GenerateVideos = () => {
                       variant={quality === q ? "default" : "outline"}
                       onClick={() => setQuality(q)}
                       className={cn(
-                        "flex-1 h-7 px-1 text-xs",
+                        "flex-1 h-8 px-1 text-xs",
                         quality === q ? "btn-3d-green" : "btn-3d"
                       )}
                     >
