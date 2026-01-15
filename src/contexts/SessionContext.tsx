@@ -44,10 +44,10 @@ export function SessionProvider({ children }: SessionProviderProps) {
     if (storedSessionId && storedUsername) {
       // Verify session still exists in DB
       supabase
-        .from("user_sessions")
+        .from("user_sessions_public")
         .select("*")
         .eq("id", storedSessionId)
-        .single()
+        .maybeSingle()
         .then(({ data, error }) => {
           if (data && !error) {
             setSession({
