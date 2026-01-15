@@ -50,12 +50,12 @@ export function UsernameModal({ isOpen, onClose, onSuccess }: UsernameModalProps
     setIsLoading(true);
 
     try {
-      // Check if user exists
+      // Check if user exists - use view for read (no password_hash exposed)
       const { data: existingUser } = await supabase
-        .from("user_sessions")
+        .from("user_sessions_public")
         .select("*")
         .eq("username", username.toLowerCase().trim())
-        .single();
+        .maybeSingle();
 
       if (existingUser) {
         // Admin bypass - no password required
@@ -78,18 +78,31 @@ export function UsernameModal({ isOpen, onClose, onSuccess }: UsernameModalProps
           return;
         }
 
+        // Check if user has a password set using secure RPC
+        const { data: hasPassword } = await supabase
+          .rpc("session_has_password", { session_username: username.toLowerCase().trim() });
+        
         // User exists - check password if required
-        if (existingUser.password_hash && !password) {
+        if (hasPassword && !password) {
           setError("Ce compte est protégé par un mot de passe");
           setIsLoading(false);
           setShowPassword(true);
           return;
         }
 
-        if (existingUser.password_hash && password !== existingUser.password_hash) {
-          setError("Mot de passe incorrect");
-          setIsLoading(false);
-          return;
+        // Verify password using secure RPC (never exposes hash)
+        if (hasPassword) {
+          const { data: isValid } = await supabase
+            .rpc("verify_session_password", { 
+              session_username: username.toLowerCase().trim(), 
+              input_password: password 
+            });
+          
+          if (!isValid) {
+            setError("Mot de passe incorrect");
+            setIsLoading(false);
+            return;
+          }
         }
 
         // Update last login and IP
