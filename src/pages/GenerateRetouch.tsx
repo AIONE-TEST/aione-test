@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useRef } from "react";
-import { Wand2, Sparkles, Upload, Maximize, Brush, Eraser, Palette, ImagePlus, Layers, Scissors, ZoomIn, Download, Film } from "lucide-react";
+import { Wand2, Sparkles, Upload, Maximize, Brush, Eraser, Palette, ImagePlus, Layers, Scissors, ZoomIn, Download, Film, X } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { ModelSelector } from "@/components/ModelSelector";
 import { AppTileCard } from "@/components/AppTileCard";
@@ -8,6 +8,7 @@ import { APIKeyModal } from "@/components/APIKeyModal";
 import { CreditsDisplay } from "@/components/CreditsDisplay";
 import { PromptEditorEnhanced } from "@/components/PromptEditorEnhanced";
 import { ViewModeToggle } from "@/components/ViewModeToggle";
+import { GenerationHistoryThumbnails } from "@/components/GenerationHistoryThumbnails";
 import { AIModel, getModelsByCategory } from "@/data/aiModels";
 import { useAPIStatus } from "@/hooks/useAPIStatus";
 import { useCredits } from "@/hooks/useCredits";
@@ -41,7 +42,7 @@ const GenerateRetouch = () => {
   const [negativePrompt, setNegativePrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [selectedTool, setSelectedTool] = useState<string>("upscale");
-  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
   const [resultImage, setResultImage] = useState<string | null>(null);
   const [showResultPopup, setShowResultPopup] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -68,14 +69,14 @@ const GenerateRetouch = () => {
   const hasCredits = hasCreditsForService(serviceName, "standard");
 
   const handleGenerate = async () => {
-    if (!selectedModel || !uploadedImage || !hasCredits) return;
+    if (!selectedModel || uploadedFiles.length === 0 || !hasCredits) return;
     
     setIsGenerating(true);
     await useCredit(serviceName, "standard");
     
     setTimeout(() => {
       setIsGenerating(false);
-      setResultImage(uploadedImage);
+      setResultImage(uploadedFiles[0]);
       setShowResultPopup(true);
     }, 3000);
   };
@@ -84,28 +85,34 @@ const GenerateRetouch = () => {
     e.preventDefault();
     setIsDragging(false);
     
-    const files = e.dataTransfer.files;
-    if (files.length > 0 && files[0].type.startsWith('image/')) {
+    const files = Array.from(e.dataTransfer.files);
+    const validFiles = files.filter(file => file.type.startsWith('image/'));
+    
+    validFiles.forEach(file => {
       const reader = new FileReader();
       reader.onload = (event) => {
-        setUploadedImage(event.target?.result as string);
+        setUploadedFiles(prev => [...prev, event.target?.result as string].slice(0, 10));
       };
-      reader.readAsDataURL(files[0]);
-    }
+      reader.readAsDataURL(file);
+    });
   }, []);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files && files.length > 0) {
+    const files = Array.from(e.target.files || []);
+    files.forEach(file => {
       const reader = new FileReader();
       reader.onload = (event) => {
-        setUploadedImage(event.target?.result as string);
+        setUploadedFiles(prev => [...prev, event.target?.result as string].slice(0, 10));
       };
-      reader.readAsDataURL(files[0]);
-    }
+      reader.readAsDataURL(file);
+    });
   };
 
-  const canGenerateNow = Boolean(selectedModel) && Boolean(uploadedImage);
+  const removeFile = (index: number) => {
+    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const canGenerateNow = Boolean(selectedModel) && uploadedFiles.length > 0;
 
   return (
     <div className="min-h-screen bg-background">
@@ -162,22 +169,31 @@ const GenerateRetouch = () => {
             onDrop={handleDrop}
             onClick={() => fileInputRef.current?.click()}
           >
-            {uploadedImage ? (
-              <div className="relative w-full h-full">
-                <img src={uploadedImage} alt="Source" className="w-full h-full object-contain" />
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="absolute top-2 right-2 bg-black/50 hover:bg-black/70"
-                  onClick={(e) => { e.stopPropagation(); setUploadedImage(null); }}
-                >
-                  Changer
-                </Button>
-                {isGenerating && (
-                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                    <div className="h-12 w-12 rounded-full border-4 border-[hsl(var(--primary))]/30 border-t-[hsl(var(--primary))] animate-spin" />
-                  </div>
-                )}
+            {uploadedFiles.length > 0 ? (
+              <div className="relative w-full h-full p-2">
+                <div className="grid grid-cols-4 gap-2 h-full">
+                  {uploadedFiles.map((file, index) => (
+                    <div key={index} className="relative aspect-square rounded-lg overflow-hidden bg-muted">
+                      <img src={file} alt={`Upload ${index + 1}`} className="w-full h-full object-cover" />
+                      <button
+                        className="absolute top-1 right-1 p-1 bg-black/60 rounded-full hover:bg-black/80 transition-colors"
+                        onClick={(e) => { e.stopPropagation(); removeFile(index); }}
+                      >
+                        <X className="h-3 w-3 text-white" />
+                      </button>
+                      {isGenerating && index === 0 && (
+                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                          <div className="h-8 w-8 rounded-full border-3 border-[hsl(var(--primary))]/30 border-t-[hsl(var(--primary))] animate-spin" />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  {uploadedFiles.length < 10 && (
+                    <div className="aspect-square rounded-lg border-2 border-dashed border-muted-foreground/30 flex items-center justify-center hover:border-[hsl(var(--primary))]/50 transition-colors">
+                      <Upload className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                  )}
+                </div>
               </div>
             ) : (
               <div className="flex flex-col items-center gap-2 text-center">
@@ -185,8 +201,8 @@ const GenerateRetouch = () => {
                   <Upload className="h-6 w-6 text-[hsl(174,100%,50%)]" />
                 </div>
                 <div>
-                  <p className="font-display text-base text-foreground">Glissez une image ici</p>
-                  <p className="text-xs text-muted-foreground">ou cliquez pour sélectionner</p>
+                  <p className="font-display text-base text-foreground">Glissez vos images ici</p>
+                  <p className="text-xs text-muted-foreground">Multi-upload supporté (max 10)</p>
                 </div>
               </div>
             )}
@@ -194,6 +210,7 @@ const GenerateRetouch = () => {
               ref={fileInputRef}
               type="file"
               accept="image/*"
+              multiple
               className="hidden"
               onChange={handleFileSelect}
             />
@@ -236,6 +253,9 @@ const GenerateRetouch = () => {
               compact
             />
           </div>
+
+          {/* Historique des générations */}
+          <GenerationHistoryThumbnails type="retouch" />
         </div>
 
         {/* Grille des modèles */}
