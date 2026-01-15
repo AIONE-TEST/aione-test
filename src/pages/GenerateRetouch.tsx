@@ -148,76 +148,73 @@ const GenerateRetouch = () => {
           </div>
         </div>
 
-        {/* Layout: 2 colonnes */}
-        <div className="grid grid-cols-[1fr_300px] gap-4 mb-6">
-          {/* Colonne gauche */}
-          <div className="space-y-3">
-            {/* Zone Upload + Résultat côte à côte */}
-            <div className="grid grid-cols-2 gap-3">
-              {/* Source */}
-              <div
-                className={cn(
-                  "panel-3d p-3 aspect-square flex items-center justify-center cursor-pointer",
-                  isDragging && "border-[hsl(var(--primary))] bg-[hsl(var(--primary))]/5"
-                )}
-                onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-                onDragLeave={() => setIsDragging(false)}
-                onDrop={handleDrop}
-                onClick={() => fileInputRef.current?.click()}
-              >
-                {uploadedImage ? (
-                  <img src={uploadedImage} alt="Source" className="w-full h-full object-contain" />
-                ) : (
-                  <div className="flex flex-col items-center gap-2 text-center">
-                    <Upload className="h-8 w-8 text-[hsl(var(--primary))]" />
-                    <p className="font-display text-sm">SOURCE</p>
-                  </div>
-                )}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleFileSelect}
-                />
-              </div>
-
-              {/* Résultat */}
-              <div className="panel-3d p-3 aspect-square flex items-center justify-center">
-                {isGenerating ? (
-                  <div className="h-10 w-10 rounded-full border-4 border-[hsl(var(--primary))]/30 border-t-[hsl(var(--primary))] animate-spin" />
-                ) : resultImage ? (
-                  <div className="relative w-full h-full">
-                    <img src={resultImage} alt="Result" className="w-full h-full object-contain" />
-                    <Button size="sm" variant="ghost" className="absolute top-1 right-1">
-                      <Download className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center gap-2 text-center">
-                    <ZoomIn className="h-8 w-8 text-muted-foreground" />
-                    <p className="font-display text-sm text-muted-foreground">RÉSULTAT</p>
-                  </div>
-                )}
-              </div>
+        {/* Layout: Vertical - Options sous le prompt */}
+        <div className="max-w-4xl space-y-3 mb-6">
+          {/* Zone Upload + Résultat côte à côte */}
+          <div className="grid grid-cols-2 gap-3">
+            {/* Source */}
+            <div
+              className={cn(
+                "panel-3d p-3 aspect-square flex items-center justify-center cursor-pointer",
+                isDragging && "border-[hsl(var(--primary))] bg-[hsl(var(--primary))]/5"
+              )}
+              onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+              onDragLeave={() => setIsDragging(false)}
+              onDrop={handleDrop}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {uploadedImage ? (
+                <img src={uploadedImage} alt="Source" className="w-full h-full object-contain" />
+              ) : (
+                <div className="flex flex-col items-center gap-2 text-center">
+                  <Upload className="h-8 w-8 text-[hsl(var(--primary))]" />
+                  <p className="font-display text-sm">SOURCE</p>
+                </div>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleFileSelect}
+              />
             </div>
 
-            {/* Prompt avec aide intégrée */}
-            <PromptEditorEnhanced
-              prompt={prompt}
-              onPromptChange={setPrompt}
-              negativePrompt={negativePrompt}
-              onNegativePromptChange={setNegativePrompt}
-              onGenerate={handleGenerate}
-              isGenerating={isGenerating}
-              canGenerate={canGenerateNow}
-              hasCredits={hasCredits}
-              placeholder={`Instructions pour ${retouchTools.find(t => t.id === selectedTool)?.name}...`}
-              category="retouch"
-            />
+            {/* Résultat */}
+            <div className="panel-3d p-3 aspect-square flex items-center justify-center">
+              {isGenerating ? (
+                <div className="h-10 w-10 rounded-full border-4 border-[hsl(var(--primary))]/30 border-t-[hsl(var(--primary))] animate-spin" />
+              ) : resultImage ? (
+                <div className="relative w-full h-full">
+                  <img src={resultImage} alt="Result" className="w-full h-full object-contain" />
+                  <Button size="sm" variant="ghost" className="absolute top-1 right-1">
+                    <Download className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-2 text-center">
+                  <ZoomIn className="h-8 w-8 text-muted-foreground" />
+                  <p className="font-display text-sm text-muted-foreground">RÉSULTAT</p>
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Colonne droite - Options */}
+          {/* Prompt avec aide intégrée */}
+          <PromptEditorEnhanced
+            prompt={prompt}
+            onPromptChange={setPrompt}
+            negativePrompt={negativePrompt}
+            onNegativePromptChange={setNegativePrompt}
+            onGenerate={handleGenerate}
+            isGenerating={isGenerating}
+            canGenerate={canGenerateNow}
+            hasCredits={hasCredits}
+            placeholder={`Instructions pour ${retouchTools.find(t => t.id === selectedTool)?.name}...`}
+            category="retouch"
+          />
+
+          {/* Options sous le prompt */}
           <div className="panel-3d p-3 space-y-3">
             <div className="flex items-center gap-2 mb-2">
               <Sparkles className="h-4 w-4 text-[hsl(var(--secondary))]" />

@@ -114,69 +114,66 @@ const GenerateImages = () => {
           </div>
         </div>
 
-        {/* Layout: 2 colonnes */}
-        <div className="grid grid-cols-[1fr_300px] gap-4 mb-6">
-          {/* Colonne gauche - Zone Upload */}
-          <div className="space-y-3">
-            {/* Zone Upload */}
-            <div
-              className={cn(
-                "panel-3d p-4 aspect-square max-h-[400px] flex items-center justify-center transition-all duration-300 cursor-pointer",
-                isDragging && "border-[hsl(var(--primary))] bg-[hsl(var(--primary))]/5"
-              )}
-              onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-              onDragLeave={() => setIsDragging(false)}
-              onDrop={handleDrop}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              {uploadedImage ? (
-                <div className="relative w-full h-full">
-                  <img src={uploadedImage} alt="Source" className="w-full h-full object-contain" />
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="absolute top-2 right-2 bg-black/50 hover:bg-black/70"
-                    onClick={(e) => { e.stopPropagation(); setUploadedImage(null); }}
-                  >
-                    Changer
-                  </Button>
+        {/* Layout: Vertical - Options sous le prompt */}
+        <div className="max-w-4xl space-y-3 mb-6">
+          {/* Zone Upload */}
+          <div
+            className={cn(
+              "panel-3d p-4 aspect-square max-h-[400px] flex items-center justify-center transition-all duration-300 cursor-pointer",
+              isDragging && "border-[hsl(var(--primary))] bg-[hsl(var(--primary))]/5"
+            )}
+            onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+            onDragLeave={() => setIsDragging(false)}
+            onDrop={handleDrop}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            {uploadedImage ? (
+              <div className="relative w-full h-full">
+                <img src={uploadedImage} alt="Source" className="w-full h-full object-contain" />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="absolute top-2 right-2 bg-black/50 hover:bg-black/70"
+                  onClick={(e) => { e.stopPropagation(); setUploadedImage(null); }}
+                >
+                  Changer
+                </Button>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-3 text-center">
+                <div className="h-16 w-16 rounded-full bg-gradient-to-br from-[hsl(320,100%,60%)]/20 to-[hsl(280,100%,65%)]/20 flex items-center justify-center">
+                  <Upload className="h-8 w-8 text-[hsl(320,100%,60%)]" />
                 </div>
-              ) : (
-                <div className="flex flex-col items-center gap-3 text-center">
-                  <div className="h-16 w-16 rounded-full bg-gradient-to-br from-[hsl(320,100%,60%)]/20 to-[hsl(280,100%,65%)]/20 flex items-center justify-center">
-                    <Upload className="h-8 w-8 text-[hsl(320,100%,60%)]" />
-                  </div>
-                  <div>
-                    <p className="font-display text-lg text-foreground">Image source (optionnel)</p>
-                    <p className="text-sm text-muted-foreground">Glissez ou cliquez</p>
-                  </div>
+                <div>
+                  <p className="font-display text-lg text-foreground">Image source (optionnel)</p>
+                  <p className="text-sm text-muted-foreground">Glissez ou cliquez</p>
                 </div>
-              )}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleFileSelect}
-              />
-            </div>
-
-            {/* Prompt avec aide intégrée */}
-            <PromptEditorEnhanced
-              prompt={prompt}
-              onPromptChange={setPrompt}
-              negativePrompt={negativePrompt}
-              onNegativePromptChange={setNegativePrompt}
-              onGenerate={handleGenerate}
-              isGenerating={isGenerating}
-              canGenerate={canGenerateNow}
-              hasCredits={hasCredits}
-              placeholder="Décrivez l'image... Ex: Paysage fantastique, style Ghibli, 4K"
-              category="images"
+              </div>
+            )}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleFileSelect}
             />
           </div>
 
-          {/* Colonne droite - Options sous le prompt */}
+          {/* Prompt avec aide intégrée */}
+          <PromptEditorEnhanced
+            prompt={prompt}
+            onPromptChange={setPrompt}
+            negativePrompt={negativePrompt}
+            onNegativePromptChange={setNegativePrompt}
+            onGenerate={handleGenerate}
+            isGenerating={isGenerating}
+            canGenerate={canGenerateNow}
+            hasCredits={hasCredits}
+            placeholder="Décrivez l'image... Ex: Paysage fantastique, style Ghibli, 4K"
+            category="images"
+          />
+
+          {/* Options sous le prompt */}
           <div className="panel-3d p-3 space-y-3">
             <div className="flex items-center gap-2 mb-2">
               <Sparkles className="h-4 w-4 text-[hsl(var(--secondary))]" />
@@ -191,45 +188,48 @@ const GenerateImages = () => {
               className="w-full"
             />
 
-            {/* Format */}
-            <div>
-              <label className="font-display text-xs text-muted-foreground block mb-1">FORMAT</label>
-              <div className="flex flex-wrap gap-1">
-                {aspectRatios.map((ratio) => (
-                  <Button
-                    key={ratio}
-                    size="sm"
-                    variant={aspectRatio === ratio ? "default" : "outline"}
-                    onClick={() => setAspectRatio(ratio)}
-                    className={cn(
-                      "text-xs px-2 py-1",
-                      aspectRatio === ratio ? "btn-3d-pink" : "btn-3d"
-                    )}
-                  >
-                    {ratio}
-                  </Button>
-                ))}
+            {/* Format + Qualité en ligne */}
+            <div className="grid grid-cols-2 gap-3">
+              {/* Format */}
+              <div>
+                <label className="font-display text-xs text-muted-foreground block mb-1">FORMAT</label>
+                <div className="flex flex-wrap gap-1">
+                  {aspectRatios.map((ratio) => (
+                    <Button
+                      key={ratio}
+                      size="sm"
+                      variant={aspectRatio === ratio ? "default" : "outline"}
+                      onClick={() => setAspectRatio(ratio)}
+                      className={cn(
+                        "text-xs px-2 py-1",
+                        aspectRatio === ratio ? "btn-3d-pink" : "btn-3d"
+                      )}
+                    >
+                      {ratio}
+                    </Button>
+                  ))}
+                </div>
               </div>
-            </div>
 
-            {/* Qualité */}
-            <div>
-              <label className="font-display text-xs text-muted-foreground block mb-1">QUALITÉ</label>
-              <div className="flex gap-1">
-                {qualities.map((q) => (
-                  <Button
-                    key={q}
-                    size="sm"
-                    variant={quality === q ? "default" : "outline"}
-                    onClick={() => setQuality(q)}
-                    className={cn(
-                      "flex-1 text-xs px-2 py-1",
-                      quality === q ? "btn-3d-green" : "btn-3d"
-                    )}
-                  >
-                    {q.toUpperCase()}
-                  </Button>
-                ))}
+              {/* Qualité */}
+              <div>
+                <label className="font-display text-xs text-muted-foreground block mb-1">QUALITÉ</label>
+                <div className="flex gap-1">
+                  {qualities.map((q) => (
+                    <Button
+                      key={q}
+                      size="sm"
+                      variant={quality === q ? "default" : "outline"}
+                      onClick={() => setQuality(q)}
+                      className={cn(
+                        "flex-1 text-xs px-2 py-1",
+                        quality === q ? "btn-3d-green" : "btn-3d"
+                      )}
+                    >
+                      {q.toUpperCase()}
+                    </Button>
+                  ))}
+                </div>
               </div>
             </div>
 
