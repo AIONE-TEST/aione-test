@@ -129,90 +129,87 @@ const GenerateAudio = () => {
           </Button>
         </div>
 
-        {/* Layout: 2 colonnes */}
-        <div className="grid grid-cols-[1fr_300px] gap-4 mb-6">
-          {/* Colonne gauche */}
-          <div className="space-y-3">
-            {/* Source + Résultat */}
-            <div className="grid grid-cols-2 gap-3">
-              {/* Source Audio */}
-              <div
-                className={cn(
-                  "panel-3d p-3 h-32 flex items-center justify-center cursor-pointer",
-                  isDragging && "border-[hsl(var(--primary))] bg-[hsl(var(--primary))]/5"
-                )}
-                onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-                onDragLeave={() => setIsDragging(false)}
-                onDrop={handleDrop}
-                onClick={() => fileInputRef.current?.click()}
-              >
-                {uploadedAudio ? (
-                  <div className="flex items-center gap-3 w-full px-4">
-                    <Button
-                      size="icon"
-                      className="h-10 w-10 rounded-full btn-3d-orange"
-                      onClick={(e) => { e.stopPropagation(); setIsPlaying(!isPlaying); }}
-                    >
-                      {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
-                    </Button>
-                    <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
-                      <div className="h-full w-1/3 bg-gradient-to-r from-[hsl(25,100%,55%)] to-[hsl(45,100%,55%)]" />
-                    </div>
+        {/* Layout: Vertical - Options sous le prompt */}
+        <div className="max-w-4xl space-y-3 mb-6">
+          {/* Source + Résultat */}
+          <div className="grid grid-cols-2 gap-3">
+            {/* Source Audio */}
+            <div
+              className={cn(
+                "panel-3d p-3 h-32 flex items-center justify-center cursor-pointer",
+                isDragging && "border-[hsl(var(--primary))] bg-[hsl(var(--primary))]/5"
+              )}
+              onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+              onDragLeave={() => setIsDragging(false)}
+              onDrop={handleDrop}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {uploadedAudio ? (
+                <div className="flex items-center gap-3 w-full px-4">
+                  <Button
+                    size="icon"
+                    className="h-10 w-10 rounded-full btn-3d-orange"
+                    onClick={(e) => { e.stopPropagation(); setIsPlaying(!isPlaying); }}
+                  >
+                    {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+                  </Button>
+                  <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                    <div className="h-full w-1/3 bg-gradient-to-r from-[hsl(25,100%,55%)] to-[hsl(45,100%,55%)]" />
                   </div>
-                ) : (
-                  <div className="flex flex-col items-center gap-2">
-                    <Upload className="h-8 w-8 text-[hsl(25,100%,55%)]" />
-                    <p className="font-display text-sm">SOURCE (optionnel)</p>
-                  </div>
-                )}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="audio/*"
-                  className="hidden"
-                  onChange={handleFileSelect}
-                />
-              </div>
-
-              {/* Résultat */}
-              <div className="panel-3d p-3 h-32 flex items-center justify-center">
-                {isGenerating ? (
-                  <div className="h-10 w-10 rounded-full border-4 border-[hsl(25,100%,55%)]/30 border-t-[hsl(25,100%,55%)] animate-spin" />
-                ) : generatedContent ? (
-                  <div className="flex items-center gap-3 w-full px-4">
-                    <Button size="icon" className="h-10 w-10 rounded-full btn-3d-green">
-                      <Play className="h-5 w-5" />
-                    </Button>
-                    <div className="flex-1 h-2 bg-muted rounded-full" />
-                    <Button size="icon" variant="ghost">
-                      <Download className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center gap-2">
-                    <Music className="h-8 w-8 text-muted-foreground" />
-                    <p className="font-display text-sm text-muted-foreground">RÉSULTAT</p>
-                  </div>
-                )}
-              </div>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-2">
+                  <Upload className="h-8 w-8 text-[hsl(25,100%,55%)]" />
+                  <p className="font-display text-sm">SOURCE (optionnel)</p>
+                </div>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="audio/*"
+                className="hidden"
+                onChange={handleFileSelect}
+              />
             </div>
 
-            {/* Prompt avec aide */}
-            <PromptEditorEnhanced
-              prompt={prompt}
-              onPromptChange={setPrompt}
-              negativePrompt={negativePrompt}
-              onNegativePromptChange={setNegativePrompt}
-              onGenerate={handleGenerate}
-              isGenerating={isGenerating}
-              canGenerate={canGenerateNow}
-              hasCredits={hasCredits}
-              placeholder="Décrivez l'audio... Ex: Musique épique orchestrale, style Hans Zimmer"
-              category="audio"
-            />
+            {/* Résultat */}
+            <div className="panel-3d p-3 h-32 flex items-center justify-center">
+              {isGenerating ? (
+                <div className="h-10 w-10 rounded-full border-4 border-[hsl(25,100%,55%)]/30 border-t-[hsl(25,100%,55%)] animate-spin" />
+              ) : generatedContent ? (
+                <div className="flex items-center gap-3 w-full px-4">
+                  <Button size="icon" className="h-10 w-10 rounded-full btn-3d-green">
+                    <Play className="h-5 w-5" />
+                  </Button>
+                  <div className="flex-1 h-2 bg-muted rounded-full" />
+                  <Button size="icon" variant="ghost">
+                    <Download className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-2">
+                  <Music className="h-8 w-8 text-muted-foreground" />
+                  <p className="font-display text-sm text-muted-foreground">RÉSULTAT</p>
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Colonne droite - Options */}
+          {/* Prompt avec aide */}
+          <PromptEditorEnhanced
+            prompt={prompt}
+            onPromptChange={setPrompt}
+            negativePrompt={negativePrompt}
+            onNegativePromptChange={setNegativePrompt}
+            onGenerate={handleGenerate}
+            isGenerating={isGenerating}
+            canGenerate={canGenerateNow}
+            hasCredits={hasCredits}
+            placeholder="Décrivez l'audio... Ex: Musique épique orchestrale, style Hans Zimmer"
+            category="audio"
+          />
+
+          {/* Options sous le prompt */}
           <div className="panel-3d p-3 space-y-3">
             <div className="flex items-center gap-2 mb-2">
               <Sparkles className="h-4 w-4 text-[hsl(var(--secondary))]" />
