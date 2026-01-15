@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useRef } from "react";
-import { Wand2, Sparkles, Upload, Maximize, Brush, Eraser, Palette, ImagePlus, Layers, Scissors, ZoomIn, Download } from "lucide-react";
+import { Wand2, Sparkles, Upload, Maximize, Brush, Eraser, Palette, ImagePlus, Layers, Scissors, ZoomIn, Download, Film } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { ModelSelector } from "@/components/ModelSelector";
 import { AppTileCard } from "@/components/AppTileCard";
@@ -149,55 +149,53 @@ const GenerateRetouch = () => {
         </div>
 
         {/* Layout: Vertical - Options sous le prompt */}
-        <div className="max-w-4xl space-y-3 mb-6">
-          {/* Zone Upload + Résultat côte à côte */}
-          <div className="grid grid-cols-2 gap-3">
-            {/* Source */}
-            <div
-              className={cn(
-                "panel-3d p-3 aspect-square flex items-center justify-center cursor-pointer",
-                isDragging && "border-[hsl(var(--primary))] bg-[hsl(var(--primary))]/5"
-              )}
-              onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-              onDragLeave={() => setIsDragging(false)}
-              onDrop={handleDrop}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              {uploadedImage ? (
+        <div className="w-full max-w-[calc(100%-2rem)] space-y-3 mb-6" style={{ maxWidth: "calc((100vh - 200px) * 16 / 9)" }}>
+          {/* Zone Upload (principale) - 16:9 */}
+          <div
+            className={cn(
+              "panel-3d p-4 aspect-[16/9] flex items-center justify-center transition-all duration-300 cursor-pointer",
+              isDragging && "border-[hsl(var(--primary))] bg-[hsl(var(--primary))]/5"
+            )}
+            onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+            onDragLeave={() => setIsDragging(false)}
+            onDrop={handleDrop}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            {uploadedImage ? (
+              <div className="relative w-full h-full">
                 <img src={uploadedImage} alt="Source" className="w-full h-full object-contain" />
-              ) : (
-                <div className="flex flex-col items-center gap-2 text-center">
-                  <Upload className="h-8 w-8 text-[hsl(var(--primary))]" />
-                  <p className="font-display text-sm">SOURCE</p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="absolute top-2 right-2 bg-black/50 hover:bg-black/70"
+                  onClick={(e) => { e.stopPropagation(); setUploadedImage(null); }}
+                >
+                  Changer
+                </Button>
+                {isGenerating && (
+                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                    <div className="h-16 w-16 rounded-full border-4 border-[hsl(var(--primary))]/30 border-t-[hsl(var(--primary))] animate-spin" />
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-3 text-center">
+                <div className="h-16 w-16 rounded-full bg-gradient-to-br from-[hsl(174,100%,50%)]/20 to-[hsl(142,76%,50%)]/20 flex items-center justify-center">
+                  <Upload className="h-8 w-8 text-[hsl(174,100%,50%)]" />
                 </div>
-              )}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleFileSelect}
-              />
-            </div>
-
-            {/* Résultat */}
-            <div className="panel-3d p-3 aspect-square flex items-center justify-center">
-              {isGenerating ? (
-                <div className="h-10 w-10 rounded-full border-4 border-[hsl(var(--primary))]/30 border-t-[hsl(var(--primary))] animate-spin" />
-              ) : resultImage ? (
-                <div className="relative w-full h-full">
-                  <img src={resultImage} alt="Result" className="w-full h-full object-contain" />
-                  <Button size="sm" variant="ghost" className="absolute top-1 right-1">
-                    <Download className="h-4 w-4" />
-                  </Button>
+                <div>
+                  <p className="font-display text-lg text-foreground">Glissez une image ici</p>
+                  <p className="text-sm text-muted-foreground">ou cliquez pour sélectionner</p>
                 </div>
-              ) : (
-                <div className="flex flex-col items-center gap-2 text-center">
-                  <ZoomIn className="h-8 w-8 text-muted-foreground" />
-                  <p className="font-display text-sm text-muted-foreground">RÉSULTAT</p>
-                </div>
-              )}
-            </div>
+              </div>
+            )}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleFileSelect}
+            />
           </div>
 
           {/* Prompt avec aide intégrée */}
@@ -242,24 +240,20 @@ const GenerateRetouch = () => {
         {/* Grille des modèles */}
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-4">
-            <Wand2 className="h-5 w-5 text-[hsl(var(--primary))]" />
-            <h2 className="font-display text-lg font-bold">OUTILS DE RETOUCHE</h2>
+            <Film className="h-5 w-5 text-[hsl(var(--primary))]" />
+            <h2 className="font-display text-lg font-bold">OUTILS DE RETOUCHE COMPATIBLES</h2>
             <Badge variant="outline" className="text-sm">{models.length}</Badge>
             <div className="ml-auto">
               <ViewModeToggle viewMode={viewMode} onViewModeChange={setViewMode} />
             </div>
           </div>
 
-          <div className={cn(
-            viewMode === "list" 
-              ? "flex flex-col gap-3" 
-              : "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
-          )}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {models.map((model) => (
               <AppTileCard
                 key={model.id}
                 model={model}
-                viewMode={viewMode}
+                viewMode="grid"
                 horizontal
                 onOpenAPIKeyModal={handleOpenAPIKeyModal}
                 onClick={() => setSelectedModel(model)}

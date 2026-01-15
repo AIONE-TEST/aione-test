@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useCallback } from "react";
-import { ImageIcon, Sparkles, Upload, Image, File } from "lucide-react";
+import { ImageIcon, Sparkles, Upload, Film } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { ModelSelector } from "@/components/ModelSelector";
 import { AppTileCard } from "@/components/AppTileCard";
@@ -115,11 +115,11 @@ const GenerateImages = () => {
         </div>
 
         {/* Layout: Vertical - Options sous le prompt */}
-        <div className="max-w-4xl space-y-3 mb-6">
-          {/* Zone Upload */}
+        <div className="w-full max-w-[calc(100%-2rem)] space-y-3 mb-6" style={{ maxWidth: "calc((100vh - 200px) * 16 / 9)" }}>
+          {/* Zone Upload (principale) - 16:9 */}
           <div
             className={cn(
-              "panel-3d p-4 aspect-square max-h-[400px] flex items-center justify-center transition-all duration-300 cursor-pointer",
+              "panel-3d p-4 aspect-[16/9] flex items-center justify-center transition-all duration-300 cursor-pointer",
               isDragging && "border-[hsl(var(--primary))] bg-[hsl(var(--primary))]/5"
             )}
             onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
@@ -201,7 +201,7 @@ const GenerateImages = () => {
                       variant={aspectRatio === ratio ? "default" : "outline"}
                       onClick={() => setAspectRatio(ratio)}
                       className={cn(
-                        "text-xs px-2 py-1",
+                        "text-xs px-2 py-1 h-7",
                         aspectRatio === ratio ? "btn-3d-pink" : "btn-3d"
                       )}
                     >
@@ -222,7 +222,7 @@ const GenerateImages = () => {
                       variant={quality === q ? "default" : "outline"}
                       onClick={() => setQuality(q)}
                       className={cn(
-                        "flex-1 text-xs px-2 py-1",
+                        "flex-1 text-xs px-2 py-1 h-7",
                         quality === q ? "btn-3d-green" : "btn-3d"
                       )}
                     >
@@ -246,7 +246,7 @@ const GenerateImages = () => {
         {/* Grille des modèles */}
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-4">
-            <ImageIcon className="h-5 w-5 text-[hsl(320,100%,60%)]" />
+            <Film className="h-5 w-5 text-[hsl(320,100%,60%)]" />
             <h2 className="font-display text-lg font-bold">MODÈLES IMAGES COMPATIBLES</h2>
             <Badge variant="outline" className="text-sm">{models.length}</Badge>
             <div className="ml-auto">
@@ -254,16 +254,12 @@ const GenerateImages = () => {
             </div>
           </div>
 
-          <div className={cn(
-            viewMode === "list" 
-              ? "flex flex-col gap-3" 
-              : "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
-          )}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {models.map((model) => (
               <AppTileCard
                 key={model.id}
                 model={model}
-                viewMode={viewMode}
+                viewMode="grid"
                 horizontal
                 onOpenAPIKeyModal={handleOpenAPIKeyModal}
                 onClick={() => setSelectedModel(model)}
