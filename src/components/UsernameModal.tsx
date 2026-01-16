@@ -2,40 +2,39 @@ import React, { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { X, HelpCircle, Lock } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox"; // Assurez-vous d'avoir ce composant ou une input type checkbox standard
 
 interface UsernameModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (sessionId: string, username: string) => void;
+  onSuccess: (sessionId: string, username: string, remember: boolean) => void;
 }
 
 export const UsernameModal: React.FC<UsernameModalProps> = ({ isOpen, onClose, onSuccess }) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // États pour le système de sécurité
+  // Sécurité
   const [attempts, setAttempts] = useState(0);
   const [isLocked, setIsLocked] = useState(false);
   const [lockoutTimer, setLockoutTimer] = useState<string>("");
 
-  // États pour l'aide
+  // Aide
   const [showHelp, setShowHelp] = useState(false);
   const [helpMessage, setHelpMessage] = useState("");
 
-  // Vérification du verrouillage au chargement
+  // Gestion du verrouillage (identique à la version validée précédente)
   useEffect(() => {
     const checkLockout = () => {
       const lockoutEnd = localStorage.getItem("mik_lockout_end");
       const storedAttempts = localStorage.getItem("mik_attempts");
-
       if (storedAttempts) setAttempts(parseInt(storedAttempts));
-
       if (lockoutEnd) {
         const endTime = parseInt(lockoutEnd);
         if (Date.now() < endTime) {
           setIsLocked(true);
-          // Démarrer le décompte
           const interval = setInterval(() => {
             const remaining = endTime - Date.now();
             if (remaining <= 0) {
@@ -52,23 +51,20 @@ export const UsernameModal: React.FC<UsernameModalProps> = ({ isOpen, onClose, o
           }, 1000);
           return () => clearInterval(interval);
         } else {
-          // Verrouillage expiré
           setIsLocked(false);
           setAttempts(0);
           localStorage.removeItem("mik_lockout_end");
         }
       }
     };
-
     checkLockout();
-  }, [isOpen]); // Vérifier à chaque ouverture
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
   const handleLoginAttempt = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isLocked) return;
-
     const cleanUsername = username.trim();
     if (!cleanUsername) return;
     setLoading(true);
@@ -79,26 +75,23 @@ export const UsernameModal: React.FC<UsernameModalProps> = ({ isOpen, onClose, o
         const newAttempts = attempts + 1;
         setAttempts(newAttempts);
         localStorage.setItem("mik_attempts", newAttempts.toString());
-
         if (newAttempts >= 5) {
-          const lockoutTime = Date.now() + 60 * 60 * 1000; // 1 heure
+          const lockoutTime = Date.now() + 60 * 60 * 1000;
           localStorage.setItem("mik_lockout_end", lockoutTime.toString());
           setIsLocked(true);
-          toast.error("SÉCURITÉ ACTIVÉE : Trop de tentatives. Accès bloqué 1h.");
+          toast.error("SÉCURITÉ : Accès bloqué 1h.");
         } else {
-          toast.error(`Mot de passe incorrect. Essais restants : ${5 - newAttempts}`);
+          toast.error(`Mot de passe incorrect. Essais : ${5 - newAttempts}`);
         }
         setLoading(false);
         return;
       } else {
-        // Succès Admin : Reset des compteurs
         setAttempts(0);
         localStorage.removeItem("mik_attempts");
         localStorage.removeItem("mik_lockout_end");
       }
     }
 
-    // --- PROCÉDURE DE CONNEXION ---
     try {
       const { data, error } = await supabase
         .from("sessions")
@@ -108,11 +101,11 @@ export const UsernameModal: React.FC<UsernameModalProps> = ({ isOpen, onClose, o
 
       if (error) throw error;
 
-      onSuccess(data.id, cleanUsername);
-      toast.success(`Session initialisée : ${cleanUsername}`);
+      onSuccess(data.id, cleanUsername, rememberMe);
+      toast.success(`Bienvenue ${cleanUsername}`);
     } catch (error) {
       console.error(error);
-      toast.error("Erreur de connexion serveur");
+      toast.error("Erreur connexion");
     } finally {
       setLoading(false);
     }
@@ -121,22 +114,14 @@ export const UsernameModal: React.FC<UsernameModalProps> = ({ isOpen, onClose, o
   const sendHelpRequest = async () => {
     if (!helpMessage.trim()) return;
     try {
-      await supabase.from("admin_alerts").insert([
-        {
-          type: "HELP_REQUEST",
-          message: helpMessage,
-          status: "pending",
-        },
-      ]);
-      toast.success("Alerte envoyée à l'administrateur.");
+      await supabase.from("admin_alerts").insert([{ type: "HELP_REQUEST", message: helpMessage }]);
+      toast.success("Alerte envoyée.");
       setShowHelp(false);
-      setHelpMessage("");
     } catch (e) {
-      toast.error("Échec de l'envoi");
+      toast.error("Erreur d'envoi");
     }
   };
 
-  // Rendu de la fenêtre d'aide (Prioritaire)
   if (showHelp) {
     return (
       <div className="fixed inset-0 z-[9999] flex items-center justify-center pointer-events-none">
@@ -146,7 +131,7 @@ export const UsernameModal: React.FC<UsernameModalProps> = ({ isOpen, onClose, o
           </button>
           <h3 className="text-xl font-orbitron text-cyan-500 mb-4">ASSISTANCE</h3>
           <textarea
-            className="w-full bg-black/50 border border-gray-700 rounded p-3 text-white mb-4 h-32 outline-none focus:border-cyan-500 font-sans"
+            className="w-full bg-black/50 border border-gray-700 rounded p-3 text-white mb-4 h-32 outline-none font-sans"
             value={helpMessage}
             onChange={(e) => setHelpMessage(e.target.value)}
             placeholder="Décrivez votre problème..."
@@ -163,37 +148,34 @@ export const UsernameModal: React.FC<UsernameModalProps> = ({ isOpen, onClose, o
   }
 
   return (
-    // CONTAINER PRINCIPAL : pointer-events-none permet de cliquer/scroller à travers le fond transparent
     <div className="fixed inset-0 z-[9999] flex items-center justify-center pointer-events-none">
-      {/* LA POP-UP : pointer-events-auto réactive les clics uniquement sur la fenêtre */}
       <div
-        className={`w-full max-w-md p-8 bg-[#0F1115] border border-cyan-500/30 rounded-lg shadow-[0_0_40px_rgba(6,182,212,0.15)] relative pointer-events-auto transition-all ${isLocked ? "grayscale opacity-90" : ""}`}
+        className={`w-full max-w-lg p-10 bg-[#0F1115] border border-cyan-500/30 rounded-xl shadow-[0_0_60px_rgba(6,182,212,0.2)] relative pointer-events-auto transition-all ${isLocked ? "grayscale opacity-90" : ""}`}
       >
-        {/* CROIX DE FERMETURE : Grisée et désactivée si bloqué */}
         <button
           onClick={isLocked ? undefined : onClose}
           disabled={isLocked}
-          className={`absolute top-4 right-4 transition-colors ${isLocked ? "text-gray-700 cursor-not-allowed" : "text-gray-500 hover:text-cyan-500"}`}
-          title={isLocked ? "Verrouillé" : "Fermer"}
+          className={`absolute top-4 right-4 ${isLocked ? "text-gray-700" : "text-gray-500 hover:text-cyan-500"}`}
         >
-          <X size={24} />
+          <X size={28} />
         </button>
 
-        <h2 className="text-2xl font-orbitron text-white text-center mb-8 tracking-widest flex items-center justify-center gap-3">
-          {isLocked && <Lock className="text-red-500 animate-pulse" />}
-          AIONE ACCESS
+        {/* TITRE ADAPTÉ AU FORMAT XXL */}
+        <h2 className="text-3xl font-orbitron text-white text-center mb-10 tracking-widest font-bold">
+          {isLocked ? (
+            <span className="text-red-500 flex items-center justify-center gap-2">
+              <Lock /> VERROUILLÉ
+            </span>
+          ) : (
+            "AIONE ACCESS"
+          )}
         </h2>
 
-        {isLocked && (
-          <div className="mb-6 p-4 bg-red-900/20 border border-red-500/50 rounded text-center">
-            <p className="text-red-500 font-orbitron text-xs font-bold mb-2">SYSTÈME VERROUILLÉ</p>
-            <p className="text-white font-mono text-xl">{lockoutTimer}</p>
-            <p className="text-gray-500 text-[10px] mt-2">Trop de tentatives incorrectes.</p>
-          </div>
-        )}
+        {isLocked && <div className="mb-6 text-center text-red-500 font-mono text-xl">{lockoutTimer}</div>}
 
-        <form onSubmit={handleLoginAttempt} className="space-y-6">
+        <form onSubmit={handleLoginAttempt} className="space-y-8">
           <div className="space-y-2">
+            {/* POLICE AGRANDIE DU DOUBLE (text-xl au lieu de text-sm) */}
             <input
               type="text"
               name="username"
@@ -201,13 +183,14 @@ export const UsernameModal: React.FC<UsernameModalProps> = ({ isOpen, onClose, o
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               disabled={isLocked}
-              className={`w-full bg-black/60 border p-3 rounded text-white font-orbitron text-sm outline-none transition-all placeholder:text-gray-600 ${isLocked ? "border-gray-800 text-gray-500 cursor-not-allowed" : "border-gray-800 focus:border-cyan-500"}`}
+              className={`w-full bg-black/60 border-b-2 border-t-0 border-x-0 border-gray-700 p-4 text-white font-orbitron text-2xl focus:border-cyan-500 outline-none transition-all placeholder:text-gray-700 text-center ${isLocked ? "cursor-not-allowed" : ""}`}
               placeholder="IDENTIFIANT"
               required
             />
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2 relative">
+            {/* LEURRE : Placeholder à 6 étoiles pour masquer la longueur réelle attendue */}
             <input
               type="password"
               name="password"
@@ -215,33 +198,46 @@ export const UsernameModal: React.FC<UsernameModalProps> = ({ isOpen, onClose, o
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={isLocked}
-              className={`w-full bg-black/60 border p-3 rounded text-white font-orbitron text-sm outline-none transition-all placeholder:text-gray-600 ${isLocked ? "border-gray-800 text-gray-500 cursor-not-allowed" : "border-gray-800 focus:border-cyan-500"}`}
-              placeholder="MOT DE PASSE (Optionnel sauf Admin)"
+              className={`w-full bg-black/60 border-b-2 border-t-0 border-x-0 border-gray-700 p-4 text-white font-orbitron text-2xl focus:border-cyan-500 outline-none transition-all placeholder:text-gray-700 text-center ${isLocked ? "cursor-not-allowed" : ""}`}
+              placeholder="******"
             />
+          </div>
+
+          {/* OPTION SE SOUVENIR DE MOI */}
+          <div className="flex items-center justify-center gap-2 pt-2">
+            <input
+              type="checkbox"
+              id="remember"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              className="w-4 h-4 accent-cyan-500 cursor-pointer"
+            />
+            <label htmlFor="remember" className="text-gray-400 text-xs font-orbitron cursor-pointer hover:text-white">
+              SE SOUVENIR DE MOI
+            </label>
           </div>
 
           <button
             type="submit"
             disabled={loading || isLocked}
-            className={`w-full py-3 font-orbitron font-bold tracking-wider rounded transition-all duration-300 ${
+            className={`w-full py-5 font-orbitron font-bold text-xl tracking-widest rounded transition-all duration-300 mt-4 ${
               isLocked
-                ? "bg-gray-800 text-gray-500 border border-gray-700 cursor-not-allowed"
-                : "bg-cyan-900/50 border border-cyan-500/50 hover:bg-cyan-500 hover:text-black text-cyan-500"
+                ? "bg-gray-800 text-gray-500 cursor-not-allowed"
+                : "bg-cyan-900/40 border border-cyan-500/50 hover:bg-cyan-500 hover:text-black text-cyan-400"
             }`}
           >
-            {loading ? "INITIALISATION..." : isLocked ? "ACCÈS REFUSÉ" : "ENTRER"}
+            {loading ? "..." : isLocked ? "REFUSÉ" : "ENTRER"}
           </button>
         </form>
 
-        <div className="mt-6 text-center">
-          <button
-            onClick={() => setShowHelp(true)}
-            className="text-xs text-gray-500 hover:text-cyan-400 flex items-center justify-center gap-2 mx-auto transition-colors"
-          >
-            <HelpCircle size={14} />
-            Besoin d'aide ?
-          </button>
-        </div>
+        {/* LIEN AIDE : DISCRET EN BAS À DROITE */}
+        <button
+          onClick={() => setShowHelp(true)}
+          className="absolute bottom-3 right-4 text-[10px] text-gray-700 hover:text-cyan-600 flex items-center gap-1 transition-colors opacity-70 hover:opacity-100"
+        >
+          <HelpCircle size={10} />
+          Besoin d'aide ?
+        </button>
       </div>
     </div>
   );
