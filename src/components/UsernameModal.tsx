@@ -69,4 +69,4 @@ const UsernameModal = ({ isOpen, onClose, onSuccess }: UsernameModalProps) => {
   );
 };
 
-export default UsernameModal; // L'export par défaut est ici
+export default UsernameModal;
