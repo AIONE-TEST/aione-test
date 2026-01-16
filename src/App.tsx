@@ -11,7 +11,7 @@ import LLMs from "./pages/LLMs";
 import GenerateImages from "./pages/GenerateImages";
 import GenerateVideos from "./pages/GenerateVideos";
 import GenerateAudio from "./pages/GenerateAudio";
-import Generate 3D from "./pages/Generate3D";
+import Generate3D from "./pages/Generate3D";
 import GenerateRetouch from "./pages/GenerateRetouch";
 import Apps from "./pages/Apps";
 import APIKeys from "./pages/APIKeys";
@@ -23,18 +23,16 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
 function AppContent() {
-  const { session, isLoading, isAuthenticated, login } = useSession();
+  const { isLoading, isAuthenticated, login } = useSession();
   const [showUsernameModal, setShowUsernameModal] = useState(false);
 
   useEffect(() => {
-    // Fonction pour ouvrir la modal sur interaction
     const handleFirstInteraction = () => {
       if (!isLoading && !isAuthenticated && !showUsernameModal) {
         setShowUsernameModal(true);
       }
     };
 
-    // On n'ajoute les écouteurs que si l'utilisateur n'est pas identifié
     if (!isAuthenticated && !isLoading) {
       window.addEventListener("click", handleFirstInteraction);
       window.addEventListener("keydown", handleFirstInteraction);
@@ -48,15 +46,15 @@ function AppContent() {
 
   const handleLoginSuccess = (sessionId: string, username: string) => {
     login(sessionId, username);
-    setShowUsernameModal(false); // Fermeture immédiate de la modal après succès
+    setShowUsernameModal(false);
   };
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#0F1115] flex items-center justify-center">
-        <div className="text-center">
+        <div className="text-center animate-pulse">
           <div className="w-16 h-16 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-cyan-500 font-orbitron animate-pulse">Chargement...</p>
+          <p className="text-cyan-500 font-orbitron">AIONE INITIALIZATION...</p>
         </div>
       </div>
     );
@@ -69,7 +67,7 @@ function AppContent() {
         onClose={() => setShowUsernameModal(false)}
         onSuccess={handleLoginSuccess}
       />
-      
+
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
