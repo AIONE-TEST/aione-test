@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { SessionProvider, useSession } from "@/contexts/SessionContext";
 import { UsernameModal } from "@/components/UsernameModal";
 import Index from "./pages/Index";
@@ -23,17 +23,67 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
 function AppContent() {
-  const { session, isLoading, isAuthenticated, login } = useSession();
+  const { session, isLoading, isAuthenticated, login, updateActivity } = useSession();
   const [showUsernameModal, setShowUsernameModal] = useState(false);
 
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+  // TÂCHE 17 & 18: Popup hidden by default, opens on action
+  const handleLoginRequired = useCallback(() => {
+    if (!isAuthenticated) {
       setShowUsernameModal(true);
     }
-  }, [isLoading, isAuthenticated]);
+  }, [isAuthenticated]);
+
+  // Track clicks on interactive elements - TÂCHE 18
+  useEffect(() => {
+    if (isAuthenticated) return;
+
+    const handleClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      const isInteractive = 
+        target.tagName === 'BUTTON' || 
+        target.tagName === 'A' ||
+        target.closest('button') ||
+        target.closest('a') ||
+        target.closest('[role="button"]');
+      
+      if (isInteractive && !showUsernameModal) {
+        // Check if it's not the close button of the modal itself
+        const isCloseButton = target.closest('[data-close-modal]');
+        if (!isCloseButton) {
+          setShowUsernameModal(true);
+        }
+      }
+    };
+
+    document.addEventListener('click', handleClick);
+    return () => document.removeEventListener('click', handleClick);
+  }, [isAuthenticated, showUsernameModal]);
+
+  // Update activity on user interaction
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    
+    const handleActivity = () => updateActivity();
+    const events = ['mousedown', 'keydown', 'scroll'];
+    
+    events.forEach(event => {
+      window.addEventListener(event, handleActivity, { passive: true });
+    });
+    
+    return () => {
+      events.forEach(event => {
+        window.removeEventListener(event, handleActivity);
+      });
+    };
+  }, [isAuthenticated, updateActivity]);
 
   const handleLoginSuccess = (sessionId: string, username: string) => {
     login(sessionId, username);
+    setShowUsernameModal(false);
+  };
+
+  // TÂCHE 18: Close modal handler
+  const handleCloseModal = () => {
     setShowUsernameModal(false);
   };
 
@@ -50,9 +100,10 @@ function AppContent() {
 
   return (
     <>
+      {/* TÂCHE 17 & 19: Modal doesn't block view, visible behind */}
       <UsernameModal
         isOpen={showUsernameModal}
-        onClose={() => {}}
+        onClose={handleCloseModal}
         onSuccess={handleLoginSuccess}
       />
       
