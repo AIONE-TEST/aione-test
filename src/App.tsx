@@ -19,29 +19,74 @@ import Account from "./pages/Account";
 import Tutorials from "./pages/Tutorials";
 import Coding from "./pages/Coding";
 import NotFound from "./pages/NotFound";
+import { supabase } from "@/integrations/supabase/client";
 
 const queryClient = new QueryClient();
+
+// Composant Diode Alerte Admin
+const AdminAlert = () => {
+  const { session } = useSession();
+  const [hasAlerts, setHasAlerts] = useState(false);
+
+  useEffect(() => {
+    if (!session?.isAdmin) return;
+
+    const checkAlerts = async () => {
+      const { count } = await supabase
+        .from("admin_alerts")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "pending");
+      setHasAlerts(!!count && count > 0);
+    };
+    checkAlerts();
+
+    const channel = supabase
+      .channel("admin-alerts")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "admin_alerts" }, () => {
+        setHasAlerts(true);
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [session]);
+
+  if (!hasAlerts || !session?.isAdmin) return null;
+
+  return (
+    <div className="fixed top-4 right-20 z-[10000] flex items-center gap-2 bg-red-900/80 px-3 py-1 rounded-full border border-red-500 animate-pulse cursor-pointer">
+      <div className="w-3 h-3 bg-red-500 rounded-full shadow-[0_0_10px_red]"></div>
+      <span className="text-white text-xs font-bold font-orbitron">ALERTE ADMIN</span>
+    </div>
+  );
+};
 
 function AppContent() {
   const { isLoading, isAuthenticated, login } = useSession();
   const [showUsernameModal, setShowUsernameModal] = useState(false);
 
+  // Gestion de l'ouverture automatique au clic
   useEffect(() => {
-    const handleFirstInteraction = () => {
+    const handleInteraction = (e: Event) => {
+      // On ignore si c'est déjà authentifié ou si la modal est ouverte
       if (!isLoading && !isAuthenticated && !showUsernameModal) {
         setShowUsernameModal(true);
       }
     };
 
     if (!isAuthenticated && !isLoading) {
-      window.addEventListener("click", handleFirstInteraction);
-      window.addEventListener("keydown", handleFirstInteraction);
+      // Délai pour éviter conflit immédiat
+      const timer = setTimeout(() => {
+        window.addEventListener("click", handleInteraction);
+        window.addEventListener("keydown", handleInteraction);
+      }, 500);
+      return () => {
+        clearTimeout(timer);
+        window.removeEventListener("click", handleInteraction);
+        window.removeEventListener("keydown", handleInteraction);
+      };
     }
-
-    return () => {
-      window.removeEventListener("click", handleFirstInteraction);
-      window.removeEventListener("keydown", handleFirstInteraction);
-    };
   }, [isLoading, isAuthenticated, showUsernameModal]);
 
   const handleLoginSuccess = (sessionId: string, username: string) => {
@@ -52,9 +97,9 @@ function AppContent() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#0F1115] flex items-center justify-center">
-        <div className="text-center animate-pulse">
+        <div className="text-center">
           <div className="w-16 h-16 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-cyan-500 font-orbitron">AIONE INITIALIZATION...</p>
+          <p className="text-cyan-500 font-orbitron animate-pulse">SYSTEM LOADING...</p>
         </div>
       </div>
     );
@@ -62,6 +107,7 @@ function AppContent() {
 
   return (
     <>
+      <AdminAlert />
       <UsernameModal
         isOpen={showUsernameModal}
         onClose={() => setShowUsernameModal(false)}
