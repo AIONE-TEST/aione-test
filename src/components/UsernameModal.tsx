@@ -1,94 +1,80 @@
 import React, { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { X, HelpCircle, Lock } from "lucide-react";
+import { LayoutGrid, Star, History, Settings, Sun, MapPin, Globe, Clock } from "lucide-react";
+import { UsernameModal } from "@/components/UsernameModal";
 
-export const UsernameModal = ({ isOpen, onClose, onSuccess }) => {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+export default function Index() {
+  const [time, setTime] = useState(new Date());
+  const languages = ["FR", "EN", "ES", "DE", "ZH", "IT", "RU", "HI", "RO", "PL", "AR"];
 
-  // Système de verrouillage (conservé)
-  const [isLocked, setIsLocked] = useState(false);
-  const [lockoutTimer, setLockoutTimer] = useState("");
-
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    if (isLocked) return;
-
-    const cleanUser = username.trim();
-    if (!cleanUser) return;
-
-    // SÉCURITÉ MIK
-    if (cleanUser.toLowerCase() === "mik") {
-      if (password !== "1971") {
-        toast.error("IDENTIFICATION ÉCHOUÉE");
-        // Logique de compteur de tentatives ici...
-        return;
-      }
-    }
-
-    setLoading(true);
-
-    // FORCE LE LOGIN : Même si la DB a un souci, on valide la session locale
-    // pour que l'utilisateur puisse entrer sur le site.
-    try {
-      // On tente une insertion silencieuse dans user_sessions
-      await supabase.from("user_sessions").upsert({ username: cleanUser }, { onConflict: 'username' }).select();
-
-      // On déclenche le succès quoi qu'il arrive pour débloquer l'accès
-      onSuccess(crypto.randomUUID(), cleanUser, true);
-      toast.success(`ACCÈS AUTORISÉ : ${cleanUser.toUpperCase()}`);
-    } catch (err) {
-      // Fallback si Supabase est offline
-      onSuccess("offline-session", cleanUser, true);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (!isOpen) return null;
+  useEffect(() => {
+    const timer = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center pointer-events-none bg-transparent">
-      <div className="w-full max-w-lg p-10 bg-[#0F1115] border border-cyan-500/30 rounded-xl pointer-events-auto shadow-[0_0_60px_rgba(0,0,0,0.9)] relative">
-        <button onClick={onClose} className="absolute top-4 right-4 text-gray-700 hover:text-cyan-500">
-          <X size={32} />
-        </button>
+    <div className="flex h-screen bg-[#0A0C10] overflow-hidden">
+      {/* BARRE LATÉRALE - CLONAGE ORIGINAL */}
+      <nav className="w-24 border-r border-white/5 flex flex-col items-center py-8 bg-[#0F1115] z-50">
+        <div className="text-cyan-500 mb-10">
+          <LayoutGrid size={28} />
+        </div>
 
-        <h2 className="text-4xl font-orbitron text-white text-center mb-12 tracking-[0.2em] font-black">
-          AIONE ACCESS
-        </h2>
-
-        <form onSubmit={handleLogin} className="space-y-10">
-          <input
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            className="w-full bg-black/40 border-b-2 border-gray-800 p-5 text-white font-orbitron text-3xl focus:border-cyan-500 outline-none text-center transition-all"
-            placeholder="IDENTIFIANT"
-            required
-          />
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full bg-black/40 border-b-2 border-gray-800 p-5 text-white font-orbitron text-3xl focus:border-cyan-500 outline-none text-center transition-all"
-            placeholder="******"
-          />
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-6 bg-cyan-950/20 border border-cyan-500/40 text-cyan-400 font-orbitron font-black text-2xl hover:bg-cyan-500 hover:text-black transition-all duration-500"
-          >
-            {loading ? "INITIALISATION..." : "ENTRER"}
+        <div className="flex flex-col gap-8">
+          <button className="p-3 text-gray-500 hover:text-cyan-400 transition-colors">
+            <Star size={24} />
           </button>
-        </form>
+          <button className="p-3 text-gray-500 hover:text-cyan-400 transition-colors">
+            <History size={24} />
+          </button>
+          {/* BOUTON TCHAT SUPPRIMÉ ICI */}
+          <button className="p-3 text-gray-500 hover:text-cyan-400 transition-colors">
+            <Settings size={24} />
+          </button>
+        </div>
 
-        <button className="absolute bottom-4 right-6 text-[10px] text-gray-700 font-orbitron hover:text-cyan-800 transition-colors">
-          Besoin d'aide ?
-        </button>
-      </div>
+        {/* GROS BOUTON DYNAMIQUE DANS L'ESPACE VIDE RESTANT */}
+        <div className="mt-auto w-full px-2 flex flex-col gap-3">
+          {/* Sélecteur de langue */}
+          <div className="bg-black/40 p-2 rounded-lg border border-white/5 flex flex-col items-center gap-1">
+            <Globe size={12} className="text-cyan-500 opacity-50" />
+            <select className="bg-transparent text-[9px] text-cyan-400 outline-none font-bold cursor-pointer font-orbitron">
+              {languages.map((l) => (
+                <option key={l} value={l} className="bg-[#0F1115]">
+                  {l}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Bloc Météo / Maps */}
+          <button
+            onClick={() => window.open("https://www.google.com/maps", "_blank")}
+            className="w-full aspect-[3/4] bg-gradient-to-b from-cyan-950/20 to-black border border-cyan-500/20 rounded-xl flex flex-col items-center justify-between py-4 transition-all hover:border-cyan-500/50 group"
+          >
+            <div className="relative">
+              <Sun size={32} className="text-yellow-400 animate-[spin_8s_linear_infinite]" />
+              <div className="absolute -top-1 -right-1 w-2 h-2 bg-white rounded-full animate-ping opacity-20" />
+            </div>
+
+            <div className="text-center">
+              <span className="block text-lg font-bold text-white leading-none">18°C</span>
+              <span className="text-[8px] text-cyan-400 uppercase tracking-tighter opacity-70">Paris, FR</span>
+            </div>
+
+            <div className="flex flex-col items-center gap-1">
+              <MapPin size={12} className="text-cyan-500 group-hover:animate-bounce" />
+              <div className="text-[7px] text-gray-500 font-bold leading-none text-center font-orbitron">
+                {time.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                <br />
+                2026
+              </div>
+            </div>
+          </button>
+        </div>
+      </nav>
+
+      {/* ZONE PRINCIPALE - TON CODE ORIGINAL DOIT CONTINUER ICI */}
+      <main className="flex-1 relative">{/* Ton contenu Hero, Globe, etc. reste ici sans changement */}</main>
     </div>
   );
-};
+}
