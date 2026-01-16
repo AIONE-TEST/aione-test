@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { LayoutGrid, Star, History, Settings, Sun, Globe } from "lucide-react";
-import { UsernameModal } from "../components/UsernameModal";
+import UsernameModal from "../components/UsernameModal"; // Import direct sans accolades
 
 export default function Index() {
   const [time, setTime] = useState(new Date());
@@ -13,12 +13,11 @@ export default function Index() {
   }, []);
 
   const handleLoginSuccess = (id: string, name: string) => {
-    console.log("Connecté en tant que:", name);
     setIsLoginOpen(false);
   };
 
   return (
-    <div className="flex h-screen bg-[#0A0C10] overflow-hidden">
+    <div className="flex h-screen bg-[#0A0C10] overflow-hidden font-orbitron">
       <UsernameModal isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} onSuccess={handleLoginSuccess} />
 
       <nav className="w-24 border-r border-white/5 flex flex-col items-center py-8 bg-[#0F1115] z-50">
@@ -41,7 +40,7 @@ export default function Index() {
         <div className="mt-auto w-full px-2 flex flex-col gap-3 pb-4">
           <div className="flex flex-col items-center gap-1 bg-white/5 py-1.5 rounded-lg border border-white/5">
             <Globe size={12} className="text-cyan-500/40" />
-            <select className="bg-transparent text-[9px] text-cyan-400 outline-none font-bold cursor-pointer font-orbitron">
+            <select className="bg-transparent text-[9px] text-cyan-400 outline-none font-bold cursor-pointer font-orbitron appearance-none text-center">
               {languages.map((l) => (
                 <option key={l} value={l} className="bg-[#0F1115]">
                   {l}
@@ -66,7 +65,7 @@ export default function Index() {
         </div>
       </nav>
 
-      <main className="flex-1 relative overflow-hidden bg-[#0A0C10]">{/* Ton contenu principal original ici */}</main>
+      <main className="flex-1 relative overflow-hidden bg-[#0A0C10]">{/* Ton contenu principal */}</main>
     </div>
   );
 }

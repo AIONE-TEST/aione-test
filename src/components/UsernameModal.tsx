@@ -32,21 +32,23 @@ const UsernameModal = ({ isOpen, onClose, onSuccess }: UsernameModalProps) => {
         <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors">
           <X size={20} />
         </button>
-        <h2 className="text-xl font-semibold text-white mb-4 font-orbitron uppercase tracking-widest">Connexion</h2>
+        <h2 className="text-xl font-semibold text-white mb-4 font-orbitron uppercase tracking-widest">
+          Connexion Système
+        </h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-400 mb-1 font-orbitron">Pseudo</label>
+            <label className="block text-sm font-medium text-gray-400 mb-1 font-orbitron">Identifiant</label>
             <input
               type="text"
               className="w-full bg-black/50 border border-white/10 rounded-lg p-2.5 text-white outline-none focus:border-cyan-500 transition-all uppercase font-orbitron"
-              placeholder="Entrez votre pseudo"
+              placeholder="Pseudo"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               autoFocus
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-400 mb-1 font-orbitron">Mot de passe</label>
+            <label className="block text-sm font-medium text-gray-400 mb-1 font-orbitron">Code d'accès</label>
             <input
               type="password"
               className="w-full bg-black/50 border border-white/10 rounded-lg p-2.5 text-white outline-none focus:border-cyan-500 transition-all font-orbitron"
@@ -59,7 +61,7 @@ const UsernameModal = ({ isOpen, onClose, onSuccess }: UsernameModalProps) => {
             type="submit"
             className="w-full py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-lg transition-all font-orbitron uppercase tracking-wider"
           >
-            Accéder au système
+            Initialisation
           </button>
         </form>
       </div>
@@ -67,4 +69,4 @@ const UsernameModal = ({ isOpen, onClose, onSuccess }: UsernameModalProps) => {
   );
 };
 
-export default UsernameModal;
+export default UsernameModal; // L'export par défaut est ici
