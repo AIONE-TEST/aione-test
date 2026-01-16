@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 import { SessionProvider, useSession } from "@/contexts/SessionContext";
-import { UsernameModal } from "@/components/UsernameModal";
+import UsernameModal from "@/components/UsernameModal";
 import Index from "./pages/Index";
 import Account from "./pages/Account";
 import Apps from "./pages/Apps";
