@@ -1,16 +1,30 @@
 import { useState, useEffect } from "react";
-// ... imports existants ...
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "@/components/ui/sonner";
 import { SessionProvider, useSession } from "@/contexts/SessionContext";
 import { UsernameModal } from "@/components/UsernameModal";
 import Index from "./pages/Index";
-// ... autres imports ...
 import Account from "./pages/Account";
-import { supabase } from "@/integrations/supabase/client";
+import Apps from "./pages/Apps";
+import Chat from "./pages/Chat";
+import Coding from "./pages/Coding";
+import Generate3D from "./pages/Generate3D";
+import GenerateAudio from "./pages/GenerateAudio";
+import GenerateImages from "./pages/GenerateImages";
+import GenerateRetouch from "./pages/GenerateRetouch";
+import GenerateVideos from "./pages/GenerateVideos";
+import LLMs from "./pages/LLMs";
+import Tutorials from "./pages/Tutorials";
+import APIKeys from "./pages/APIKeys";
+import NotFound from "./pages/NotFound";
 
-// ... Code AdminAlert existant ... (Ne pas modifier)
+const queryClient = new QueryClient();
+
 const AdminAlert = () => {
-  /* ... Code diode ... */ return null;
-}; // Je raccourcis ici pour la lisibilité, gardez votre code AdminAlert
+  return null;
+};
 
 function AppContent() {
   const { isLoading, isAuthenticated, login } = useSession();
@@ -36,7 +50,6 @@ function AppContent() {
     }
   }, [isLoading, isAuthenticated, showUsernameModal]);
 
-  // CORRECTION MAJEURE ICI : Prise en compte du paramètre 'remember'
   const handleLoginSuccess = (sessionId: string, username: string, remember: boolean) => {
     login(sessionId, username, remember);
     setShowUsernameModal(false);
@@ -55,7 +68,7 @@ function AppContent() {
 
   return (
     <>
-      <AdminAlert /> {/* Assurez-vous que la définition de AdminAlert est bien dans le fichier */}
+      <AdminAlert />
       <UsernameModal
         isOpen={showUsernameModal}
         onClose={() => setShowUsernameModal(false)}
@@ -63,14 +76,37 @@ function AppContent() {
       />
       <BrowserRouter>
         <Routes>
-          {/* ... Toutes vos routes existantes ... */}
           <Route path="/" element={<Index />} />
           <Route path="/account" element={<Account />} />
-          {/* ... etc ... */}
+          <Route path="/apps" element={<Apps />} />
+          <Route path="/chat" element={<Chat />} />
+          <Route path="/coding" element={<Coding />} />
+          <Route path="/3d" element={<Generate3D />} />
+          <Route path="/audio" element={<GenerateAudio />} />
+          <Route path="/images" element={<GenerateImages />} />
+          <Route path="/retouch" element={<GenerateRetouch />} />
+          <Route path="/videos" element={<GenerateVideos />} />
+          <Route path="/llms" element={<LLMs />} />
+          <Route path="/tutorials" element={<Tutorials />} />
+          <Route path="/api-keys" element={<APIKeys />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
     </>
   );
 }
-// ... Export default App ...
-export default App; // (Gardez la structure wrapper existante)
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <SessionProvider>
+        <TooltipProvider>
+          <Toaster />
+          <AppContent />
+        </TooltipProvider>
+      </SessionProvider>
+    </QueryClientProvider>
+  );
+}
+
+export default App;

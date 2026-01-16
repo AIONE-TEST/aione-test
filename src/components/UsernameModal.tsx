@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { X, HelpCircle, Lock } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox"; // Assurez-vous d'avoir ce composant ou une input type checkbox standard
 
 interface UsernameModalProps {
   isOpen: boolean;
@@ -25,7 +24,7 @@ export const UsernameModal: React.FC<UsernameModalProps> = ({ isOpen, onClose, o
   const [showHelp, setShowHelp] = useState(false);
   const [helpMessage, setHelpMessage] = useState("");
 
-  // Gestion du verrouillage (identique à la version validée précédente)
+  // Gestion du verrouillage
   useEffect(() => {
     const checkLockout = () => {
       const lockoutEnd = localStorage.getItem("mik_lockout_end");
@@ -93,18 +92,40 @@ export const UsernameModal: React.FC<UsernameModalProps> = ({ isOpen, onClose, o
     }
 
     try {
-      const { data, error } = await supabase
-        .from("sessions")
-        .insert([{ username: cleanUsername }])
-        .select()
-        .single();
+      // Vérifier si l'utilisateur existe déjà
+      const { data: existingUser } = await supabase
+        .from("user_sessions_public")
+        .select("id, username")
+        .eq("username", cleanUsername)
+        .maybeSingle();
 
-      if (error) throw error;
+      let sessionId: string;
 
-      onSuccess(data.id, cleanUsername, rememberMe);
+      if (existingUser) {
+        // Utilisateur existant - utiliser son ID
+        sessionId = existingUser.id!;
+        
+        // Mettre à jour last_login
+        await supabase
+          .from("user_sessions")
+          .update({ last_login: new Date().toISOString() })
+          .eq("id", sessionId);
+      } else {
+        // Nouvel utilisateur - créer une session
+        const { data: newSession, error: insertError } = await supabase
+          .from("user_sessions")
+          .insert([{ username: cleanUsername }])
+          .select("id")
+          .single();
+
+        if (insertError) throw insertError;
+        sessionId = newSession.id;
+      }
+
+      onSuccess(sessionId, cleanUsername, rememberMe);
       toast.success(`Bienvenue ${cleanUsername}`);
     } catch (error) {
-      console.error(error);
+      console.error("Login error:", error);
       toast.error("Erreur connexion");
     } finally {
       setLoading(false);
@@ -114,9 +135,14 @@ export const UsernameModal: React.FC<UsernameModalProps> = ({ isOpen, onClose, o
   const sendHelpRequest = async () => {
     if (!helpMessage.trim()) return;
     try {
-      await supabase.from("admin_alerts").insert([{ type: "HELP_REQUEST", message: helpMessage }]);
+      await supabase.from("notifications").insert([{ 
+        title: "HELP_REQUEST",
+        message: helpMessage,
+        type: "help"
+      }]);
       toast.success("Alerte envoyée.");
       setShowHelp(false);
+      setHelpMessage("");
     } catch (e) {
       toast.error("Erreur d'envoi");
     }
@@ -160,7 +186,6 @@ export const UsernameModal: React.FC<UsernameModalProps> = ({ isOpen, onClose, o
           <X size={28} />
         </button>
 
-        {/* TITRE ADAPTÉ AU FORMAT XXL */}
         <h2 className="text-3xl font-orbitron text-white text-center mb-10 tracking-widest font-bold">
           {isLocked ? (
             <span className="text-red-500 flex items-center justify-center gap-2">
@@ -175,7 +200,6 @@ export const UsernameModal: React.FC<UsernameModalProps> = ({ isOpen, onClose, o
 
         <form onSubmit={handleLoginAttempt} className="space-y-8">
           <div className="space-y-2">
-            {/* POLICE AGRANDIE DU DOUBLE (text-xl au lieu de text-sm) */}
             <input
               type="text"
               name="username"
@@ -190,7 +214,6 @@ export const UsernameModal: React.FC<UsernameModalProps> = ({ isOpen, onClose, o
           </div>
 
           <div className="space-y-2 relative">
-            {/* LEURRE : Placeholder à 6 étoiles pour masquer la longueur réelle attendue */}
             <input
               type="password"
               name="password"
@@ -203,7 +226,6 @@ export const UsernameModal: React.FC<UsernameModalProps> = ({ isOpen, onClose, o
             />
           </div>
 
-          {/* OPTION SE SOUVENIR DE MOI */}
           <div className="flex items-center justify-center gap-2 pt-2">
             <input
               type="checkbox"
@@ -230,7 +252,6 @@ export const UsernameModal: React.FC<UsernameModalProps> = ({ isOpen, onClose, o
           </button>
         </form>
 
-        {/* LIEN AIDE : DISCRET EN BAS À DROITE */}
         <button
           onClick={() => setShowHelp(true)}
           className="absolute bottom-3 right-4 text-[10px] text-gray-700 hover:text-cyan-600 flex items-center gap-1 transition-colors opacity-70 hover:opacity-100"
