@@ -14,9 +14,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        // Déclaration cruciale pour tes directives
+        // AJOUT : Pour tes directives de police
         orbitron: ["Orbitron", "sans-serif"],
-        inter: ["Inter", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -52,13 +51,6 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        // Couleurs Neon pour ton Design System Terminator
-        neon: {
-          cyan: "hsl(174 100% 50%)",
-          pink: "hsl(320 100% 60%)",
-          purple: "hsl(280 100% 65%)",
-          yellow: "hsl(45 100% 55%)",
-        },
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -74,7 +66,7 @@ export default {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
-        // Animation pour ton soleil XXL
+        // AJOUT : Pour l'animation du bouton météo
         "spin-slow": {
           from: { transform: "rotate(0deg)" },
           to: { transform: "rotate(360deg)" },
@@ -83,7 +75,8 @@ export default {
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
-        "spin-slow": "spin-slow 10s linear infinite",
+        // AJOUT : Déclenchement de l'animation
+        "spin-slow": "spin-slow 12s linear infinite",
       },
     },
   },

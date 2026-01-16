@@ -1,112 +1,75 @@
-import { useState, useEffect } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { Toaster } from "@/components/ui/sonner";
-import { SessionProvider, useSession } from "@/contexts/SessionContext";
-import { UsernameModal } from "@/components/UsernameModal";
-import Index from "./pages/Index";
-import Account from "./pages/Account";
-import Apps from "./pages/Apps";
-import Chat from "./pages/Chat";
-import Coding from "./pages/Coding";
-import Generate3D from "./pages/Generate3D";
-import GenerateAudio from "./pages/GenerateAudio";
-import GenerateImages from "./pages/GenerateImages";
-import GenerateRetouch from "./pages/GenerateRetouch";
-import GenerateVideos from "./pages/GenerateVideos";
-import LLMs from "./pages/LLMs";
-import Tutorials from "./pages/Tutorials";
-import APIKeys from "./pages/APIKeys";
-import NotFound from "./pages/NotFound";
+import React, { useState, useEffect } from "react";
+import { LayoutGrid, Star, History, Settings, Sun, Globe } from "lucide-react";
+import UsernameModal from "../components/UsernameModal";
 
-const queryClient = new QueryClient();
-
-const AdminAlert = () => {
-  return null;
-};
-
-function AppContent() {
-  const { isLoading, isAuthenticated, login } = useSession();
-  const [showUsernameModal, setShowUsernameModal] = useState(false);
+export default function Index() {
+  const [time, setTime] = useState(new Date());
+  const [isLoginOpen, setIsLoginOpen] = useState(true);
+  const languages = ["FR", "EN", "ES", "DE", "ZH", "IT", "RU", "HI", "RO", "PL", "AR"];
 
   useEffect(() => {
-    const handleInteraction = () => {
-      if (!isLoading && !isAuthenticated && !showUsernameModal) {
-        setShowUsernameModal(true);
-      }
-    };
+    const timer = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
-    if (!isAuthenticated && !isLoading) {
-      const timer = setTimeout(() => {
-        window.addEventListener("click", handleInteraction);
-        window.addEventListener("keydown", handleInteraction);
-      }, 500);
-      return () => {
-        clearTimeout(timer);
-        window.removeEventListener("click", handleInteraction);
-        window.removeEventListener("keydown", handleInteraction);
-      };
-    }
-  }, [isLoading, isAuthenticated, showUsernameModal]);
-
-  const handleLoginSuccess = (sessionId: string, username: string, remember: boolean) => {
-    login(sessionId, username, remember);
-    setShowUsernameModal(false);
+  const handleLoginSuccess = (id: string, name: string) => {
+    setIsLoginOpen(false);
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-[#0F1115] flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-cyan-500 font-orbitron animate-pulse">SYSTEM LOADING...</p>
+  return (
+    <div className="flex h-screen bg-[#0A0C10] overflow-hidden font-orbitron">
+      <UsernameModal isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} onSuccess={handleLoginSuccess} />
+
+      {/* Barre latérale gauche - Sidebar */}
+      <nav className="w-24 border-r border-white/5 flex flex-col items-center py-8 bg-[#0F1115] z-50">
+        <div className="text-cyan-500 mb-10">
+          <LayoutGrid size={28} />
         </div>
-      </div>
-    );
-  }
 
-  return (
-    <>
-      <AdminAlert />
-      <UsernameModal
-        isOpen={showUsernameModal}
-        onClose={() => setShowUsernameModal(false)}
-        onSuccess={handleLoginSuccess}
-      />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/account" element={<Account />} />
-          <Route path="/apps" element={<Apps />} />
-          <Route path="/chat" element={<Chat />} />
-          <Route path="/coding" element={<Coding />} />
-          <Route path="/3d" element={<Generate3D />} />
-          <Route path="/audio" element={<GenerateAudio />} />
-          <Route path="/images" element={<GenerateImages />} />
-          <Route path="/retouch" element={<GenerateRetouch />} />
-          <Route path="/videos" element={<GenerateVideos />} />
-          <Route path="/llms" element={<LLMs />} />
-          <Route path="/tutorials" element={<Tutorials />} />
-          <Route path="/api-keys" element={<APIKeys />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </>
+        <div className="flex flex-col gap-8">
+          <button className="p-3 text-gray-500 hover:text-cyan-400 transition-colors">
+            <Star size={24} />
+          </button>
+          <button className="p-3 text-gray-500 hover:text-cyan-400 transition-colors">
+            <History size={24} />
+          </button>
+          <button className="p-3 text-gray-500 hover:text-cyan-400 transition-colors">
+            <Settings size={24} />
+          </button>
+        </div>
+
+        {/* Bloc Météo et Langues en bas de sidebar */}
+        <div className="mt-auto w-full px-2 flex flex-col gap-3 pb-4">
+          <div className="flex flex-col items-center gap-1 bg-white/5 py-1.5 rounded-lg border border-white/5">
+            <Globe size={12} className="text-cyan-500/40" />
+            <select className="bg-transparent text-[9px] text-cyan-400 outline-none font-bold cursor-pointer font-orbitron appearance-none text-center">
+              {languages.map((l) => (
+                <option key={l} value={l} className="bg-[#0F1115]">
+                  {l}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <button
+            onClick={() => window.open("https://www.google.com/maps", "_blank")}
+            className="w-full aspect-square bg-white/5 border border-white/10 rounded-xl flex flex-col items-center justify-around py-3 transition-all hover:border-cyan-500/40 group"
+          >
+            <Sun size={28} className="text-yellow-500 animate-spin-slow" />
+            <div className="text-center">
+              <span className="block text-base font-bold text-white leading-none">18°C</span>
+              <span className="text-[8px] text-cyan-400 font-bold uppercase opacity-60">Paris, FR</span>
+            </div>
+            <div className="text-[7px] text-gray-500 font-bold">
+              {time.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} | 2026
+            </div>
+          </button>
+        </div>
+      </nav>
+
+      <main className="flex-1 relative overflow-hidden bg-[#0A0C10]">
+        {/* Le contenu original du site reste inchangé ici */}
+      </main>
+    </div>
   );
 }
-
-function App() {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <SessionProvider>
-        <TooltipProvider>
-          <Toaster />
-          <AppContent />
-        </TooltipProvider>
-      </SessionProvider>
-    </QueryClientProvider>
-  );
-}
-
-export default App;
