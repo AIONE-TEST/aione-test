@@ -33,8 +33,8 @@ export const UsernameModal = ({ isOpen, onClose, onSuccess }) => {
     // FORCE LE LOGIN : Même si la DB a un souci, on valide la session locale
     // pour que l'utilisateur puisse entrer sur le site.
     try {
-      // On tente une insertion silencieuse
-      await supabase.from("profiles").upsert({ username: cleanUser }).select();
+      // On tente une insertion silencieuse dans user_sessions
+      await supabase.from("user_sessions").upsert({ username: cleanUser }, { onConflict: 'username' }).select();
 
       // On déclenche le succès quoi qu'il arrive pour débloquer l'accès
       onSuccess(crypto.randomUUID(), cleanUser, true);

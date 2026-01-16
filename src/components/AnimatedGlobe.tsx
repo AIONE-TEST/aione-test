@@ -1,64 +1,102 @@
-import React, { useRef, useMemo } from "react";
-import { useFrame } from "@react-three/fiber";
-import { Points, PointMaterial } from "@react-three/drei";
-import * as THREE from "three";
+import React, { useRef, useEffect } from "react";
 
-const AnimatedGlobe = () => {
-  const ref = useRef<THREE.Points>(null);
+interface AnimatedGlobeProps {
+  size?: number;
+}
 
-  // Rétablissement de la structure originale des points
-  const particles = useMemo(() => {
-    const count = 5000;
-    const positions = new Float32Array(count * 3);
-    const colors = new Float32Array(count * 3);
+const AnimatedGlobe: React.FC<AnimatedGlobeProps> = ({ size = 100 }) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const animationRef = useRef<number>(0);
+  const rotationRef = useRef<number>(0);
 
-    // Pour les continents, on utilise une image de map alpha si possible,
-    // sinon on simule des clusters de points denses.
-    for (let i = 0; i < count; i++) {
-      const theta = THREE.MathUtils.randFloat(0, Math.PI * 2);
-      const phi = THREE.MathUtils.randFloat(0, Math.PI);
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
-      const x = 2.5 * Math.sin(phi) * Math.cos(theta);
-      const y = 2.5 * Math.sin(phi) * Math.sin(theta);
-      const z = 2.5 * Math.cos(phi);
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
 
-      positions[i * 3] = x;
-      positions[i * 3 + 1] = y;
-      positions[i * 3 + 2] = z;
+    const centerX = size / 2;
+    const centerY = size / 2;
+    const radius = size * 0.4;
+    const pointCount = 300;
 
-      // Logique de couleur originale (Cyan Terminator)
-      colors[i * 3] = 0.03; // R
-      colors[i * 3 + 1] = 0.9; // G
-      colors[i * 3 + 2] = 1.0; // B
+    // Generate sphere points
+    const points: { theta: number; phi: number }[] = [];
+    for (let i = 0; i < pointCount; i++) {
+      points.push({
+        theta: Math.random() * Math.PI * 2,
+        phi: Math.random() * Math.PI,
+      });
     }
-    return { positions, colors };
-  }, []);
 
-  useFrame((state) => {
-    if (ref.current) {
-      ref.current.rotation.y += 0.0015;
-      ref.current.rotation.z += 0.0005;
-    }
-  });
+    const animate = () => {
+      ctx.clearRect(0, 0, size, size);
+
+      // Draw glow background
+      const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius * 1.5);
+      gradient.addColorStop(0, "rgba(6, 182, 212, 0.15)");
+      gradient.addColorStop(0.5, "rgba(6, 182, 212, 0.05)");
+      gradient.addColorStop(1, "rgba(6, 182, 212, 0)");
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radius * 1.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Draw wireframe sphere
+      ctx.strokeStyle = "rgba(6, 182, 212, 0.2)";
+      ctx.lineWidth = 0.5;
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Draw rotating points
+      rotationRef.current += 0.005;
+
+      points.forEach((point) => {
+        const rotatedTheta = point.theta + rotationRef.current;
+        const x = radius * Math.sin(point.phi) * Math.cos(rotatedTheta);
+        const y = radius * Math.sin(point.phi) * Math.sin(rotatedTheta);
+        const z = radius * Math.cos(point.phi);
+
+        // Only draw points on the visible side
+        if (y > 0) {
+          const screenX = centerX + x;
+          const screenY = centerY - z;
+          const alpha = 0.3 + (y / radius) * 0.7;
+
+          ctx.fillStyle = `rgba(6, 230, 255, ${alpha})`;
+          ctx.beginPath();
+          ctx.arc(screenX, screenY, 1.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      });
+
+      // Draw equator line
+      ctx.strokeStyle = "rgba(6, 182, 212, 0.3)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.ellipse(centerX, centerY, radius, radius * 0.3, 0, 0, Math.PI * 2);
+      ctx.stroke();
+
+      animationRef.current = requestAnimationFrame(animate);
+    };
+
+    animate();
+
+    return () => {
+      cancelAnimationFrame(animationRef.current);
+    };
+  }, [size]);
 
   return (
-    <group>
-      <Points ref={ref} positions={particles.positions} colors={particles.colors} stride={3}>
-        <PointMaterial
-          transparent
-          vertexColors
-          size={0.025}
-          sizeAttenuation={true}
-          depthWrite={false}
-          blending={THREE.AdditiveBlending}
-        />
-      </Points>
-      {/* Halo de protection original */}
-      <mesh>
-        <sphereGeometry args={[2.51, 32, 32]} />
-        <meshBasicMaterial color="#06b6d4" transparent opacity={0.05} wireframe />
-      </mesh>
-    </group>
+    <canvas
+      ref={canvasRef}
+      width={size}
+      height={size}
+      className="pointer-events-none"
+      style={{ width: size, height: size }}
+    />
   );
 };
 
