@@ -1,113 +1,64 @@
-import { useEffect, useState, useRef } from "react";
+import React, { useRef, useMemo } from "react";
+import { useFrame } from "@react-three/fiber";
+import { Points, PointMaterial } from "@react-three/drei";
+import * as THREE from "three";
 
-interface AnimatedGlobeProps {
-  size?: number;
-}
+const AnimatedGlobe = () => {
+  const ref = useRef<THREE.Points>(null);
 
-const AnimatedGlobe = ({ size = 100 }: AnimatedGlobeProps) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [rotation, setRotation] = useState(0);
+  // Rétablissement de la structure originale des points
+  const particles = useMemo(() => {
+    const count = 5000;
+    const positions = new Float32Array(count * 3);
+    const colors = new Float32Array(count * 3);
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+    // Pour les continents, on utilise une image de map alpha si possible,
+    // sinon on simule des clusters de points denses.
+    for (let i = 0; i < count; i++) {
+      const theta = THREE.MathUtils.randFloat(0, Math.PI * 2);
+      const phi = THREE.MathUtils.randFloat(0, Math.PI);
 
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+      const x = 2.5 * Math.sin(phi) * Math.cos(theta);
+      const y = 2.5 * Math.sin(phi) * Math.sin(theta);
+      const z = 2.5 * Math.cos(phi);
 
-    let animationId: number;
-    let currentRotation = 0;
+      positions[i * 3] = x;
+      positions[i * 3 + 1] = y;
+      positions[i * 3 + 2] = z;
 
-    const drawGlobe = () => {
-      ctx.clearRect(0, 0, size, size);
+      // Logique de couleur originale (Cyan Terminator)
+      colors[i * 3] = 0.03; // R
+      colors[i * 3 + 1] = 0.9; // G
+      colors[i * 3 + 2] = 1.0; // B
+    }
+    return { positions, colors };
+  }, []);
 
-      const centerX = size / 2;
-      const centerY = size / 2;
-      const radius = size * 0.4;
-
-      // Glow effect
-      const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius * 1.3);
-      gradient.addColorStop(0, "rgba(6, 182, 212, 0.3)");
-      gradient.addColorStop(0.7, "rgba(6, 182, 212, 0.1)");
-      gradient.addColorStop(1, "rgba(6, 182, 212, 0)");
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, radius * 1.3, 0, Math.PI * 2);
-      ctx.fillStyle = gradient;
-      ctx.fill();
-
-      // Globe base
-      const globeGradient = ctx.createRadialGradient(centerX - radius * 0.3, centerY - radius * 0.3, 0, centerX, centerY, radius);
-      globeGradient.addColorStop(0, "rgba(6, 182, 212, 0.4)");
-      globeGradient.addColorStop(0.5, "rgba(6, 182, 212, 0.2)");
-      globeGradient.addColorStop(1, "rgba(0, 17, 51, 0.8)");
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-      ctx.fillStyle = globeGradient;
-      ctx.fill();
-
-      // Globe outline
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-      ctx.strokeStyle = "rgba(6, 182, 212, 0.6)";
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-
-      // Latitude lines
-      ctx.strokeStyle = "rgba(6, 182, 212, 0.3)";
-      ctx.lineWidth = 0.5;
-      for (let i = -2; i <= 2; i++) {
-        const y = centerY + (i * radius * 0.35);
-        const lineRadius = Math.sqrt(radius * radius - Math.pow(i * radius * 0.35, 2));
-        if (!isNaN(lineRadius) && lineRadius > 0) {
-          ctx.beginPath();
-          ctx.ellipse(centerX, y, lineRadius, lineRadius * 0.2, 0, 0, Math.PI * 2);
-          ctx.stroke();
-        }
-      }
-
-      // Rotating longitude lines
-      ctx.strokeStyle = "rgba(6, 182, 212, 0.4)";
-      for (let i = 0; i < 6; i++) {
-        const angle = (i * Math.PI / 3) + currentRotation;
-        ctx.beginPath();
-        ctx.ellipse(centerX, centerY, radius * Math.abs(Math.cos(angle)), radius, 0, 0, Math.PI * 2);
-        ctx.stroke();
-      }
-
-      // Dots representing cities/data points
-      ctx.fillStyle = "rgba(6, 182, 212, 1)";
-      const numDots = 20;
-      for (let i = 0; i < numDots; i++) {
-        const theta = (i * Math.PI * 2 / numDots) + currentRotation;
-        const phi = (i * 0.5) % Math.PI;
-        const x = centerX + radius * Math.sin(phi) * Math.cos(theta) * 0.8;
-        const y = centerY + radius * Math.cos(phi) * 0.8;
-        const dotSize = 1 + Math.sin(theta + currentRotation * 2) * 0.5;
-        if (Math.cos(theta) > -0.3) {
-          ctx.beginPath();
-          ctx.arc(x, y, dotSize, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      }
-
-      currentRotation += 0.005;
-      animationId = requestAnimationFrame(drawGlobe);
-    };
-
-    drawGlobe();
-
-    return () => {
-      cancelAnimationFrame(animationId);
-    };
-  }, [size]);
+  useFrame((state) => {
+    if (ref.current) {
+      ref.current.rotation.y += 0.0015;
+      ref.current.rotation.z += 0.0005;
+    }
+  });
 
   return (
-    <canvas
-      ref={canvasRef}
-      width={size}
-      height={size}
-      className="drop-shadow-[0_0_15px_rgba(6,182,212,0.5)]"
-    />
+    <group>
+      <Points ref={ref} positions={particles.positions} colors={particles.colors} stride={3}>
+        <PointMaterial
+          transparent
+          vertexColors
+          size={0.025}
+          sizeAttenuation={true}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+        />
+      </Points>
+      {/* Halo de protection original */}
+      <mesh>
+        <sphereGeometry args={[2.51, 32, 32]} />
+        <meshBasicMaterial color="#06b6d4" transparent opacity={0.05} wireframe />
+      </mesh>
+    </group>
   );
 };
 
