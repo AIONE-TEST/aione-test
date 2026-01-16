@@ -1,81 +1,113 @@
 import { useEffect, useState, useRef } from "react";
 
-import React, { useRef, useMemo } from "react";
-import { useFrame } from "@react-three/fiber";
-import { Points, PointMaterial } from "@react-three/drei";
-import * as THREE from "three";
+interface AnimatedGlobeProps {
+  size?: number;
+}
 
-const AnimatedGlobe = () => {
-  const ref = useRef<THREE.Points>(null);
+const AnimatedGlobe = ({ size = 100 }: AnimatedGlobeProps) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [rotation, setRotation] = useState(0);
 
-  // Génération des points simulant des continents
-  const particles = useMemo(() => {
-    const count = 4000; // Nombre de points
-    const positions = new Float32Array(count * 3);
-    const colors = new Float32Array(count * 3);
-    const phi = Math.PI * (3 - Math.sqrt(5)); // Golden angle
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
-    let index = 0;
-    for (let i = 0; i < count * 2; i++) {
-      // Distribution sphérique uniforme
-      const y = 1 - (i / (count * 2 - 1)) * 2;
-      const radius = Math.sqrt(1 - y * y);
-      const theta = phi * i;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
 
-      const x = Math.cos(theta) * radius;
-      const z = Math.sin(theta) * radius;
+    let animationId: number;
+    let currentRotation = 0;
 
-      // Simulation de continents simple :
-      // On utilise des fonctions sinusoïdales combinées pour créer des "zones" denses et des "océans" vides
-      const noise = Math.sin(x * 5) * Math.cos(y * 5) + Math.sin(z * 4 + x * 2) * 0.5 + Math.cos(y * 10) * 0.2;
+    const drawGlobe = () => {
+      ctx.clearRect(0, 0, size, size);
 
-      // Seuil pour décider si c'est la terre ou la mer (on ne garde que les points "terre")
-      if (noise > 0.1 && index < count) {
-        positions[index * 3] = x * 2.5; // Rayon du globe
-        positions[index * 3 + 1] = y * 2.5;
-        positions[index * 3 + 2] = z * 2.5;
+      const centerX = size / 2;
+      const centerY = size / 2;
+      const radius = size * 0.4;
 
-        // Couleur Tech/Cyan avec variations
-        colors[index * 3] = 0.1; // R
-        colors[index * 3 + 1] = 0.8; // G
-        colors[index * 3 + 2] = 1.0; // B
+      // Glow effect
+      const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius * 1.3);
+      gradient.addColorStop(0, "rgba(6, 182, 212, 0.3)");
+      gradient.addColorStop(0.7, "rgba(6, 182, 212, 0.1)");
+      gradient.addColorStop(1, "rgba(6, 182, 212, 0)");
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radius * 1.3, 0, Math.PI * 2);
+      ctx.fillStyle = gradient;
+      ctx.fill();
 
-        index++;
+      // Globe base
+      const globeGradient = ctx.createRadialGradient(centerX - radius * 0.3, centerY - radius * 0.3, 0, centerX, centerY, radius);
+      globeGradient.addColorStop(0, "rgba(6, 182, 212, 0.4)");
+      globeGradient.addColorStop(0.5, "rgba(6, 182, 212, 0.2)");
+      globeGradient.addColorStop(1, "rgba(0, 17, 51, 0.8)");
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+      ctx.fillStyle = globeGradient;
+      ctx.fill();
+
+      // Globe outline
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+      ctx.strokeStyle = "rgba(6, 182, 212, 0.6)";
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Latitude lines
+      ctx.strokeStyle = "rgba(6, 182, 212, 0.3)";
+      ctx.lineWidth = 0.5;
+      for (let i = -2; i <= 2; i++) {
+        const y = centerY + (i * radius * 0.35);
+        const lineRadius = Math.sqrt(radius * radius - Math.pow(i * radius * 0.35, 2));
+        if (!isNaN(lineRadius) && lineRadius > 0) {
+          ctx.beginPath();
+          ctx.ellipse(centerX, y, lineRadius, lineRadius * 0.2, 0, 0, Math.PI * 2);
+          ctx.stroke();
+        }
       }
-    }
 
-    // On coupe le tableau à la taille réelle des points générés
-    return {
-      positions: positions.slice(0, index * 3),
-      colors: colors.slice(0, index * 3),
+      // Rotating longitude lines
+      ctx.strokeStyle = "rgba(6, 182, 212, 0.4)";
+      for (let i = 0; i < 6; i++) {
+        const angle = (i * Math.PI / 3) + currentRotation;
+        ctx.beginPath();
+        ctx.ellipse(centerX, centerY, radius * Math.abs(Math.cos(angle)), radius, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      // Dots representing cities/data points
+      ctx.fillStyle = "rgba(6, 182, 212, 1)";
+      const numDots = 20;
+      for (let i = 0; i < numDots; i++) {
+        const theta = (i * Math.PI * 2 / numDots) + currentRotation;
+        const phi = (i * 0.5) % Math.PI;
+        const x = centerX + radius * Math.sin(phi) * Math.cos(theta) * 0.8;
+        const y = centerY + radius * Math.cos(phi) * 0.8;
+        const dotSize = 1 + Math.sin(theta + currentRotation * 2) * 0.5;
+        if (Math.cos(theta) > -0.3) {
+          ctx.beginPath();
+          ctx.arc(x, y, dotSize, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      currentRotation += 0.005;
+      animationId = requestAnimationFrame(drawGlobe);
     };
-  }, []);
 
-  useFrame((state) => {
-    if (ref.current) {
-      ref.current.rotation.y += 0.002; // Rotation lente de la terre
-      ref.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.1) * 0.1; // Légère inclinaison
-    }
-  });
+    drawGlobe();
+
+    return () => {
+      cancelAnimationFrame(animationId);
+    };
+  }, [size]);
 
   return (
-    <group rotation={[0, 0, Math.PI / 6]}>
-      <Points ref={ref} positions={particles.positions} colors={particles.colors} stride={3} frustumCulled={false}>
-        <PointMaterial
-          transparent
-          vertexColors
-          size={0.03}
-          sizeAttenuation={true}
-          depthWrite={false}
-          blending={THREE.AdditiveBlending}
-        />
-      </Points>
-      {/* Noyau central léger pour donner du volume */}
-      <mesh>
-        <sphereGeometry args={[2.4, 32, 32]} />
-        <meshBasicMaterial color="#001133" transparent opacity={0.6} />
-      </mesh>
-    </group>
+    <canvas
+      ref={canvasRef}
+      width={size}
+      height={size}
+      className="drop-shadow-[0_0_15px_rgba(6,182,212,0.5)]"
+    />
   );
 };
 

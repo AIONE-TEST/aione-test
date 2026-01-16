@@ -36,12 +36,12 @@ export const GenerationHistoryThumbnails = ({ type, className }: GenerationHisto
 
   useEffect(() => {
     const fetchHistory = async () => {
-      if (!session?.id) return;
+      if (!session?.sessionId) return;
 
       const { data, error } = await supabase
         .from("generation_history")
         .select("id, created_at, type, prompt, result_url, thumbnail_url, model_name")
-        .eq("session_id", session.id)
+        .eq("session_id", session.sessionId)
         .eq("type", type)
         .order("created_at", { ascending: false })
         .limit(8);
@@ -52,7 +52,7 @@ export const GenerationHistoryThumbnails = ({ type, className }: GenerationHisto
     };
 
     fetchHistory();
-  }, [session?.id, type]);
+  }, [session?.sessionId, type]);
 
   const handleThumbnailClick = (item: GenerationHistoryItem) => {
     setSelectedItem(item);
