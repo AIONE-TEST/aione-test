@@ -4,23 +4,24 @@ import { X } from "lucide-react";
 interface UsernameModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (id: string, name: string) => void;
+  onSuccess: (id: string, name: string, remember: boolean) => void;
 }
 
 export const UsernameModal = ({ isOpen, onClose, onSuccess }: UsernameModalProps) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [remember, setRemember] = useState(true);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // LOGIQUE BYPASS STRICTE
     if (username.toLowerCase() === "mik" && password === "1971") {
-      onSuccess("mik-admin-id", "Mik");
+      onSuccess("mik-admin-id", "Mik", remember);
       onClose();
       return;
     }
     if (username.trim()) {
-      onSuccess(crypto.randomUUID(), username);
+      onSuccess(crypto.randomUUID(), username, remember);
       onClose();
     }
   };
