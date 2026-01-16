@@ -7,9 +7,9 @@ export default {
     extend: {
       fontFamily: {
         orbitron: ["Orbitron", "sans-serif"],
+        display: ["Orbitron", "sans-serif"],
       },
     },
   },
   plugins: [require("tailwindcss-animate")],
-} satisfies Config;
 } satisfies Config;
