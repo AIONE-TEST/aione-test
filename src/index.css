@@ -2,55 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&display=swap");
 
 @layer base {
   :root {
     --background: 220 18% 12%;
     --foreground: 210 40% 98%;
-    --card: 220 20% 12%;
-    --card-foreground: 210 40% 98%;
-    --popover: 220 20% 10%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 174 100% 50%;
-    --primary-foreground: 220 25% 6%;
-    --secondary: 280 100% 65%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 220 15% 18%;
-    --muted-foreground: 215 20% 55%;
-    --accent: 320 100% 60%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
     --border: 220 15% 22%;
-    --input: 220 15% 16%;
-    --ring: 174 100% 50%;
-    --radius: 0.5rem;
   }
-
-  * {
-    @apply border-border;
-    font-family: "Orbitron", sans-serif !important;
-  }
-
   body {
     @apply bg-background text-foreground;
     font-family: "Orbitron", sans-serif !important;
-    overflow-x: hidden;
-    letter-spacing: 0.03em;
-  }
-}
-
-@layer utilities {
-  .animate-spin-slow {
-    animation: spin-slow 12s linear infinite;
-  }
-  @keyframes spin-slow {
-    from {
-      transform: rotate(0deg);
-    }
-    to {
-      transform: rotate(360deg);
-    }
   }
 }
