@@ -11,7 +11,7 @@ import LLMs from "./pages/LLMs";
 import GenerateImages from "./pages/GenerateImages";
 import GenerateVideos from "./pages/GenerateVideos";
 import GenerateAudio from "./pages/GenerateAudio";
-import Generate3D from "./pages/Generate3D";
+import Generate 3D from "./pages/Generate3D";
 import GenerateRetouch from "./pages/GenerateRetouch";
 import Apps from "./pages/Apps";
 import APIKeys from "./pages/APIKeys";
@@ -27,22 +27,36 @@ function AppContent() {
   const [showUsernameModal, setShowUsernameModal] = useState(false);
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      setShowUsernameModal(true);
+    // Fonction pour ouvrir la modal sur interaction
+    const handleFirstInteraction = () => {
+      if (!isLoading && !isAuthenticated && !showUsernameModal) {
+        setShowUsernameModal(true);
+      }
+    };
+
+    // On n'ajoute les écouteurs que si l'utilisateur n'est pas identifié
+    if (!isAuthenticated && !isLoading) {
+      window.addEventListener("click", handleFirstInteraction);
+      window.addEventListener("keydown", handleFirstInteraction);
     }
-  }, [isLoading, isAuthenticated]);
+
+    return () => {
+      window.removeEventListener("click", handleFirstInteraction);
+      window.removeEventListener("keydown", handleFirstInteraction);
+    };
+  }, [isLoading, isAuthenticated, showUsernameModal]);
 
   const handleLoginSuccess = (sessionId: string, username: string) => {
     login(sessionId, username);
-    setShowUsernameModal(false);
+    setShowUsernameModal(false); // Fermeture immédiate de la modal après succès
   };
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-[#0F1115] flex items-center justify-center">
         <div className="text-center">
-          <div className="h-12 w-12 border-4 border-[hsl(var(--primary))]/30 border-t-[hsl(var(--primary))] rounded-full animate-spin mx-auto mb-4" />
-          <p className="font-display text-lg text-muted-foreground">Chargement...</p>
+          <div className="w-16 h-16 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-cyan-500 font-orbitron animate-pulse">Chargement...</p>
         </div>
       </div>
     );
@@ -52,7 +66,7 @@ function AppContent() {
     <>
       <UsernameModal
         isOpen={showUsernameModal}
-        onClose={() => {}}
+        onClose={() => setShowUsernameModal(false)}
         onSuccess={handleLoginSuccess}
       />
       
@@ -72,7 +86,6 @@ function AppContent() {
           <Route path="/account" element={<Account />} />
           <Route path="/tutorials" element={<Tutorials />} />
           <Route path="/coding" element={<Coding />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
