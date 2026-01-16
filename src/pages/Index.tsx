@@ -1,11 +1,11 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { Image, Video, MessageSquare, Music, Wand2, Box, Zap, ArrowRight, Star, Flame, Code } from "lucide-react";
+import { 
+  Image, Video, MessageSquare, Music, Wand2, Box, 
+  Zap, ArrowRight, Star
+} from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
-import { aiModels, AIModel } from "@/data/aiModels";
-import { sortAIModels } from "@/utils/appSorting";
-import { Badge } from "@/components/ui/badge";
-import UsernameModal from "../components/UsernameModal";
+import { aiModels } from "@/data/aiModels";
 
 const categories = [
   { id: "llms", label: "LLMS", icon: MessageSquare, path: "/llms", color: "btn-3d-pink" },
@@ -16,52 +16,7 @@ const categories = [
   { id: "3d", label: "3D", icon: Box, path: "/3d", color: "btn-3d-green" },
 ];
 
-const categoryStyles: Record<string, { color: string; bgColor: string; icon: React.ReactNode }> = {
-  videos: {
-    color: "text-[hsl(280,100%,65%)]",
-    bgColor: "bg-[hsl(280,100%,65%)]/10",
-    icon: <Video className="h-3.5 w-3.5" />,
-  },
-  images: {
-    color: "text-[hsl(320,100%,60%)]",
-    bgColor: "bg-[hsl(320,100%,60%)]/10",
-    icon: <Image className="h-3.5 w-3.5" />,
-  },
-  retouch: {
-    color: "text-[hsl(45,100%,55%)]",
-    bgColor: "bg-[hsl(45,100%,55%)]/10",
-    icon: <Wand2 className="h-3.5 w-3.5" />,
-  },
-  adult: {
-    color: "text-[hsl(0,100%,60%)]",
-    bgColor: "bg-[hsl(0,100%,60%)]/10",
-    icon: <Flame className="h-3.5 w-3.5" />,
-  },
-  audio: {
-    color: "text-[hsl(25,100%,55%)]",
-    bgColor: "bg-[hsl(25,100%,55%)]/10",
-    icon: <Music className="h-3.5 w-3.5" />,
-  },
-  llms: {
-    color: "text-[hsl(200,100%,55%)]",
-    bgColor: "bg-[hsl(200,100%,55%)]/10",
-    icon: <MessageSquare className="h-3.5 w-3.5" />,
-  },
-  "3d": {
-    color: "text-[hsl(160,100%,50%)]",
-    bgColor: "bg-[hsl(160,100%,50%)]/10",
-    icon: <Box className="h-3.5 w-3.5" />,
-  },
-  code: {
-    color: "text-[hsl(210,100%,60%)]",
-    bgColor: "bg-[hsl(210,100%,60%)]/10",
-    icon: <Code className="h-3.5 w-3.5" />,
-  },
-};
-
 const Index = () => {
-  const [isLoginOpen, setIsLoginOpen] = useState(true);
-
   const stats = useMemo(() => {
     const total = aiModels.length;
     const free = aiModels.filter((m) => m.isFree).length;
@@ -69,31 +24,25 @@ const Index = () => {
     return { total, free, categories: categoriesSet.size };
   }, []);
 
-  const freeModels = useMemo(() => aiModels.filter((m) => m.isFree).slice(0, 8), []);
-
-  const allAppsSorted = useMemo(() => {
-    return sortAIModels([...aiModels]);
-  }, []);
-
-  const getCategoryStyle = (category: string) => {
-    return categoryStyles[category] || categoryStyles.llms;
-  };
-
-  const handleLoginSuccess = (id: string, name: string) => {
-    setIsLoginOpen(false);
-  };
+  const freeModels = useMemo(() => 
+    aiModels.filter((m) => m.isFree).slice(0, 8), 
+  []);
 
   return (
     <div className="min-h-screen bg-background">
-      <UsernameModal isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} onSuccess={handleLoginSuccess} />
-
       <Sidebar />
 
       <main className="ml-[373px] min-h-screen p-6">
+        {/* Hero Section */}
         <div className="text-center mb-10">
-          <h1 className="font-display text-4xl font-black gradient-text-pink text-glow-pink mb-3">AIONE</h1>
-          <p className="font-display text-sm text-[hsl(174,100%,50%)] tracking-[0.3em] mb-6">AI GATEWAY</p>
-
+          <h1 className="font-display text-4xl font-black gradient-text-pink text-glow-pink mb-3">
+            AIONE
+          </h1>
+          <p className="font-display text-sm text-[hsl(174,100%,50%)] tracking-[0.3em] mb-6">
+            AI GATEWAY
+          </p>
+          
+          {/* Stats */}
           <div className="flex justify-center gap-8 mb-8">
             <div className="text-center">
               <p className="font-display text-3xl font-bold text-foreground">{stats.total}</p>
@@ -110,6 +59,7 @@ const Index = () => {
           </div>
         </div>
 
+        {/* Category Buttons */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-10">
           {categories.map((cat) => (
             <Link
@@ -123,16 +73,22 @@ const Index = () => {
           ))}
         </div>
 
-        <div className="space-y-4 mb-12">
+        {/* Free Models Section */}
+        <div className="space-y-4">
           <div className="flex items-center gap-3">
             <Zap className="h-5 w-5 text-[hsl(142,76%,50%)]" />
             <h2 className="font-display text-lg text-foreground">MODÈLES GRATUITS</h2>
-            <span className="font-display text-xs text-muted-foreground">({stats.free})</span>
+            <span className="font-display text-xs text-muted-foreground">
+              ({stats.free})
+            </span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
             {freeModels.map((model) => (
-              <div key={model.id} className="panel-3d p-4 space-y-2 hover:scale-[1.02] transition-transform">
+              <div
+                key={model.id}
+                className="panel-3d p-4 space-y-2 hover:scale-[1.02] transition-transform"
+              >
                 <div className="flex items-start justify-between">
                   <div>
                     <h3 className="font-display text-xs text-foreground">{model.name}</h3>
@@ -143,7 +99,9 @@ const Index = () => {
                     FREE
                   </span>
                 </div>
-                <p className="text-[10px] text-muted-foreground line-clamp-2">{model.description}</p>
+                <p className="text-[10px] text-muted-foreground line-clamp-2">
+                  {model.description}
+                </p>
                 <div className="flex items-center gap-1">
                   <span className="px-1.5 py-0.5 rounded text-[8px] bg-[hsl(220,15%,18%)] text-muted-foreground uppercase">
                     {model.category}
@@ -154,60 +112,7 @@ const Index = () => {
           </div>
         </div>
 
-        <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            <Star className="h-5 w-5 text-[hsl(45,100%,55%)]" />
-            <h2 className="font-display text-lg text-foreground">TOUTES LES APPLIS IA</h2>
-            <Badge className="bg-[hsl(174,100%,50%)]/10 text-[hsl(174,100%,50%)] font-display">
-              {allAppsSorted.length} APPLIS
-            </Badge>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-            {allAppsSorted.map((model) => {
-              const catStyle = getCategoryStyle(model.category);
-              return (
-                <Link
-                  key={model.id}
-                  to={`/apps`}
-                  className="panel-3d p-4 space-y-2 hover:scale-[1.02] transition-transform cursor-pointer"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-display text-xs text-foreground truncate">{model.name}</h3>
-                      <p className="text-[10px] text-muted-foreground truncate">{model.provider}</p>
-                    </div>
-                    {model.isFree ? (
-                      <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[8px] font-bold bg-[hsl(142,76%,50%)/0.2] text-[hsl(142,76%,50%)] shrink-0">
-                        <Zap className="h-2.5 w-2.5" />
-                        FREE
-                      </span>
-                    ) : (
-                      <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[8px] font-bold bg-[hsl(45,100%,55%)]/10 text-[hsl(45,100%,55%)] shrink-0">
-                        API
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-[10px] text-muted-foreground line-clamp-2">{model.description}</p>
-                  <div className="flex items-center gap-1">
-                    <span
-                      className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[8px] ${catStyle.bgColor} ${catStyle.color} uppercase`}
-                    >
-                      {catStyle.icon}
-                      {model.category}
-                    </span>
-                    {model.category === "adult" && (
-                      <span className="px-1.5 py-0.5 rounded text-[8px] bg-[hsl(0,100%,60%)]/10 text-[hsl(0,100%,60%)]">
-                        18+
-                      </span>
-                    )}
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-
+        {/* Footer */}
         <footer className="mt-12 pt-6 border-t border-[hsl(220,15%,20%)] text-center">
           <p className="font-display text-xs text-muted-foreground">
             <span className="gradient-text-pink">AIONE</span> - AI Gateway • © 2025

@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useCallback } from "react";
-import { Volume2, Sparkles, Music, Mic, Radio, Headphones, Upload, Play, Pause, Download, Film, X } from "lucide-react";
+import { Volume2, Sparkles, Music, Mic, Radio, Headphones, Upload, Play, Pause, Download } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { ModelSelector } from "@/components/ModelSelector";
 import { AppTileCard } from "@/components/AppTileCard";
@@ -7,7 +7,6 @@ import { APIKeyModal } from "@/components/APIKeyModal";
 import { CreditsDisplay } from "@/components/CreditsDisplay";
 import { PromptEditorEnhanced } from "@/components/PromptEditorEnhanced";
 import { ViewModeToggle } from "@/components/ViewModeToggle";
-import { GenerationHistoryThumbnails } from "@/components/GenerationHistoryThumbnails";
 import { AIModel, getModelsByCategory } from "@/data/aiModels";
 import { useAPIStatus } from "@/hooks/useAPIStatus";
 import { useCredits } from "@/hooks/useCredits";
@@ -25,7 +24,7 @@ const GenerateAudio = () => {
   const [negativePrompt, setNegativePrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedContent, setGeneratedContent] = useState<string | null>(null);
-  const [uploadedFiles, setUploadedFiles] = useState<{ name: string; data: string }[]>([]);
+  const [uploadedAudio, setUploadedAudio] = useState<string | null>(null);
   const [duration, setDuration] = useState("30s");
   const [isDragging, setIsDragging] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -67,31 +66,25 @@ const GenerateAudio = () => {
     e.preventDefault();
     setIsDragging(false);
     
-    const files = Array.from(e.dataTransfer.files);
-    const validFiles = files.filter(file => file.type.startsWith('audio/'));
-    
-    validFiles.forEach(file => {
+    const files = e.dataTransfer.files;
+    if (files.length > 0 && files[0].type.startsWith('audio/')) {
       const reader = new FileReader();
       reader.onload = (event) => {
-        setUploadedFiles(prev => [...prev, { name: file.name, data: event.target?.result as string }].slice(0, 10));
+        setUploadedAudio(event.target?.result as string);
       };
-      reader.readAsDataURL(file);
-    });
+      reader.readAsDataURL(files[0]);
+    }
   }, []);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    files.forEach(file => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
       const reader = new FileReader();
       reader.onload = (event) => {
-        setUploadedFiles(prev => [...prev, { name: file.name, data: event.target?.result as string }].slice(0, 10));
+        setUploadedAudio(event.target?.result as string);
       };
-      reader.readAsDataURL(file);
-    });
-  };
-
-  const removeFile = (index: number) => {
-    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
+      reader.readAsDataURL(files[0]);
+    }
   };
 
   const canGenerateNow = Boolean(selectedModel) && prompt.trim().length > 0;
@@ -136,102 +129,90 @@ const GenerateAudio = () => {
           </Button>
         </div>
 
-        {/* Layout: Vertical - Options sous le prompt */}
-        <div className="w-full max-w-6xl space-y-3 mb-6">
-          {/* Zone Upload (principale) */}
-          <div
-            className={cn(
-              "panel-3d p-4 aspect-video flex items-center justify-center transition-all duration-300 cursor-pointer",
-              isDragging && "border-[hsl(var(--primary))] bg-[hsl(var(--primary))]/5"
-            )}
-            style={{ maxHeight: "60vh" }}
-            onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-            onDragLeave={() => setIsDragging(false)}
-            onDrop={handleDrop}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            {uploadedFiles.length > 0 ? (
-              <div className="relative w-full h-full p-2">
-                <div className="flex flex-col gap-2 h-full overflow-auto">
-                  {uploadedFiles.map((file, index) => (
-                    <div key={index} className="flex items-center gap-3 p-2 bg-muted/50 rounded-lg">
-                      <Button
-                        size="icon"
-                        className="h-10 w-10 rounded-full btn-3d-orange shrink-0"
-                        onClick={(e) => { e.stopPropagation(); setIsPlaying(!isPlaying); }}
-                      >
-                        {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                      </Button>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{file.name}</p>
-                        <div className="h-1.5 bg-muted rounded-full overflow-hidden mt-1">
-                          <div className="h-full w-1/3 bg-gradient-to-r from-[hsl(25,100%,55%)] to-[hsl(45,100%,55%)]" />
-                        </div>
-                      </div>
-                      <button
-                        className="p-1.5 bg-black/60 rounded-full hover:bg-black/80 transition-colors shrink-0"
-                        onClick={(e) => { e.stopPropagation(); removeFile(index); }}
-                      >
-                        <X className="h-3 w-3 text-white" />
-                      </button>
+        {/* Layout: 2 colonnes */}
+        <div className="grid grid-cols-[1fr_300px] gap-4 mb-6">
+          {/* Colonne gauche */}
+          <div className="space-y-3">
+            {/* Source + Résultat */}
+            <div className="grid grid-cols-2 gap-3">
+              {/* Source Audio */}
+              <div
+                className={cn(
+                  "panel-3d p-3 h-32 flex items-center justify-center cursor-pointer",
+                  isDragging && "border-[hsl(var(--primary))] bg-[hsl(var(--primary))]/5"
+                )}
+                onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                onDragLeave={() => setIsDragging(false)}
+                onDrop={handleDrop}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {uploadedAudio ? (
+                  <div className="flex items-center gap-3 w-full px-4">
+                    <Button
+                      size="icon"
+                      className="h-10 w-10 rounded-full btn-3d-orange"
+                      onClick={(e) => { e.stopPropagation(); setIsPlaying(!isPlaying); }}
+                    >
+                      {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+                    </Button>
+                    <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                      <div className="h-full w-1/3 bg-gradient-to-r from-[hsl(25,100%,55%)] to-[hsl(45,100%,55%)]" />
                     </div>
-                  ))}
-                  {uploadedFiles.length < 10 && (
-                    <div className="flex items-center justify-center p-4 border-2 border-dashed border-muted-foreground/30 rounded-lg hover:border-[hsl(var(--primary))]/50 transition-colors">
-                      <Upload className="h-5 w-5 text-muted-foreground mr-2" />
-                      <span className="text-sm text-muted-foreground">Ajouter plus de fichiers</span>
-                    </div>
-                  )}
-                </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-2">
+                    <Upload className="h-8 w-8 text-[hsl(25,100%,55%)]" />
+                    <p className="font-display text-sm">SOURCE (optionnel)</p>
+                  </div>
+                )}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="audio/*"
+                  className="hidden"
+                  onChange={handleFileSelect}
+                />
               </div>
-            ) : generatedContent ? (
-              <div className="flex items-center gap-4 w-full px-6">
-                <Button size="icon" className="h-12 w-12 rounded-full btn-3d-green">
-                  <Play className="h-6 w-6" />
-                </Button>
-                <div className="flex-1 h-2 bg-muted rounded-full" />
-                <Button size="icon" variant="ghost" className="h-10 w-10">
-                  <Download className="h-5 w-5" />
-                </Button>
+
+              {/* Résultat */}
+              <div className="panel-3d p-3 h-32 flex items-center justify-center">
+                {isGenerating ? (
+                  <div className="h-10 w-10 rounded-full border-4 border-[hsl(25,100%,55%)]/30 border-t-[hsl(25,100%,55%)] animate-spin" />
+                ) : generatedContent ? (
+                  <div className="flex items-center gap-3 w-full px-4">
+                    <Button size="icon" className="h-10 w-10 rounded-full btn-3d-green">
+                      <Play className="h-5 w-5" />
+                    </Button>
+                    <div className="flex-1 h-2 bg-muted rounded-full" />
+                    <Button size="icon" variant="ghost">
+                      <Download className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-2">
+                    <Music className="h-8 w-8 text-muted-foreground" />
+                    <p className="font-display text-sm text-muted-foreground">RÉSULTAT</p>
+                  </div>
+                )}
               </div>
-            ) : isGenerating ? (
-              <div className="h-12 w-12 rounded-full border-4 border-[hsl(25,100%,55%)]/30 border-t-[hsl(25,100%,55%)] animate-spin" />
-            ) : (
-              <div className="flex flex-col items-center gap-2 text-center">
-                <div className="h-12 w-12 rounded-full bg-gradient-to-br from-[hsl(25,100%,55%)]/20 to-[hsl(45,100%,55%)]/20 flex items-center justify-center">
-                  <Upload className="h-6 w-6 text-[hsl(25,100%,55%)]" />
-                </div>
-                <div>
-                  <p className="font-display text-base text-foreground">Glissez vos fichiers audio ici</p>
-                  <p className="text-xs text-muted-foreground">Multi-upload supporté (max 10)</p>
-                </div>
-              </div>
-            )}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="audio/*"
-              multiple
-              className="hidden"
-              onChange={handleFileSelect}
+            </div>
+
+            {/* Prompt avec aide */}
+            <PromptEditorEnhanced
+              prompt={prompt}
+              onPromptChange={setPrompt}
+              negativePrompt={negativePrompt}
+              onNegativePromptChange={setNegativePrompt}
+              onGenerate={handleGenerate}
+              isGenerating={isGenerating}
+              canGenerate={canGenerateNow}
+              hasCredits={hasCredits}
+              placeholder="Décrivez l'audio... Ex: Musique épique orchestrale, style Hans Zimmer"
+              category="audio"
             />
           </div>
 
-          {/* Prompt avec aide */}
-          <PromptEditorEnhanced
-            prompt={prompt}
-            onPromptChange={setPrompt}
-            negativePrompt={negativePrompt}
-            onNegativePromptChange={setNegativePrompt}
-            onGenerate={handleGenerate}
-            isGenerating={isGenerating}
-            canGenerate={canGenerateNow}
-            hasCredits={hasCredits}
-            placeholder="Décrivez l'audio... Ex: Musique épique orchestrale, style Hans Zimmer"
-            category="audio"
-          />
-
-          {/* Options sous le prompt */}
+          {/* Colonne droite - Options */}
           <div className="panel-3d p-3 space-y-3">
             <div className="flex items-center gap-2 mb-2">
               <Sparkles className="h-4 w-4 text-[hsl(var(--secondary))]" />
@@ -257,7 +238,7 @@ const GenerateAudio = () => {
                     variant={duration === d ? "default" : "outline"}
                     onClick={() => setDuration(d)}
                     className={cn(
-                      "flex-1 text-xs h-8",
+                      "flex-1 text-xs",
                       duration === d ? "btn-3d-orange" : "btn-3d"
                     )}
                   >
@@ -275,28 +256,29 @@ const GenerateAudio = () => {
               compact
             />
           </div>
-
-          {/* Historique des générations */}
-          <GenerationHistoryThumbnails type="audio" />
         </div>
 
         {/* Grille des modèles */}
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-4">
-            <Film className="h-5 w-5 text-[hsl(25,100%,55%)]" />
-            <h2 className="font-display text-lg font-bold">MODÈLES AUDIO COMPATIBLES</h2>
+            <Volume2 className="h-5 w-5 text-[hsl(25,100%,55%)]" />
+            <h2 className="font-display text-lg font-bold">MODÈLES AUDIO</h2>
             <Badge variant="outline" className="text-sm">{models.length}</Badge>
             <div className="ml-auto">
               <ViewModeToggle viewMode={viewMode} onViewModeChange={setViewMode} />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className={cn(
+            viewMode === "list" 
+              ? "flex flex-col gap-3" 
+              : "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
+          )}>
             {models.map((model) => (
               <AppTileCard
                 key={model.id}
                 model={model}
-                viewMode="grid"
+                viewMode={viewMode}
                 horizontal
                 onOpenAPIKeyModal={handleOpenAPIKeyModal}
                 onClick={() => setSelectedModel(model)}

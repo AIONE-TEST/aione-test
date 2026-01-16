@@ -50,13 +50,6 @@ export type Database = {
             referencedRelation: "user_sessions"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "activity_logs_session_id_fkey"
-            columns: ["session_id"]
-            isOneToOne: false
-            referencedRelation: "user_sessions_public"
-            referencedColumns: ["id"]
-          },
         ]
       }
       api_keys: {
@@ -114,13 +107,6 @@ export type Database = {
             columns: ["session_id"]
             isOneToOne: false
             referencedRelation: "user_sessions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "chat_conversations_session_id_fkey"
-            columns: ["session_id"]
-            isOneToOne: false
-            referencedRelation: "user_sessions_public"
             referencedColumns: ["id"]
           },
         ]
@@ -235,13 +221,6 @@ export type Database = {
             referencedRelation: "user_sessions"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "generation_history_session_id_fkey"
-            columns: ["session_id"]
-            isOneToOne: false
-            referencedRelation: "user_sessions_public"
-            referencedColumns: ["id"]
-          },
         ]
       }
       notifications: {
@@ -328,13 +307,6 @@ export type Database = {
             referencedRelation: "user_sessions"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "user_api_keys_session_id_fkey"
-            columns: ["session_id"]
-            isOneToOne: false
-            referencedRelation: "user_sessions_public"
-            referencedColumns: ["id"]
-          },
         ]
       }
       user_notes: {
@@ -368,13 +340,6 @@ export type Database = {
             columns: ["session_id"]
             isOneToOne: false
             referencedRelation: "user_sessions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_notes_session_id_fkey"
-            columns: ["session_id"]
-            isOneToOne: false
-            referencedRelation: "user_sessions_public"
             referencedColumns: ["id"]
           },
         ]
@@ -482,49 +447,10 @@ export type Database = {
       }
     }
     Views: {
-      user_sessions_public: {
-        Row: {
-          created_at: string | null
-          id: string | null
-          ip_address: string | null
-          last_login: string | null
-          save_history: boolean | null
-          settings: Json | null
-          updated_at: string | null
-          username: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string | null
-          ip_address?: string | null
-          last_login?: string | null
-          save_history?: boolean | null
-          settings?: Json | null
-          updated_at?: string | null
-          username?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          id?: string | null
-          ip_address?: string | null
-          last_login?: string | null
-          save_history?: boolean | null
-          settings?: Json | null
-          updated_at?: string | null
-          username?: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
-      session_has_password: {
-        Args: { session_username: string }
-        Returns: boolean
-      }
-      verify_session_password: {
-        Args: { input_password: string; session_username: string }
-        Returns: boolean
-      }
+      [_ in never]: never
     }
     Enums: {
       [_ in never]: never

@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useRef } from "react";
-import { Wand2, Sparkles, Upload, Maximize, Brush, Eraser, Palette, ImagePlus, Layers, Scissors, ZoomIn, Download, Film, X } from "lucide-react";
+import { Wand2, Sparkles, Upload, Maximize, Brush, Eraser, Palette, ImagePlus, Layers, Scissors, ZoomIn, Download } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { ModelSelector } from "@/components/ModelSelector";
 import { AppTileCard } from "@/components/AppTileCard";
@@ -8,7 +8,6 @@ import { APIKeyModal } from "@/components/APIKeyModal";
 import { CreditsDisplay } from "@/components/CreditsDisplay";
 import { PromptEditorEnhanced } from "@/components/PromptEditorEnhanced";
 import { ViewModeToggle } from "@/components/ViewModeToggle";
-import { GenerationHistoryThumbnails } from "@/components/GenerationHistoryThumbnails";
 import { AIModel, getModelsByCategory } from "@/data/aiModels";
 import { useAPIStatus } from "@/hooks/useAPIStatus";
 import { useCredits } from "@/hooks/useCredits";
@@ -42,7 +41,7 @@ const GenerateRetouch = () => {
   const [negativePrompt, setNegativePrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [selectedTool, setSelectedTool] = useState<string>("upscale");
-  const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [resultImage, setResultImage] = useState<string | null>(null);
   const [showResultPopup, setShowResultPopup] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -69,14 +68,14 @@ const GenerateRetouch = () => {
   const hasCredits = hasCreditsForService(serviceName, "standard");
 
   const handleGenerate = async () => {
-    if (!selectedModel || uploadedFiles.length === 0 || !hasCredits) return;
+    if (!selectedModel || !uploadedImage || !hasCredits) return;
     
     setIsGenerating(true);
     await useCredit(serviceName, "standard");
     
     setTimeout(() => {
       setIsGenerating(false);
-      setResultImage(uploadedFiles[0]);
+      setResultImage(uploadedImage);
       setShowResultPopup(true);
     }, 3000);
   };
@@ -85,34 +84,28 @@ const GenerateRetouch = () => {
     e.preventDefault();
     setIsDragging(false);
     
-    const files = Array.from(e.dataTransfer.files);
-    const validFiles = files.filter(file => file.type.startsWith('image/'));
-    
-    validFiles.forEach(file => {
+    const files = e.dataTransfer.files;
+    if (files.length > 0 && files[0].type.startsWith('image/')) {
       const reader = new FileReader();
       reader.onload = (event) => {
-        setUploadedFiles(prev => [...prev, event.target?.result as string].slice(0, 10));
+        setUploadedImage(event.target?.result as string);
       };
-      reader.readAsDataURL(file);
-    });
+      reader.readAsDataURL(files[0]);
+    }
   }, []);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    files.forEach(file => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
       const reader = new FileReader();
       reader.onload = (event) => {
-        setUploadedFiles(prev => [...prev, event.target?.result as string].slice(0, 10));
+        setUploadedImage(event.target?.result as string);
       };
-      reader.readAsDataURL(file);
-    });
+      reader.readAsDataURL(files[0]);
+    }
   };
 
-  const removeFile = (index: number) => {
-    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const canGenerateNow = Boolean(selectedModel) && uploadedFiles.length > 0;
+  const canGenerateNow = Boolean(selectedModel) && Boolean(uploadedImage);
 
   return (
     <div className="min-h-screen bg-background">
@@ -155,82 +148,76 @@ const GenerateRetouch = () => {
           </div>
         </div>
 
-        {/* Layout: Vertical - Options sous le prompt */}
-        <div className="w-full max-w-6xl space-y-3 mb-6">
-          {/* Zone Upload (principale) */}
-          <div
-            className={cn(
-              "panel-3d p-4 aspect-video flex items-center justify-center transition-all duration-300 cursor-pointer",
-              isDragging && "border-[hsl(var(--primary))] bg-[hsl(var(--primary))]/5"
-            )}
-            style={{ maxHeight: "60vh" }}
-            onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-            onDragLeave={() => setIsDragging(false)}
-            onDrop={handleDrop}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            {uploadedFiles.length > 0 ? (
-              <div className="relative w-full h-full p-2">
-                <div className="grid grid-cols-4 gap-2 h-full">
-                  {uploadedFiles.map((file, index) => (
-                    <div key={index} className="relative aspect-square rounded-lg overflow-hidden bg-muted">
-                      <img src={file} alt={`Upload ${index + 1}`} className="w-full h-full object-cover" />
-                      <button
-                        className="absolute top-1 right-1 p-1 bg-black/60 rounded-full hover:bg-black/80 transition-colors"
-                        onClick={(e) => { e.stopPropagation(); removeFile(index); }}
-                      >
-                        <X className="h-3 w-3 text-white" />
-                      </button>
-                      {isGenerating && index === 0 && (
-                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                          <div className="h-8 w-8 rounded-full border-3 border-[hsl(var(--primary))]/30 border-t-[hsl(var(--primary))] animate-spin" />
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                  {uploadedFiles.length < 10 && (
-                    <div className="aspect-square rounded-lg border-2 border-dashed border-muted-foreground/30 flex items-center justify-center hover:border-[hsl(var(--primary))]/50 transition-colors">
-                      <Upload className="h-6 w-6 text-muted-foreground" />
-                    </div>
-                  )}
-                </div>
+        {/* Layout: 2 colonnes */}
+        <div className="grid grid-cols-[1fr_300px] gap-4 mb-6">
+          {/* Colonne gauche */}
+          <div className="space-y-3">
+            {/* Zone Upload + Résultat côte à côte */}
+            <div className="grid grid-cols-2 gap-3">
+              {/* Source */}
+              <div
+                className={cn(
+                  "panel-3d p-3 aspect-square flex items-center justify-center cursor-pointer",
+                  isDragging && "border-[hsl(var(--primary))] bg-[hsl(var(--primary))]/5"
+                )}
+                onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                onDragLeave={() => setIsDragging(false)}
+                onDrop={handleDrop}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {uploadedImage ? (
+                  <img src={uploadedImage} alt="Source" className="w-full h-full object-contain" />
+                ) : (
+                  <div className="flex flex-col items-center gap-2 text-center">
+                    <Upload className="h-8 w-8 text-[hsl(var(--primary))]" />
+                    <p className="font-display text-sm">SOURCE</p>
+                  </div>
+                )}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleFileSelect}
+                />
               </div>
-            ) : (
-              <div className="flex flex-col items-center gap-2 text-center">
-                <div className="h-12 w-12 rounded-full bg-gradient-to-br from-[hsl(174,100%,50%)]/20 to-[hsl(142,76%,50%)]/20 flex items-center justify-center">
-                  <Upload className="h-6 w-6 text-[hsl(174,100%,50%)]" />
-                </div>
-                <div>
-                  <p className="font-display text-base text-foreground">Glissez vos images ici</p>
-                  <p className="text-xs text-muted-foreground">Multi-upload supporté (max 10)</p>
-                </div>
+
+              {/* Résultat */}
+              <div className="panel-3d p-3 aspect-square flex items-center justify-center">
+                {isGenerating ? (
+                  <div className="h-10 w-10 rounded-full border-4 border-[hsl(var(--primary))]/30 border-t-[hsl(var(--primary))] animate-spin" />
+                ) : resultImage ? (
+                  <div className="relative w-full h-full">
+                    <img src={resultImage} alt="Result" className="w-full h-full object-contain" />
+                    <Button size="sm" variant="ghost" className="absolute top-1 right-1">
+                      <Download className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-2 text-center">
+                    <ZoomIn className="h-8 w-8 text-muted-foreground" />
+                    <p className="font-display text-sm text-muted-foreground">RÉSULTAT</p>
+                  </div>
+                )}
               </div>
-            )}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              multiple
-              className="hidden"
-              onChange={handleFileSelect}
+            </div>
+
+            {/* Prompt avec aide intégrée */}
+            <PromptEditorEnhanced
+              prompt={prompt}
+              onPromptChange={setPrompt}
+              negativePrompt={negativePrompt}
+              onNegativePromptChange={setNegativePrompt}
+              onGenerate={handleGenerate}
+              isGenerating={isGenerating}
+              canGenerate={canGenerateNow}
+              hasCredits={hasCredits}
+              placeholder={`Instructions pour ${retouchTools.find(t => t.id === selectedTool)?.name}...`}
+              category="retouch"
             />
           </div>
 
-          {/* Prompt avec aide intégrée */}
-          <PromptEditorEnhanced
-            prompt={prompt}
-            onPromptChange={setPrompt}
-            negativePrompt={negativePrompt}
-            onNegativePromptChange={setNegativePrompt}
-            onGenerate={handleGenerate}
-            isGenerating={isGenerating}
-            canGenerate={canGenerateNow}
-            hasCredits={hasCredits}
-            placeholder={`Instructions pour ${retouchTools.find(t => t.id === selectedTool)?.name}...`}
-            category="retouch"
-          />
-
-          {/* Options sous le prompt */}
+          {/* Colonne droite - Options */}
           <div className="panel-3d p-3 space-y-3">
             <div className="flex items-center gap-2 mb-2">
               <Sparkles className="h-4 w-4 text-[hsl(var(--secondary))]" />
@@ -253,28 +240,29 @@ const GenerateRetouch = () => {
               compact
             />
           </div>
-
-          {/* Historique des générations */}
-          <GenerationHistoryThumbnails type="retouch" />
         </div>
 
         {/* Grille des modèles */}
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-4">
-            <Film className="h-5 w-5 text-[hsl(var(--primary))]" />
-            <h2 className="font-display text-lg font-bold">OUTILS DE RETOUCHE COMPATIBLES</h2>
+            <Wand2 className="h-5 w-5 text-[hsl(var(--primary))]" />
+            <h2 className="font-display text-lg font-bold">OUTILS DE RETOUCHE</h2>
             <Badge variant="outline" className="text-sm">{models.length}</Badge>
             <div className="ml-auto">
               <ViewModeToggle viewMode={viewMode} onViewModeChange={setViewMode} />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className={cn(
+            viewMode === "list" 
+              ? "flex flex-col gap-3" 
+              : "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
+          )}>
             {models.map((model) => (
               <AppTileCard
                 key={model.id}
                 model={model}
-                viewMode="grid"
+                viewMode={viewMode}
                 horizontal
                 onOpenAPIKeyModal={handleOpenAPIKeyModal}
                 onClick={() => setSelectedModel(model)}
