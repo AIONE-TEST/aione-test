@@ -9,6 +9,30 @@
     --background: 220 18% 12%;
     --foreground: 210 40% 98%;
     --border: 220 15% 22%;
+    --input: 220 15% 22%;
+    --ring: 262 83% 58%;
+    --radius: 0.5rem;
+
+    --primary: 262 83% 58%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 220 15% 22%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 220 15% 18%;
+    --muted-foreground: 215 20% 65%;
+
+    --accent: 262 83% 58%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 210 40% 98%;
+
+    --card: 220 18% 14%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 220 18% 14%;
+    --popover-foreground: 210 40% 98%;
   }
 
   body {
@@ -17,7 +41,6 @@
   }
 }
 
-/* Bloc utilitaire pour tes boutons originaux */
 @layer utilities {
   .gradient-text-pink {
     @apply bg-clip-text text-transparent bg-gradient-to-r from-pink-500 to-purple-500;
