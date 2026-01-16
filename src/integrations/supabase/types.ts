@@ -295,6 +295,30 @@ export type Database = {
         }
         Relationships: []
       }
+      support_messages: {
+        Row: {
+          created_at: string
+          from_username: string
+          id: string
+          is_read: boolean | null
+          message: string
+        }
+        Insert: {
+          created_at?: string
+          from_username: string
+          id?: string
+          is_read?: boolean | null
+          message: string
+        }
+        Update: {
+          created_at?: string
+          from_username?: string
+          id?: string
+          is_read?: boolean | null
+          message?: string
+        }
+        Relationships: []
+      }
       user_api_keys: {
         Row: {
           created_at: string
@@ -444,37 +468,73 @@ export type Database = {
         }
         Relationships: []
       }
-      user_sessions: {
+      user_roles: {
         Row: {
           created_at: string
           id: string
-          ip_address: string | null
-          last_login: string | null
-          password_hash: string | null
-          save_history: boolean | null
-          settings: Json | null
-          updated_at: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string | null
           username: string
         }
         Insert: {
           created_at?: string
           id?: string
-          ip_address?: string | null
-          last_login?: string | null
-          password_hash?: string | null
-          save_history?: boolean | null
-          settings?: Json | null
-          updated_at?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string | null
           username: string
         }
         Update: {
           created_at?: string
           id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string | null
+          username?: string
+        }
+        Relationships: []
+      }
+      user_sessions: {
+        Row: {
+          created_at: string
+          failed_attempts: number | null
+          id: string
+          ip_address: string | null
+          last_activity: string | null
+          last_login: string | null
+          locked_until: string | null
+          password_hash: string | null
+          save_history: boolean | null
+          settings: Json | null
+          stay_connected: boolean | null
+          updated_at: string
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          failed_attempts?: number | null
+          id?: string
           ip_address?: string | null
+          last_activity?: string | null
           last_login?: string | null
+          locked_until?: string | null
           password_hash?: string | null
           save_history?: boolean | null
           settings?: Json | null
+          stay_connected?: boolean | null
+          updated_at?: string
+          username: string
+        }
+        Update: {
+          created_at?: string
+          failed_attempts?: number | null
+          id?: string
+          ip_address?: string | null
+          last_activity?: string | null
+          last_login?: string | null
+          locked_until?: string | null
+          password_hash?: string | null
+          save_history?: boolean | null
+          settings?: Json | null
+          stay_connected?: boolean | null
           updated_at?: string
           username?: string
         }
@@ -482,6 +542,24 @@ export type Database = {
       }
     }
     Views: {
+      active_users: {
+        Row: {
+          last_activity: string | null
+          last_login: string | null
+          username: string | null
+        }
+        Insert: {
+          last_activity?: string | null
+          last_login?: string | null
+          username?: string | null
+        }
+        Update: {
+          last_activity?: string | null
+          last_login?: string | null
+          username?: string | null
+        }
+        Relationships: []
+      }
       user_sessions_public: {
         Row: {
           created_at: string | null
@@ -517,6 +595,14 @@ export type Database = {
       }
     }
     Functions: {
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _username: string
+        }
+        Returns: boolean
+      }
+      is_admin: { Args: { _username: string }; Returns: boolean }
       session_has_password: {
         Args: { session_username: string }
         Returns: boolean
@@ -527,7 +613,7 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -654,6 +740,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+    },
   },
 } as const
