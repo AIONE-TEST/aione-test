@@ -3,8 +3,9 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { SessionProvider, useSession } from "@/contexts/SessionContext";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 import { UsernameModal } from "@/components/UsernameModal";
 import Index from "./pages/Index";
 import LLMs from "./pages/LLMs";
@@ -46,12 +47,11 @@ function AppContent() {
         target.closest('a') ||
         target.closest('[role="button"]');
       
-      if (isInteractive && !showUsernameModal) {
-        // Check if it's not the close button of the modal itself
-        const isCloseButton = target.closest('[data-close-modal]');
-        if (!isCloseButton) {
-          setShowUsernameModal(true);
-        }
+      // Check if it's not the close button of the modal itself
+      const isCloseButton = target.closest('[data-close-modal]');
+      
+      if (isInteractive && !showUsernameModal && !isCloseButton) {
+        setShowUsernameModal(true);
       }
     };
 
@@ -134,11 +134,13 @@ function AppContent() {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <SessionProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <AppContent />
-      </TooltipProvider>
+      <LanguageProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <AppContent />
+        </TooltipProvider>
+      </LanguageProvider>
     </SessionProvider>
   </QueryClientProvider>
 );

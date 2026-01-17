@@ -607,6 +607,10 @@ export type Database = {
         Args: { session_username: string }
         Returns: boolean
       }
+      verify_admin_password: {
+        Args: { admin_password: string; admin_username: string }
+        Returns: boolean
+      }
       verify_session_password: {
         Args: { input_password: string; session_username: string }
         Returns: boolean
