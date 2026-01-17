@@ -439,26 +439,28 @@ export function AppTileCard({ model, onOpenAPIKeyModal, onClick, viewMode = "gri
     );
   }
 
-  // GRID VIEW - Card with hover info
+  // GRID VIEW - Card with hover info - TAILLE RÉDUITE DE 20%
   return (
     <TooltipProvider>
       <div 
         className={cn(
-          "relative overflow-hidden rounded-xl transition-all duration-300 cursor-pointer group",
+          "relative overflow-hidden rounded-lg transition-all duration-500 cursor-pointer group",
           "bg-gradient-to-br",
           style.bgGradient,
-          "border-2",
+          "border",
           style.borderColor,
-          "hover:scale-[1.02] hover:shadow-xl",
-          "shadow-[inset_0_2px_0_hsl(0_0%_100%/0.15),_0_6px_16px_hsl(220_20%_4%/0.4)]"
+          // Animation survol: format rectangulaire horizontal
+          "hover:scale-x-[1.20] hover:scale-y-[0.60] hover:z-50 hover:shadow-2xl",
+          "shadow-[inset_0_1px_0_hsl(0_0%_100%/0.1),_0_4px_12px_hsl(220_20%_4%/0.3)]"
         )}
         onClick={onClick}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         style={{ 
-          minHeight: "240px",
+          minHeight: "180px", // Réduit de 240px à 180px (-25%)
           display: "flex",
-          flexDirection: "column"
+          flexDirection: "column",
+          transformOrigin: "center center"
         }}
       >
         {/* TOP ZONE - App Name + LED + Flame */}
