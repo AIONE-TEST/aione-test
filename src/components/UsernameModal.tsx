@@ -105,15 +105,27 @@ export function UsernameModal({ isOpen, onClose, onSuccess }: UsernameModalProps
       return;
     }
 
-    // RESPECT CASSE: Mik reste Mik, autres en minuscule
-    const isAdmin = username.trim() === ADMIN_USERNAME;
-    const normalizedUsername = isAdmin ? username.trim() : username.toLowerCase().trim();
+    // RESPECT CASSE STRICT: Mik doit être exactement "Mik" (majuscule M, minuscules i et k)
+    const trimmedUsername = username.trim();
+    const isAdmin = trimmedUsername === ADMIN_USERNAME; // Comparaison EXACTE avec casse
+    
+    // Pour les non-admins, on normalise en minuscules
+    // Pour l'admin, on garde la casse exacte
+    const normalizedUsername = isAdmin ? trimmedUsername : trimmedUsername.toLowerCase();
 
-    // BUG FIX: Admin DOIT entrer mot de passe obligatoirement
-    if (isAdmin && !password) {
-      setError("Mot de passe requis pour l'administrateur");
-      setShowPasswordField(true);
-      return;
+    // BUG FIX CRITIQUE: Admin DOIT OBLIGATOIREMENT entrer son mot de passe
+    if (isAdmin) {
+      if (!password) {
+        setError("⚠️ Mot de passe OBLIGATOIRE pour l'administrateur Mik");
+        setShowPasswordField(true);
+        setUsePassword(true);
+        return;
+      }
+      // Vérification mot de passe admin STRICT avec casse
+      if (password !== "1971") {
+        setError("❌ Mot de passe incorrect");
+        return;
+      }
     }
 
     setIsLoading(true);
@@ -312,6 +324,7 @@ export function UsernameModal({ isOpen, onClose, onSuccess }: UsernameModalProps
       <DialogContent
         className="sm:max-w-md panel-3d border-2 border-[hsl(var(--primary))]/50 bg-background/95 backdrop-blur-md"
         onPointerDownOutside={(e) => e.preventDefault()}
+        hideCloseButton={true}
       >
         {/* TÂCHE 1.15: Sélecteur de langue */}
         <div className="absolute left-4 top-4 relative">
@@ -343,11 +356,11 @@ export function UsernameModal({ isOpen, onClose, onSuccess }: UsernameModalProps
           )}
         </div>
 
-        {/* BUG FIX: UNE SEULE croix de fermeture */}
+        {/* UNE SEULE croix de fermeture fonctionnelle */}
         <Button
           variant="ghost"
           size="icon"
-          className="absolute right-4 top-4 rounded-full opacity-70 hover:opacity-100 hover:bg-[hsl(0,100%,50%)]/20"
+          className="absolute right-4 top-4 rounded-full opacity-70 hover:opacity-100 hover:bg-[hsl(0,100%,50%)]/20 z-10"
           onClick={onClose}
         >
           <X className="h-4 w-4" />

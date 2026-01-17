@@ -24,43 +24,38 @@ const bannerLinks = [
 
 export function PromoBanner() {
   return (
-    <div className="relative overflow-hidden rounded-2xl border-2 border-[hsl(45,100%,55%)]/40 bg-gradient-to-r from-[hsl(220,20%,10%)] via-[hsl(280,60%,15%)] to-[hsl(220,20%,10%)] p-5 mb-6">
-      {/* Animated background glow */}
-      <div className="absolute inset-0 opacity-30">
-        <div className="absolute top-0 left-1/4 w-64 h-64 bg-[hsl(45,100%,55%)] rounded-full blur-[100px] animate-pulse" />
-        <div className="absolute bottom-0 right-1/4 w-48 h-48 bg-[hsl(320,100%,60%)] rounded-full blur-[80px] animate-pulse delay-500" />
+    <div className="relative overflow-hidden rounded-xl border border-[hsl(45,100%,55%)]/30 bg-gradient-to-r from-[hsl(220,20%,8%)] via-[hsl(280,50%,12%)] to-[hsl(220,20%,8%)] px-4 py-2 mb-4">
+      {/* Compact animated background */}
+      <div className="absolute inset-0 opacity-20">
+        <div className="absolute top-0 left-1/3 w-32 h-16 bg-[hsl(45,100%,55%)] rounded-full blur-[60px] animate-pulse" />
+        <div className="absolute bottom-0 right-1/3 w-24 h-12 bg-[hsl(320,100%,60%)] rounded-full blur-[40px] animate-pulse delay-300" />
       </div>
 
-      <div className="relative z-10 flex flex-col items-center gap-4">
-        {/* Header with animated icons */}
-        <div className="flex items-center gap-3">
-          <Zap className="h-6 w-6 text-[hsl(45,100%,55%)] animate-pulse" />
-          <h3 className="font-display text-xl font-black tracking-wider bg-gradient-to-r from-[hsl(45,100%,55%)] via-[hsl(25,100%,55%)] to-[hsl(320,100%,60%)] bg-clip-text text-transparent">
-            PRIX IMBATTABLES SUR VOS CRÉDITS IA !
-          </h3>
-          <Zap className="h-6 w-6 text-[hsl(45,100%,55%)] animate-pulse" />
+      <div className="relative z-10 flex flex-wrap items-center justify-between gap-3">
+        {/* Left - Title & Features */}
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-2">
+            <Zap className="h-5 w-5 text-[hsl(45,100%,55%)] animate-pulse" />
+            <span className="font-display text-base font-black tracking-wider bg-gradient-to-r from-[hsl(45,100%,55%)] via-[hsl(25,100%,55%)] to-[hsl(320,100%,60%)] bg-clip-text text-transparent">
+              PRIX IMBATTABLES !
+            </span>
+          </div>
+          
+          <div className="flex items-center gap-2 text-xs">
+            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[hsl(142,76%,50%)]/10 text-[hsl(142,76%,50%)] border border-[hsl(142,76%,50%)]/30">
+              <Gift className="h-3 w-3" /> Tokens
+            </span>
+            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[hsl(280,100%,65%)]/10 text-[hsl(280,100%,65%)] border border-[hsl(280,100%,65%)]/30">
+              <Sparkles className="h-3 w-3" /> Crédits IA
+            </span>
+            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[hsl(45,100%,55%)]/10 text-[hsl(45,100%,55%)] border border-[hsl(45,100%,55%)]/30">
+              <Percent className="h-3 w-3" /> -70%
+            </span>
+          </div>
         </div>
 
-        {/* Features */}
-        <div className="flex flex-wrap justify-center gap-4 text-sm">
-          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[hsl(142,76%,50%)]/10 text-[hsl(142,76%,50%)] border border-[hsl(142,76%,50%)]/30">
-            <Gift className="h-4 w-4" /> Tokens & Crédits
-          </span>
-          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[hsl(280,100%,65%)]/10 text-[hsl(280,100%,65%)] border border-[hsl(280,100%,65%)]/30">
-            <Sparkles className="h-4 w-4" /> Abonnements IA
-          </span>
-          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[hsl(45,100%,55%)]/10 text-[hsl(45,100%,55%)] border border-[hsl(45,100%,55%)]/30">
-            <Percent className="h-4 w-4" /> Jusqu'à -70%
-          </span>
-        </div>
-
-        {/* Slogan */}
-        <p className="text-center text-muted-foreground text-sm max-w-lg">
-          Gift Codes • Redeem Codes • API Credits • Subscriptions à prix réduit
-        </p>
-
-        {/* Links */}
-        <div className="flex flex-wrap justify-center gap-4 mt-2">
+        {/* Right - Links */}
+        <div className="flex items-center gap-2">
           {bannerLinks.map((link) => (
             <a
               key={link.name}
@@ -68,23 +63,16 @@ export function PromoBanner() {
               target="_blank"
               rel="noopener noreferrer"
               className={cn(
-                "flex items-center gap-2 px-5 py-2.5 rounded-xl font-display font-bold text-white transition-all duration-300",
-                "bg-gradient-to-r hover:scale-105 hover:shadow-lg",
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-display font-bold text-white text-sm transition-all duration-300",
+                "bg-gradient-to-r hover:scale-105 hover:shadow-md",
                 link.color
               )}
             >
               <span>{link.name}</span>
-              <ExternalLink className="h-4 w-4" />
+              <ExternalLink className="h-3 w-3" />
             </a>
           ))}
         </div>
-
-        {/* CTA */}
-        <p className="text-xs text-muted-foreground mt-2 flex items-center gap-2">
-          <span className="animate-pulse">✨</span>
-          Découvrez les meilleures offres pour vos générateurs IA préférés
-          <span className="animate-pulse">✨</span>
-        </p>
       </div>
     </div>
   );

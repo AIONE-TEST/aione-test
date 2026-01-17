@@ -146,7 +146,7 @@ export function Sidebar() {
                 "flex items-center justify-center gap-4 px-3 py-2 rounded-lg font-display text-2xl font-black tracking-wider transition-all duration-300 transform group",
                 isActive 
                   ? cn(item.btn3dClass, "text-white scale-102", item.glowClass) 
-                  : "btn-3d text-[hsl(215,20%,65%)] hover:text-white hover:scale-101"
+                  : "btn-3d text-[hsl(215,20%,65%)]"
               )}
               style={{
                 "--hover-glow": item.colorClass.replace("text-", ""),
@@ -155,16 +155,31 @@ export function Sidebar() {
               <span className={cn(
                 "transition-all duration-300",
                 isActive ? "text-white drop-shadow-lg" : item.colorClass,
-                !isActive && "group-hover:drop-shadow-[0_0_10px_currentColor] group-hover:scale-110"
+                !isActive && "group-hover:drop-shadow-[0_0_15px_currentColor] group-hover:scale-115"
               )}>
                 {React.cloneElement(item.icon as React.ReactElement, { className: "h-8 w-8" })}
               </span>
               <span className={cn(
                 "flex-1 text-center text-2xl font-black transition-all duration-300",
-                !isActive && "group-hover:text-white group-hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]"
+                !isActive && cn(
+                  "group-hover:text-white",
+                  "group-hover:drop-shadow-[0_0_12px_currentColor]",
+                  item.colorClass.replace("text-", "group-hover:text-")
+                )
               )}>
                 {item.label}
               </span>
+              
+              {/* Effet lumineux indépendant au survol */}
+              <div className={cn(
+                "absolute inset-0 rounded-lg opacity-0 transition-opacity duration-300 pointer-events-none",
+                "group-hover:opacity-100",
+                !isActive && "group-hover:bg-gradient-to-r group-hover:from-transparent group-hover:via-current/10 group-hover:to-transparent"
+              )} 
+              style={{
+                boxShadow: `inset 0 0 20px ${item.colorClass.includes("hsl") ? item.colorClass.replace("text-[", "").replace("]", "") : "currentColor"}20`
+              }}
+              />
             </Link>
           );
         })}
