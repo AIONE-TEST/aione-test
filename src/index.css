@@ -578,4 +578,34 @@
   ::-webkit-scrollbar-thumb:hover {
     background: hsl(220 15% 35%);
   }
+
+  /* Animation diodes vertes rapides */
+  @keyframes led-blink-fast {
+    0%, 100% { opacity: 1; box-shadow: 0 0 10px currentColor; }
+    50% { opacity: 0; box-shadow: none; }
+  }
+
+  .led-green-blink {
+    animation: led-blink-fast 0.5s ease-in-out infinite;
+  }
+
+  /* Animation pulse rapide pour LMarena */
+  .animate-pulse-fast {
+    animation: pulse 0.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  /* Animation shimmer pour bannière */
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+
+  .animate-shimmer {
+    animation: shimmer 3s ease-in-out infinite;
+  }
+
+  /* Animation pulse slow pour audio */
+  .animate-pulse-slow {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
 }

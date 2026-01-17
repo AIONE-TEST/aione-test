@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { 
   Image, Video, MessageSquare, Music, Wand2, Box, 
@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { aiModels } from "@/data/aiModels";
+import { PromoBanner } from "@/components/PromptBanner";
 
 const categories = [
   { id: "llms", label: "LLMS", icon: MessageSquare, path: "/llms", color: "btn-3d-pink" },
@@ -17,6 +18,11 @@ const categories = [
 ];
 
 const Index = () => {
+  // Scroll en haut de page (Point 9)
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
   const stats = useMemo(() => {
     const total = aiModels.length;
     const free = aiModels.filter((m) => m.isFree).length;
@@ -24,8 +30,9 @@ const Index = () => {
     return { total, free, categories: categoriesSet.size };
   }, []);
 
+  // Tâche 12: Afficher TOUS les modèles gratuits
   const freeModels = useMemo(() => 
-    aiModels.filter((m) => m.isFree).slice(0, 8), 
+    aiModels.filter((m) => m.isFree), 
   []);
 
   return (
@@ -73,7 +80,10 @@ const Index = () => {
           ))}
         </div>
 
-        {/* Free Models Section */}
+        {/* Bannière publicitaire G2A/G2G/Kinguin */}
+        <PromoBanner />
+
+        {/* Free Models Section - TOUS les modèles gratuits (Tâche 12) */}
         <div className="space-y-4">
           <div className="flex items-center gap-3">
             <Zap className="h-5 w-5 text-[hsl(142,76%,50%)]" />

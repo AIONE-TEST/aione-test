@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { AppWindow, Sparkles, Key, Check, Zap, Flame, Search, LayoutGrid, List, Image, Video, MessageSquare, Music, Wand2, Box, Code } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { SessionTimer } from "@/components/SessionTimer";
@@ -12,6 +12,7 @@ import { APIKeyModal } from "@/components/APIKeyModal";
 import { AdultDisclaimerModal } from "@/components/AdultDisclaimerModal";
 import { AppDetailModal } from "@/components/AppDetailModal";
 import { AppTileCard } from "@/components/AppTileCard";
+import { LMarenaButton } from "@/components/LMarenaButton";
 import { cn } from "@/lib/utils";
 
 interface CategoryConfig {
@@ -129,6 +130,11 @@ const Apps = () => {
   const [pendingAdultModel, setPendingAdultModel] = useState<AIModel | null>(null);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [selectedDetailModel, setSelectedDetailModel] = useState<AIModel | null>(null);
+
+  // Scroll en haut de page (Point 9)
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
 
   // Get ALL models including those from API Keys
   const allModels = useMemo(() => {
@@ -310,6 +316,9 @@ const Apps = () => {
       <Sidebar />
 
       <main className="ml-[373px] min-h-screen p-6">
+        {/* Bouton LMarena en haut */}
+        <LMarenaButton />
+
         {/* Header with Session Timer */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
