@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useCallback } from "react";
+import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { Volume2, Sparkles, Music, Mic, Radio, Headphones, Upload, Play, Pause, Download } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { ModelSelector } from "@/components/ModelSelector";
@@ -7,6 +7,10 @@ import { APIKeyModal } from "@/components/APIKeyModal";
 import { CreditsDisplay } from "@/components/CreditsDisplay";
 import { PromptEditorEnhanced } from "@/components/PromptEditorEnhanced";
 import { ViewModeToggle } from "@/components/ViewModeToggle";
+import { MediaHistoryPanel } from "@/components/MediaHistoryPanel";
+import { FloatingMediaPreview } from "@/components/FloatingMediaPreview";
+import { AppTileCardExpanded } from "@/components/AppTileCardExpanded";
+import { ModelSpecificOptions, useModelOptions } from "@/components/ModelSpecificOptions";
 import { AIModel, getModelsByCategory } from "@/data/aiModels";
 import { useAPIStatus } from "@/hooks/useAPIStatus";
 import { useCredits } from "@/hooks/useCredits";
@@ -31,7 +35,18 @@ const GenerateAudio = () => {
   const [apiKeyModalOpen, setApiKeyModalOpen] = useState(false);
   const [selectedApiKeyName, setSelectedApiKeyName] = useState<string>("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [audioMode, setAudioMode] = useState<"music" | "voice" | "clone" | "effects">("music");
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Nouveaux états
+  const [previewMedia, setPreviewMedia] = useState<{ url: string; type: "image" | "video" | "audio"; x: number; y: number } | null>(null);
+  const [expandedApp, setExpandedApp] = useState<{ model: AIModel; x: number; y: number } | null>(null);
+  const { options: modelOptions, setOptions: setModelOptions, hasSpecificOptions } = useModelOptions(selectedModel?.id);
+
+  // Scroll en haut (Point 9)
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
 
   const handleOpenAPIKeyModal = (apiKeyName: string) => {
     setSelectedApiKeyName(apiKeyName);
@@ -87,6 +102,11 @@ const GenerateAudio = () => {
     }
   };
 
+  const handleAppHover = (model: AIModel, e: React.MouseEvent) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setExpandedApp({ model, x: rect.right + 10, y: rect.top });
+  };
+
   const canGenerateNow = Boolean(selectedModel) && prompt.trim().length > 0;
 
   return (
@@ -94,7 +114,7 @@ const GenerateAudio = () => {
       <Sidebar />
 
       <main className="ml-[373px] min-h-screen p-4">
-        {/* Header compact */}
+        {/* Header */}
         <div className="flex items-center gap-3 mb-4">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[hsl(25,100%,55%)] to-[hsl(45,100%,55%)] glow-orange">
             <Volume2 className="h-5 w-5 text-white" />
@@ -115,89 +135,127 @@ const GenerateAudio = () => {
 
         {/* Quick Actions */}
         <div className="flex gap-2 mb-4">
-          <Button size="sm" className="btn-3d-orange gap-1 text-xs">
+          <Button 
+            size="sm" 
+            className={cn("gap-1 text-xs", audioMode === "music" ? "btn-3d-orange" : "btn-3d")}
+            onClick={() => setAudioMode("music")}
+          >
             <Music className="h-4 w-4" /> MUSIQUE
           </Button>
-          <Button size="sm" className="btn-3d gap-1 text-xs">
+          <Button 
+            size="sm" 
+            className={cn("gap-1 text-xs", audioMode === "voice" ? "btn-3d-orange" : "btn-3d")}
+            onClick={() => setAudioMode("voice")}
+          >
             <Mic className="h-4 w-4" /> VOIX
           </Button>
-          <Button size="sm" className="btn-3d gap-1 text-xs">
+          <Button 
+            size="sm" 
+            className={cn("gap-1 text-xs", audioMode === "clone" ? "btn-3d-orange" : "btn-3d")}
+            onClick={() => setAudioMode("clone")}
+          >
             <Radio className="h-4 w-4" /> CLONAGE
           </Button>
-          <Button size="sm" className="btn-3d gap-1 text-xs">
+          <Button 
+            size="sm" 
+            className={cn("gap-1 text-xs", audioMode === "effects" ? "btn-3d-orange" : "btn-3d")}
+            onClick={() => setAudioMode("effects")}
+          >
             <Headphones className="h-4 w-4" /> EFFETS
           </Button>
         </div>
 
-        {/* Layout: 2 colonnes */}
-        <div className="grid grid-cols-[1fr_300px] gap-4 mb-6">
-          {/* Colonne gauche */}
-          <div className="space-y-3">
-            {/* Source + Résultat */}
-            <div className="grid grid-cols-2 gap-3">
-              {/* Source Audio */}
-              <div
-                className={cn(
-                  "panel-3d p-3 h-32 flex items-center justify-center cursor-pointer",
-                  isDragging && "border-[hsl(var(--primary))] bg-[hsl(var(--primary))]/5"
-                )}
-                onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-                onDragLeave={() => setIsDragging(false)}
-                onDrop={handleDrop}
-                onClick={() => fileInputRef.current?.click()}
-              >
-                {uploadedAudio ? (
-                  <div className="flex items-center gap-3 w-full px-4">
+        {/* LAYOUT: 2/3 + 1/3 */}
+        <div className="grid grid-cols-[1fr_280px] gap-4">
+          {/* Colonne principale */}
+          <div className="space-y-4">
+            {/* 1. FENÊTRE DE GÉNÉRATION AUDIO */}
+            <div
+              className={cn(
+                "panel-3d p-6 aspect-video flex flex-col items-center justify-center transition-all duration-300",
+                isDragging && "border-[hsl(var(--primary))] bg-[hsl(var(--primary))]/5"
+              )}
+              onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+              onDragLeave={() => setIsDragging(false)}
+              onDrop={handleDrop}
+            >
+              {isGenerating ? (
+                <div className="flex flex-col items-center gap-4">
+                  <div className="h-16 w-16 rounded-full border-4 border-[hsl(25,100%,55%)]/30 border-t-[hsl(25,100%,55%)] animate-spin" />
+                  <p className="font-display text-lg">Génération en cours...</p>
+                </div>
+              ) : generatedContent ? (
+                <div className="flex flex-col items-center gap-4 w-full max-w-md">
+                  <div className="h-24 w-24 rounded-full bg-gradient-to-br from-[hsl(25,100%,55%)] to-[hsl(45,100%,55%)] flex items-center justify-center">
+                    <Music className="h-12 w-12 text-white" />
+                  </div>
+                  <div className="flex items-center gap-3 w-full">
                     <Button
                       size="icon"
-                      className="h-10 w-10 rounded-full btn-3d-orange"
-                      onClick={(e) => { e.stopPropagation(); setIsPlaying(!isPlaying); }}
+                      className="h-12 w-12 rounded-full btn-3d-green"
+                      onClick={() => setIsPlaying(!isPlaying)}
                     >
-                      {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+                      {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
                     </Button>
                     <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
                       <div className="h-full w-1/3 bg-gradient-to-r from-[hsl(25,100%,55%)] to-[hsl(45,100%,55%)]" />
                     </div>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center gap-2">
-                    <Upload className="h-8 w-8 text-[hsl(25,100%,55%)]" />
-                    <p className="font-display text-sm">SOURCE (optionnel)</p>
-                  </div>
-                )}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="audio/*"
-                  className="hidden"
-                  onChange={handleFileSelect}
-                />
-              </div>
-
-              {/* Résultat */}
-              <div className="panel-3d p-3 h-32 flex items-center justify-center">
-                {isGenerating ? (
-                  <div className="h-10 w-10 rounded-full border-4 border-[hsl(25,100%,55%)]/30 border-t-[hsl(25,100%,55%)] animate-spin" />
-                ) : generatedContent ? (
-                  <div className="flex items-center gap-3 w-full px-4">
-                    <Button size="icon" className="h-10 w-10 rounded-full btn-3d-green">
-                      <Play className="h-5 w-5" />
-                    </Button>
-                    <div className="flex-1 h-2 bg-muted rounded-full" />
                     <Button size="icon" variant="ghost">
-                      <Download className="h-4 w-4" />
+                      <Download className="h-5 w-5" />
                     </Button>
                   </div>
-                ) : (
-                  <div className="flex flex-col items-center gap-2">
-                    <Music className="h-8 w-8 text-muted-foreground" />
-                    <p className="font-display text-sm text-muted-foreground">RÉSULTAT</p>
-                  </div>
-                )}
-              </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setGeneratedContent(null)}
+                  >
+                    Nouvelle génération
+                  </Button>
+                </div>
+              ) : (
+                <div 
+                  className="flex flex-col items-center gap-4 cursor-pointer"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  {uploadedAudio ? (
+                    <div className="flex flex-col items-center gap-4 w-full max-w-md">
+                      <div className="flex items-center gap-3 w-full">
+                        <Button
+                          size="icon"
+                          className="h-10 w-10 rounded-full btn-3d-orange"
+                          onClick={(e) => { e.stopPropagation(); setIsPlaying(!isPlaying); }}
+                        >
+                          {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+                        </Button>
+                        <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                          <div className="h-full w-1/3 bg-gradient-to-r from-[hsl(25,100%,55%)] to-[hsl(45,100%,55%)]" />
+                        </div>
+                      </div>
+                      <Badge>Audio source chargé</Badge>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="h-16 w-16 rounded-full bg-gradient-to-br from-[hsl(25,100%,55%)]/20 to-[hsl(45,100%,55%)]/20 flex items-center justify-center">
+                        <Upload className="h-8 w-8 text-[hsl(25,100%,55%)]" />
+                      </div>
+                      <div className="text-center">
+                        <p className="font-display text-lg text-foreground">Audio source (optionnel)</p>
+                        <p className="text-sm text-muted-foreground">Pour clonage vocal ou remix</p>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="audio/*"
+                className="hidden"
+                onChange={handleFileSelect}
+              />
             </div>
 
-            {/* Prompt avec aide */}
+            {/* 2. FENÊTRE DU PROMPT */}
             <PromptEditorEnhanced
               prompt={prompt}
               onPromptChange={setPrompt}
@@ -210,90 +268,136 @@ const GenerateAudio = () => {
               placeholder="Décrivez l'audio... Ex: Musique épique orchestrale, style Hans Zimmer"
               category="audio"
             />
-          </div>
 
-          {/* Colonne droite - Options */}
-          <div className="panel-3d p-3 space-y-3">
-            <div className="flex items-center gap-2 mb-2">
-              <Sparkles className="h-4 w-4 text-[hsl(var(--secondary))]" />
-              <span className="font-display text-sm font-bold">MODÈLES AI</span>
-            </div>
+            {/* 3. FENÊTRE DES MODÈLES AI */}
+            <div className="panel-3d p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-[hsl(var(--secondary))]" />
+                  <span className="font-display text-sm font-bold">MODÈLES AI</span>
+                  <Badge variant="outline" className="text-xs">{models.length}</Badge>
+                </div>
+                <ViewModeToggle viewMode={viewMode} onViewModeChange={setViewMode} />
+              </div>
 
-            <ModelSelector
-              models={models}
-              selectedModel={selectedModel}
-              onSelectModel={setSelectedModel}
-              category="audio"
-              className="w-full"
-            />
+              <ModelSelector
+                models={models}
+                selectedModel={selectedModel}
+                onSelectModel={setSelectedModel}
+                category="audio"
+                className="w-full"
+              />
 
-            {/* Durée */}
-            <div>
-              <label className="font-display text-xs text-muted-foreground block mb-1">DURÉE</label>
-              <div className="flex gap-1">
-                {durations.map((d) => (
-                  <Button
-                    key={d}
-                    size="sm"
-                    variant={duration === d ? "default" : "outline"}
-                    onClick={() => setDuration(d)}
-                    className={cn(
-                      "flex-1 text-xs",
-                      duration === d ? "btn-3d-orange" : "btn-3d"
-                    )}
+              {hasSpecificOptions && (
+                <ModelSpecificOptions
+                  model={selectedModel}
+                  options={modelOptions}
+                  onOptionsChange={setModelOptions}
+                />
+              )}
+
+              {/* Durée */}
+              <div>
+                <label className="font-display text-xs text-muted-foreground block mb-1">DURÉE</label>
+                <div className="flex gap-1">
+                  {durations.map((d) => (
+                    <Button
+                      key={d}
+                      size="sm"
+                      variant={duration === d ? "default" : "outline"}
+                      onClick={() => setDuration(d)}
+                      className={cn(
+                        "flex-1 text-xs",
+                        duration === d ? "btn-3d-orange" : "btn-3d"
+                      )}
+                    >
+                      {d}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              <CreditsDisplay 
+                credits={credits} 
+                totalCredits={totalCredits} 
+                serviceName={selectedModel?.name}
+                compact
+              />
+
+              {/* Grille des modèles */}
+              <div className={cn(
+                viewMode === "list" 
+                  ? "flex flex-col gap-2" 
+                  : "grid grid-cols-2 lg:grid-cols-3 gap-3"
+              )}>
+                {models.map((model) => (
+                  <div
+                    key={model.id}
+                    onMouseEnter={(e) => handleAppHover(model, e)}
+                    onMouseLeave={() => setExpandedApp(null)}
                   >
-                    {d}
-                  </Button>
+                    <AppTileCard
+                      model={model}
+                      viewMode={viewMode}
+                      horizontal
+                      onOpenAPIKeyModal={handleOpenAPIKeyModal}
+                      onClick={() => setSelectedModel(model)}
+                    />
+                  </div>
                 ))}
               </div>
             </div>
-
-            {/* Credits */}
-            <CreditsDisplay 
-              credits={credits} 
-              totalCredits={totalCredits} 
-              serviceName={selectedModel?.name}
-              compact
-            />
-          </div>
-        </div>
-
-        {/* Grille des modèles */}
-        <div className="mb-6">
-          <div className="flex items-center gap-3 mb-4">
-            <Volume2 className="h-5 w-5 text-[hsl(25,100%,55%)]" />
-            <h2 className="font-display text-lg font-bold">MODÈLES AUDIO</h2>
-            <Badge variant="outline" className="text-sm">{models.length}</Badge>
-            <div className="ml-auto">
-              <ViewModeToggle viewMode={viewMode} onViewModeChange={setViewMode} />
-            </div>
           </div>
 
-          <div className={cn(
-            viewMode === "list" 
-              ? "flex flex-col gap-3" 
-              : "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
-          )}>
-            {models.map((model) => (
-              <AppTileCard
-                key={model.id}
-                model={model}
-                viewMode={viewMode}
-                horizontal
-                onOpenAPIKeyModal={handleOpenAPIKeyModal}
-                onClick={() => setSelectedModel(model)}
-              />
-            ))}
-          </div>
+          {/* Colonne droite - Historique */}
+          <MediaHistoryPanel
+            category="audio"
+            currentMedia={uploadedAudio}
+            onSelectMedia={(media) => {
+              if (media.url) setUploadedAudio(media.url);
+            }}
+            onPreviewMedia={(media) => {
+              if (media.url) {
+                setPreviewMedia({
+                  url: media.url,
+                  type: "audio",
+                  x: window.innerWidth / 4,
+                  y: window.innerHeight / 4
+                });
+              }
+            }}
+          />
         </div>
       </main>
 
-      {/* API Key Modal */}
+      {/* Modals */}
       <APIKeyModal
         isOpen={apiKeyModalOpen}
         onClose={() => setApiKeyModalOpen(false)}
         apiKeyName={selectedApiKeyName}
       />
+
+      <FloatingMediaPreview
+        isOpen={!!previewMedia}
+        mediaUrl={previewMedia?.url}
+        mediaType={previewMedia?.type}
+        position={previewMedia ? { x: previewMedia.x, y: previewMedia.y } : undefined}
+        onClose={() => setPreviewMedia(null)}
+      />
+
+      {expandedApp && (
+        <AppTileCardExpanded
+          model={expandedApp.model}
+          isOpen={true}
+          position={{ x: expandedApp.x, y: expandedApp.y }}
+          onClose={() => setExpandedApp(null)}
+          onOpenAPIKeyModal={handleOpenAPIKeyModal}
+          onClick={() => {
+            setSelectedModel(expandedApp.model);
+            setExpandedApp(null);
+          }}
+        />
+      )}
     </div>
   );
 };
