@@ -20,12 +20,12 @@ interface SessionContextType {
   logout: () => void;
   updateSettings: (settings: Partial<SessionData>) => Promise<void>;
   updateActivity: () => void;
-  deleteHistory: () => Promise<void>; // TÂCHE 21
+  deleteHistory: () => Promise<void>;
 }
 
 const SessionContext = createContext<SessionContextType | undefined>(undefined);
 
-// TÂCHE 9: Timeout d'inactivité de 30 minutes
+// TÂCHE 1.8: Timeout d'inactivité de 30 minutes
 const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutes
 
 export function useSession() {
@@ -96,7 +96,7 @@ export function SessionProvider({ children }: SessionProviderProps) {
     }
   }, []);
 
-  // TÂCHE 9: Activity tracking and timeout
+  // TÂCHE 1.8: Activity tracking and timeout
   useEffect(() => {
     if (!session || session.stay_connected) return;
 
@@ -104,6 +104,8 @@ export function SessionProvider({ children }: SessionProviderProps) {
       const now = Date.now();
       if (now - lastActivity > INACTIVITY_TIMEOUT) {
         setIsInactive(true);
+        // Rediriger vers la page d'accueil
+        window.location.href = '/';
         logout();
       }
     };
@@ -157,6 +159,7 @@ export function SessionProvider({ children }: SessionProviderProps) {
     
     setSession({ id: sessionId, username, isAdmin: adminStatus });
     setLastActivity(Date.now());
+    setIsInactive(false);
   };
 
   const logout = async () => {
@@ -190,7 +193,7 @@ export function SessionProvider({ children }: SessionProviderProps) {
     }
   };
 
-  // TÂCHE 21: Delete all user history
+  // TÂCHE 1.14: Delete all user history
   const deleteHistory = async () => {
     if (!session) return;
 
@@ -253,12 +256,16 @@ export function SessionProvider({ children }: SessionProviderProps) {
         deleteHistory,
       }}
     >
-      {/* TÂCHE 9: Overlay when inactive */}
+      {/* TÂCHE 1.8: Overlay when inactive - message plus visible */}
       {isInactive && (
-        <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center">
-          <div className="text-center text-white">
-            <p className="text-xl mb-4">Session expirée pour inactivité</p>
-            <p className="text-sm text-muted-foreground">Veuillez vous réidentifier</p>
+        <div className="fixed inset-0 bg-black/70 z-[100] flex items-center justify-center backdrop-blur-sm">
+          <div className="text-center bg-background/90 p-8 rounded-2xl border border-primary/50 shadow-2xl">
+            <p className="text-2xl font-display font-bold text-primary mb-4">
+              Session en veille
+            </p>
+            <p className="text-lg text-muted-foreground">
+              Réidentification requise
+            </p>
           </div>
         </div>
       )}

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { User, Lock, LogIn, AlertCircle, Shield, Eye, EyeOff, ChevronDown, HelpCircle, X } from "lucide-react";
+import { User, Lock, LogIn, AlertCircle, Shield, Eye, EyeOff, ChevronDown, HelpCircle, X, Globe } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useSession } from "@/contexts/SessionContext";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { SupportedLanguage } from "@/i18n/translations";
 
 interface UsernameModalProps {
   isOpen: boolean;
@@ -15,12 +17,24 @@ interface UsernameModalProps {
   onSuccess: (sessionId: string, username: string) => void;
 }
 
-// ✅ CORRIGÉ : Respect strict de la casse pour "Mik"
+// TÂCHE 2.1: Suppression des mots de passe en dur - Utiliser les fonctions RPC
 const ADMIN_USERNAME = "Mik";
-const ADMIN_PASSWORD = "1971";
+
+const LANGUAGE_OPTIONS: { code: SupportedLanguage; label: string; flag: string }[] = [
+  { code: 'fr', label: 'Français', flag: '🇫🇷' },
+  { code: 'en', label: 'English', flag: '🇬🇧' },
+  { code: 'es', label: 'Español', flag: '🇪🇸' },
+  { code: 'de', label: 'Deutsch', flag: '🇩🇪' },
+  { code: 'it', label: 'Italiano', flag: '🇮🇹' },
+  { code: 'pt', label: 'Português', flag: '🇵🇹' },
+  { code: 'ja', label: '日本語', flag: '🇯🇵' },
+  { code: 'zh', label: '中文', flag: '🇨🇳' },
+  { code: 'ko', label: '한국어', flag: '🇰🇷' },
+];
 
 export function UsernameModal({ isOpen, onClose, onSuccess }: UsernameModalProps) {
   const { login } = useSession();
+  const { t, language, setLanguage } = useLanguage();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPasswordField, setShowPasswordField] = useState(false);
@@ -34,6 +48,7 @@ export function UsernameModal({ isOpen, onClose, onSuccess }: UsernameModalProps
   const [showSupportForm, setShowSupportForm] = useState(false);
   const [supportMessage, setSupportMessage] = useState("");
   const [userIP, setUserIP] = useState<string>("");
+  const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
 
   // Récupération IP utilisateur
   useEffect(() => {
@@ -73,7 +88,7 @@ export function UsernameModal({ isOpen, onClose, onSuccess }: UsernameModalProps
         from_username: username || "anonyme",
         message: supportMessage,
       });
-      toast({ title: "Message envoyé", description: "L'administrateur sera notifié." });
+      toast({ title: t.messageSent, description: "" });
       setSupportMessage("");
       setShowSupportForm(false);
     } catch (err) {
@@ -86,7 +101,7 @@ export function UsernameModal({ isOpen, onClose, onSuccess }: UsernameModalProps
     setError("");
 
     if (!username.trim() || username.length < 3) {
-      setError("L'identifiant doit contenir au moins 3 caractères");
+      setError(t.errorUsernameTooShort);
       return;
     }
 
@@ -110,16 +125,21 @@ export function UsernameModal({ isOpen, onClose, onSuccess }: UsernameModalProps
           const lockedUntil = new Date(existingUser.locked_until);
           if (lockedUntil > new Date()) {
             const remaining = Math.ceil((lockedUntil.getTime() - Date.now()) / 60000);
-            setError(`Compte bloqué. Réessayez dans ${remaining} minutes.`);
+            setError(`${t.errorAccountLocked} (${remaining} min)`);
             setIsLoading(false);
             return;
           }
         }
 
-        // Vérification admin
+        // Vérification admin - TÂCHE 2.1: Utiliser RPC sécurisé
         if (isAdmin) {
-          if (password !== ADMIN_PASSWORD) {
-            setError("Mot de passe administrateur requis");
+          const { data: adminValid } = await supabase.rpc("verify_admin_password", {
+            admin_username: normalizedUsername,
+            admin_password: password
+          });
+
+          if (!adminValid) {
+            setError(t.errorPasswordRequired);
             setShowPasswordField(true);
             setIsLoading(false);
             return;
@@ -148,20 +168,28 @@ export function UsernameModal({ isOpen, onClose, onSuccess }: UsernameModalProps
           }
 
           toast({
-            title: "Bienvenue Administrateur !",
-            description: "Accès total accordé.",
+            title: t.successLogin,
+            description: "Bienvenue Administrateur !",
           });
 
           saveToRecentUsernames(normalizedUsername);
           login(existingUser.id, existingUser.username);
+          onSuccess(existingUser.id, existingUser.username);
           onClose();
           return;
         }
 
-        // Vérification mot de passe utilisateur
+        // Vérification mot de passe utilisateur via RPC sécurisé
         const { data: hasPass } = await supabase.rpc("session_has_password", { session_username: normalizedUsername });
 
-        if (hasPass && password) {
+        if (hasPass) {
+          if (!password) {
+            setError(t.errorPasswordRequired);
+            setShowPasswordField(true);
+            setIsLoading(false);
+            return;
+          }
+
           const { data: passwordValid } = await supabase.rpc("verify_session_password", {
             session_username: normalizedUsername,
             input_password: password,
@@ -171,13 +199,12 @@ export function UsernameModal({ isOpen, onClose, onSuccess }: UsernameModalProps
             const newAttempts = (existingUser.failed_attempts || 0) + 1;
             const updateData: any = { failed_attempts: newAttempts };
 
-            // ✅ BLOCAGE APRÈS 10 TENTATIVES
+            // TÂCHE 1.5: BLOCAGE APRÈS 10 TENTATIVES
             if (newAttempts >= 10) {
               updateData.locked_until = new Date(Date.now() + 60 * 60 * 1000).toISOString();
-              setError("Trop de tentatives. Compte bloqué pour 1 heure.");
+              setError(t.errorAccountLocked);
             } else {
-              // ✅ MESSAGE AVEC 10 TENTATIVES
-              setError(`Mot de passe incorrect. ${10 - newAttempts} tentative(s) restante(s).`);
+              setError(`${t.errorWrongPassword} (${10 - newAttempts} essais restants)`);
             }
 
             await supabase.from("user_sessions").update(updateData).eq("id", existingUser.id);
@@ -209,12 +236,13 @@ export function UsernameModal({ isOpen, onClose, onSuccess }: UsernameModalProps
         });
 
         toast({
-          title: "Bienvenue !",
-          description: `Ravi de vous revoir, ${existingUser.username} !`,
+          title: t.successLogin,
+          description: `Bienvenue ${existingUser.username} !`,
         });
 
         saveToRecentUsernames(normalizedUsername);
         login(existingUser.id, existingUser.username);
+        onSuccess(existingUser.id, existingUser.username);
         onClose();
       } else {
         // Création nouveau compte
@@ -252,12 +280,13 @@ export function UsernameModal({ isOpen, onClose, onSuccess }: UsernameModalProps
         });
 
         toast({
-          title: "Compte créé !",
-          description: `Bienvenue ${newUser.username} ! Votre espace de travail est prêt.`,
+          title: t.successAccountCreated,
+          description: `Bienvenue ${newUser.username} !`,
         });
 
         saveToRecentUsernames(normalizedUsername);
         login(newUser.id, newUser.username);
+        onSuccess(newUser.id, newUser.username);
         onClose();
       }
     } catch (err: any) {
@@ -268,27 +297,60 @@ export function UsernameModal({ isOpen, onClose, onSuccess }: UsernameModalProps
     }
   };
 
+  const currentLang = LANGUAGE_OPTIONS.find(l => l.code === language) || LANGUAGE_OPTIONS[0];
+
   return (
     <Dialog open={isOpen} onOpenChange={() => {}}>
       <DialogContent
         className="sm:max-w-md panel-3d border-2 border-[hsl(var(--primary))]/50 bg-background/95 backdrop-blur-md"
         onPointerDownOutside={(e) => e.preventDefault()}
       >
+        {/* TÂCHE 1.15: Sélecteur de langue */}
+        <div className="absolute left-4 top-4 relative">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="gap-2 text-xs"
+            onClick={() => setShowLanguageDropdown(!showLanguageDropdown)}
+          >
+            <Globe className="h-3 w-3" />
+            {currentLang.flag} {currentLang.code.toUpperCase()}
+          </Button>
+          {showLanguageDropdown && (
+            <div className="absolute z-50 top-full left-0 mt-1 bg-background border border-border rounded-lg shadow-lg py-1 min-w-[150px]">
+              {LANGUAGE_OPTIONS.map((lang) => (
+                <button
+                  key={lang.code}
+                  className="w-full px-3 py-2 text-left hover:bg-muted text-sm flex items-center gap-2"
+                  onClick={() => {
+                    setLanguage(lang.code);
+                    setShowLanguageDropdown(false);
+                  }}
+                >
+                  <span>{lang.flag}</span>
+                  <span>{lang.label}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
         <Button
           variant="ghost"
           size="icon"
           className="absolute right-4 top-4 rounded-full opacity-70 hover:opacity-100"
           onClick={onClose}
+          data-close-modal
         >
           <X className="h-4 w-4" />
         </Button>
 
-        <DialogHeader>
+        <DialogHeader className="mt-4">
           <DialogTitle className="font-display text-2xl font-black gradient-text-cyan tracking-wider text-center">
-            BIENVENUE SUR AIONE
+            {t.loginTitle}
           </DialogTitle>
           <DialogDescription className="text-center text-muted-foreground">
-            Entrez votre identifiant pour accéder à votre espace de travail personnel
+            {t.loginDescription}
           </DialogDescription>
         </DialogHeader>
 
@@ -296,7 +358,7 @@ export function UsernameModal({ isOpen, onClose, onSuccess }: UsernameModalProps
           <div className="space-y-2 relative">
             <Label htmlFor="username" className="font-display text-sm font-bold flex items-center gap-2">
               <User className="h-4 w-4 text-[hsl(var(--primary))]" />
-              IDENTIFIANT
+              {t.identifierLabel}
             </Label>
             <div className="relative">
               <Input
@@ -305,7 +367,7 @@ export function UsernameModal({ isOpen, onClose, onSuccess }: UsernameModalProps
                 onChange={(e) => setUsername(e.target.value)}
                 onFocus={() => recentUsernames.length > 1 && setShowUsernameDropdown(true)}
                 onBlur={() => setTimeout(() => setShowUsernameDropdown(false), 200)}
-                placeholder="Votre identifiant unique..."
+                placeholder={t.identifierPlaceholder}
                 className="input-3d text-lg pr-10"
                 autoFocus
                 required
@@ -341,10 +403,6 @@ export function UsernameModal({ isOpen, onClose, onSuccess }: UsernameModalProps
                 ))}
               </div>
             )}
-
-            <p className="text-xs text-muted-foreground">
-              Ce pseudo vous permet de retrouver votre historique, configuration et médias
-            </p>
           </div>
 
           <div className="flex items-center space-x-2">
@@ -358,7 +416,7 @@ export function UsernameModal({ isOpen, onClose, onSuccess }: UsernameModalProps
             />
             <Label htmlFor="usePassword" className="text-sm cursor-pointer flex items-center gap-2">
               <Shield className="h-4 w-4 text-[hsl(142,76%,50%)]" />
-              <span>ENREGISTRER MOT DE PASSE</span>
+              <span>{t.savePassword}</span>
             </Label>
           </div>
 
@@ -369,7 +427,7 @@ export function UsernameModal({ isOpen, onClose, onSuccess }: UsernameModalProps
               onCheckedChange={(checked) => setStayConnected(checked as boolean)}
             />
             <Label htmlFor="stayConnected" className="text-sm cursor-pointer">
-              Rester connecté
+              {t.stayConnected}
             </Label>
           </div>
 
@@ -377,7 +435,7 @@ export function UsernameModal({ isOpen, onClose, onSuccess }: UsernameModalProps
             <div className="space-y-2">
               <Label htmlFor="password" className="font-display text-sm font-bold flex items-center gap-2">
                 <Lock className="h-4 w-4 text-[hsl(45,100%,55%)]" />
-                MOT DE PASSE {showPasswordField && !usePassword ? "(requis)" : ""}
+                {t.passwordLabel}
               </Label>
               <div className="relative">
                 <Input
@@ -385,7 +443,7 @@ export function UsernameModal({ isOpen, onClose, onSuccess }: UsernameModalProps
                   type={showPasswordText ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Mot de passe..."
+                  placeholder={t.passwordPlaceholder}
                   className="input-3d pr-10"
                   required={showPasswordField && !usePassword}
                 />
@@ -403,7 +461,6 @@ export function UsernameModal({ isOpen, onClose, onSuccess }: UsernameModalProps
                   )}
                 </Button>
               </div>
-              <p className="text-xs text-[hsl(45,100%,55%)]">⚠️ Un mot de passe protège votre compte et vos données</p>
             </div>
           )}
 
@@ -414,15 +471,9 @@ export function UsernameModal({ isOpen, onClose, onSuccess }: UsernameModalProps
             </div>
           )}
 
-          <div className="bg-[hsl(var(--primary))]/10 border border-[hsl(var(--primary))]/30 rounded-lg p-3">
-            <p className="text-xs text-[hsl(var(--primary))]">
-              🔒 <strong>Sécurité:</strong> Sans mot de passe, n'importe qui connaissant votre identifiant pourrait
-              accéder à votre compte.
-            </p>
-          </div>
-
+          {/* TÂCHE 1.14: Message de confidentialité */}
           <div className="text-xs text-center text-muted-foreground">
-            🛡️ Aucun cookie/donnée stockée - Confidentialité garantie
+            🛡️ {t.noCookiesMessage}
           </div>
 
           {userIP && <div className="text-xs text-muted-foreground text-center">IP: {userIP}</div>}
@@ -437,7 +488,7 @@ export function UsernameModal({ isOpen, onClose, onSuccess }: UsernameModalProps
             ) : (
               <>
                 <LogIn className="h-5 w-5" />
-                ENTRER
+                {t.loginButton}
               </>
             )}
           </Button>
@@ -449,7 +500,7 @@ export function UsernameModal({ isOpen, onClose, onSuccess }: UsernameModalProps
               onClick={() => setShowSupportForm(!showSupportForm)}
             >
               <HelpCircle className="h-3 w-3" />
-              Besoin d'aide ?
+              {t.needHelp}
             </button>
           </div>
 
@@ -458,7 +509,7 @@ export function UsernameModal({ isOpen, onClose, onSuccess }: UsernameModalProps
               <textarea
                 value={supportMessage}
                 onChange={(e) => setSupportMessage(e.target.value)}
-                placeholder="Décrivez votre problème..."
+                placeholder={t.helpPlaceholder}
                 className="w-full p-2 rounded bg-background border border-border text-sm min-h-[80px]"
               />
               <Button
@@ -468,7 +519,7 @@ export function UsernameModal({ isOpen, onClose, onSuccess }: UsernameModalProps
                 disabled={!supportMessage.trim()}
                 className="w-full"
               >
-                Envoyer
+                {t.sendMessage}
               </Button>
             </div>
           )}

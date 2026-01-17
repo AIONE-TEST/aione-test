@@ -15,6 +15,7 @@ import {
 import { cn } from "@/lib/utils";
 import { AnimatedGlobe } from "./AnimatedGlobe";
 import { SessionTimer } from "./SessionTimer";
+import { ActiveUsersCounter } from "./ActiveUsersCounter";
 
 interface NavItem {
   id: string;
@@ -169,9 +170,12 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* Footer */}
+      {/* Footer - TÂCHE 3.1: ActiveUsersCounter ajouté */}
       <div className="border-t-2 border-[hsl(220,15%,25%)] p-4">
-        <div className="flex flex-col items-center gap-2">
+        <div className="flex flex-col items-center gap-3">
+          {/* TÂCHE 1.13 & 3.1: Compteur d'utilisateurs actifs */}
+          <ActiveUsersCounter />
+          
           <div className="flex items-center gap-2">
             <Flame className="h-8 w-8 text-[hsl(25,100%,55%)] animate-pulse" />
             <span className="font-display text-base text-[hsl(25,100%,55%)] tracking-wider font-bold">
