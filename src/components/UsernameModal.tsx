@@ -105,8 +105,16 @@ export function UsernameModal({ isOpen, onClose, onSuccess }: UsernameModalProps
       return;
     }
 
+    // RESPECT CASSE: Mik reste Mik, autres en minuscule
     const isAdmin = username.trim() === ADMIN_USERNAME;
     const normalizedUsername = isAdmin ? username.trim() : username.toLowerCase().trim();
+
+    // BUG FIX: Admin DOIT entrer mot de passe obligatoirement
+    if (isAdmin && !password) {
+      setError("Mot de passe requis pour l'administrateur");
+      setShowPasswordField(true);
+      return;
+    }
 
     setIsLoading(true);
 
@@ -335,12 +343,12 @@ export function UsernameModal({ isOpen, onClose, onSuccess }: UsernameModalProps
           )}
         </div>
 
+        {/* BUG FIX: UNE SEULE croix de fermeture */}
         <Button
           variant="ghost"
           size="icon"
-          className="absolute right-4 top-4 rounded-full opacity-70 hover:opacity-100"
+          className="absolute right-4 top-4 rounded-full opacity-70 hover:opacity-100 hover:bg-[hsl(0,100%,50%)]/20"
           onClick={onClose}
-          data-close-modal
         >
           <X className="h-4 w-4" />
         </Button>

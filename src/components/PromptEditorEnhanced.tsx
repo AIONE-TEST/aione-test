@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { 
   Wand2, ChevronDown, ChevronUp, Sparkles, Loader2, 
-  Lightbulb, SpellCheck, MinusCircle, Paperclip, HelpCircle 
+  Lightbulb, MinusCircle, Paperclip, HelpCircle, Zap
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -41,6 +41,12 @@ const promptSuggestions: Record<string, string[]> = {
     "Supprimer l'arrière-plan",
     "Agrandir en 4K",
     "Style artistique"
+  ],
+  audio: [
+    "Style orchestral épique",
+    "Musique électronique ambient",
+    "Voix naturelle expressive",
+    "Effets sonores cinématiques"
   ],
   default: [
     "Haute qualité",
@@ -153,17 +159,17 @@ export function PromptEditorEnhanced({
       {/* Main Prompt Area */}
       <div className="panel-3d p-3">
         <div className="flex gap-2 items-start">
-          {/* Upload Button */}
+          {/* Upload Button - AGRANDI x2 (Tâche icône trombone) */}
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="h-10 w-10 flex-shrink-0"
+                  className="h-14 w-14 flex-shrink-0"
                   onClick={handleFileClick}
                 >
-                  <Paperclip className="h-5 w-5 text-muted-foreground" />
+                  <Paperclip className="h-8 w-8 text-muted-foreground" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
@@ -212,25 +218,25 @@ export function PromptEditorEnhanced({
 
         {/* Quick Actions Row */}
         <div className="flex items-center gap-2 mt-2 flex-wrap">
-          {/* Spell Check Toggle */}
+          {/* Prompt Optimizer Button (Tâche: remplacer SpellCheck) */}
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
-                  variant={spellCheckEnabled ? "default" : "ghost"}
+                  variant="ghost"
                   size="sm"
-                  className={cn(
-                    "h-7 px-2 text-xs gap-1",
-                    spellCheckEnabled ? "btn-3d-cyan" : ""
-                  )}
-                  onClick={() => setSpellCheckEnabled(!spellCheckEnabled)}
+                  className="h-7 px-2 text-xs gap-1 btn-3d-purple"
+                  onClick={() => {
+                    // TODO: Implémenter l'optimisation AI du prompt
+                    console.log("Prompt Optimizer clicked");
+                  }}
                 >
-                  <SpellCheck className="h-3 w-3" />
-                  Ortho
+                  <Zap className="h-3 w-3" />
+                  Prompt Optimizer
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Correcteur orthographique</p>
+                <p>Optimise ton prompt avec l'IA pour des résultats professionnels (master-prompt, format JSON adapté au modèle)</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
