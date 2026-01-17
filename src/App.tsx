@@ -27,51 +27,26 @@ function AppContent() {
   const { session, isLoading, isAuthenticated, login, updateActivity } = useSession();
   const [showUsernameModal, setShowUsernameModal] = useState(false);
 
-  // TÂCHE 17 & 18: Popup hidden by default, opens on action
-  const handleLoginRequired = useCallback(() => {
-    if (!isAuthenticated) {
+  // Ouvrir le modal au démarrage si non authentifié
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
       setShowUsernameModal(true);
     }
-  }, [isAuthenticated]);
-
-  // Track clicks on interactive elements - TÂCHE 18
-  useEffect(() => {
-    if (isAuthenticated) return;
-
-    const handleClick = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      const isInteractive = 
-        target.tagName === 'BUTTON' || 
-        target.tagName === 'A' ||
-        target.closest('button') ||
-        target.closest('a') ||
-        target.closest('[role="button"]');
-      
-      // Check if it's not the close button of the modal itself
-      const isCloseButton = target.closest('[data-close-modal]');
-      
-      if (isInteractive && !showUsernameModal && !isCloseButton) {
-        setShowUsernameModal(true);
-      }
-    };
-
-    document.addEventListener('click', handleClick);
-    return () => document.removeEventListener('click', handleClick);
-  }, [isAuthenticated, showUsernameModal]);
+  }, [isLoading, isAuthenticated]);
 
   // Update activity on user interaction
   useEffect(() => {
     if (!isAuthenticated) return;
-    
+
     const handleActivity = () => updateActivity();
-    const events = ['mousedown', 'keydown', 'scroll'];
-    
-    events.forEach(event => {
+    const events = ["mousedown", "keydown", "scroll"];
+
+    events.forEach((event) => {
       window.addEventListener(event, handleActivity, { passive: true });
     });
-    
+
     return () => {
-      events.forEach(event => {
+      events.forEach((event) => {
         window.removeEventListener(event, handleActivity);
       });
     };
@@ -82,7 +57,7 @@ function AppContent() {
     setShowUsernameModal(false);
   };
 
-  // TÂCHE 18: Close modal handler
+  // Close modal handler
   const handleCloseModal = () => {
     setShowUsernameModal(false);
   };
@@ -100,13 +75,8 @@ function AppContent() {
 
   return (
     <>
-      {/* TÂCHE 17 & 19: Modal doesn't block view, visible behind */}
-      <UsernameModal
-        isOpen={showUsernameModal}
-        onClose={handleCloseModal}
-        onSuccess={handleLoginSuccess}
-      />
-      
+      <UsernameModal isOpen={showUsernameModal} onClose={handleCloseModal} onSuccess={handleLoginSuccess} />
+
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
