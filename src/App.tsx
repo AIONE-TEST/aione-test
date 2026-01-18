@@ -57,10 +57,14 @@ function AppContent() {
     setShowUsernameModal(false);
   };
 
-  // Close modal handler
-  const handleCloseModal = () => {
-    setShowUsernameModal(false);
-  };
+  // Close modal handler - CORRECTION CRITIQUE: Ne permet PAS la fermeture si non authentifié
+  const handleCloseModal = useCallback(() => {
+    // RÈGLE ABSOLUE: La croix ne doit PAS permettre l'accès au site sans identification
+    if (isAuthenticated) {
+      setShowUsernameModal(false);
+    }
+    // Si non authentifié, on ne fait RIEN - le modal reste ouvert
+  }, [isAuthenticated]);
 
   if (isLoading) {
     return (
@@ -69,6 +73,17 @@ function AppContent() {
           <div className="h-12 w-12 border-4 border-[hsl(var(--primary))]/30 border-t-[hsl(var(--primary))] rounded-full animate-spin mx-auto mb-4" />
           <p className="font-display text-lg text-muted-foreground">Chargement...</p>
         </div>
+      </div>
+    );
+  }
+
+  // CORRECTION CRITIQUE: Bloquer l'accès au site si non authentifié
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-background">
+        <UsernameModal isOpen={true} onClose={() => {}} onSuccess={handleLoginSuccess} />
+        {/* AUCUN CONTENU - L'utilisateur DOIT s'identifier */}
+        <div className="fixed inset-0 bg-gradient-to-br from-[hsl(220,20%,8%)] to-[hsl(220,25%,4%)] -z-10" />
       </div>
     );
   }
