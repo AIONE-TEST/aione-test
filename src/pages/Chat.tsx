@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from "react";
-import { MessageSquare, Send, Bot, User, Sparkles, History, Trash2 } from "lucide-react";
+import { MessageSquare, Send, Bot, User, Sparkles, Trash2 } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { ModelSelector } from "@/components/ModelSelector";
+import { ChatHistoryPanel } from "@/components/ChatHistoryPanel";
 import { AIModel, getModelsByCategory } from "@/data/aiModels";
 import { useAPIStatus } from "@/hooks/useAPIStatus";
 import { cn } from "@/lib/utils";
@@ -221,16 +222,18 @@ const Chat = () => {
           </div>
 
           {/* Colonne droite - Historique (1/3) - TASK-003 */}
-          <Card className="panel-3d p-4 h-fit">
-            <div className="flex items-center gap-2 mb-4">
-              <History className="h-4 w-4 text-[hsl(var(--primary))]" />
-              <span className="font-display text-sm font-bold">HISTORIQUE</span>
-            </div>
-            <div className="text-center py-8 text-muted-foreground">
-              <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">Historique des conversations</p>
-            </div>
-          </Card>
+          <ChatHistoryPanel
+            currentConversationId={null}
+            onSelectConversation={(conversation) => {
+              console.log("Selected conversation:", conversation);
+            }}
+            onPreviewConversation={(conversation) => {
+              console.log("Preview conversation:", conversation);
+            }}
+            onDeleteConversation={(id) => {
+              console.log("Delete conversation:", id);
+            }}
+          />
         </div>
       </main>
     </div>
