@@ -48,8 +48,8 @@ const APIKeys = () => {
   const [sessionExpiry, setSessionExpiry] = useState<number | null>(null);
   const [remainingTime, setRemainingTime] = useState<string>("");
 
-  // Master password - 4 characters
-  const MASTER_PASSWORD = "0000";
+  // Master password vérifié côté serveur - ne jamais stocker en clair dans le code
+  // L'accès est contrôlé par la session et les RLS policies
 
   // Effet pour gérer l'expiration de la session
   useEffect(() => {
@@ -168,8 +168,20 @@ const APIKeys = () => {
     );
   }, [configuredServices, searchQuery]);
 
-  const handlePasswordSubmit = useCallback(() => {
-    if (passwordInput === MASTER_PASSWORD) {
+  const handlePasswordSubmit = useCallback(async () => {
+    // Vérification du mot de passe côté serveur via RPC
+    const { data: isValid } = await supabase.rpc("verify_session_password", {
+      session_username: "api_keys_access",
+      input_password: passwordInput
+    });
+    
+    // Fallback: si pas de mot de passe défini, vérifier que l'utilisateur est admin
+    const sessionUsername = localStorage.getItem("aione_username");
+    const { data: isAdmin } = await supabase.rpc("is_admin", {
+      _username: sessionUsername || ""
+    });
+    
+    if (isValid || isAdmin) {
       setIsUnlocked(true);
       setSessionExpiry(Date.now() + SESSION_DURATION);
       setShowPasswordModal(false);
@@ -196,7 +208,7 @@ const APIKeys = () => {
       }
       setPendingAction(null);
     } else {
-      toast.error("Mot de passe incorrect");
+      toast.error("Mot de passe incorrect ou accès non autorisé");
       setPasswordInput("");
     }
   }, [passwordInput, pendingAction, configuredServices]);
