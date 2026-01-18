@@ -563,31 +563,40 @@ export type Database = {
       user_sessions_public: {
         Row: {
           created_at: string | null
+          failed_attempts: number | null
           id: string | null
-          ip_address: string | null
+          last_activity: string | null
           last_login: string | null
+          locked_until: string | null
           save_history: boolean | null
           settings: Json | null
+          stay_connected: boolean | null
           updated_at: string | null
           username: string | null
         }
         Insert: {
           created_at?: string | null
+          failed_attempts?: number | null
           id?: string | null
-          ip_address?: string | null
+          last_activity?: string | null
           last_login?: string | null
+          locked_until?: string | null
           save_history?: boolean | null
           settings?: Json | null
+          stay_connected?: boolean | null
           updated_at?: string | null
           username?: string | null
         }
         Update: {
           created_at?: string | null
+          failed_attempts?: number | null
           id?: string | null
-          ip_address?: string | null
+          last_activity?: string | null
           last_login?: string | null
+          locked_until?: string | null
           save_history?: boolean | null
           settings?: Json | null
+          stay_connected?: boolean | null
           updated_at?: string | null
           username?: string | null
         }
