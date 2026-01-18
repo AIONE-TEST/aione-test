@@ -139,7 +139,7 @@ const GenerateImages = () => {
             {/* 1. FENÊTRE DE GÉNÉRATION */}
             <div
               className={cn(
-                "panel-3d p-4 aspect-square max-h-[500px] flex items-center justify-center transition-all duration-300 cursor-pointer",
+                "panel-3d p-4 aspect-video flex items-center justify-center transition-all duration-300 cursor-pointer",
                 isDragging && "border-[hsl(var(--primary))] bg-[hsl(var(--primary))]/5"
               )}
               onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
