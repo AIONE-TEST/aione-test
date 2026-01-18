@@ -21,14 +21,7 @@ import {
 import { cn } from "@/lib/utils";
 
 // Configuration des catégories avec couleurs distinctes
-const categoryStyles: Record<string, {
-  bgGradient: string;
-  borderColor: string;
-  textColor: string;
-  badgeBg: string;
-  icon: React.ReactNode;
-  label: string;
-}> = {
+const categoryStyles: Record<string, { bgGradient: string; borderColor: string; textColor: string; badgeBg: string; icon: React.ReactNode; label: string }> = {
   activated: {
     bgGradient: "from-[hsl(142,76%,20%)]/30 to-[hsl(142,76%,10%)]/30",
     borderColor: "border-[hsl(142,76%,50%)]/50",
@@ -121,25 +114,17 @@ const categoryStyles: Record<string, {
 
 // Icônes des capacités - Taille augmentée
 const capabilityIcons: Record<string, { icon: React.ReactNode; label: string }> = {
-  "image": { icon: <ImageIcon className="h-5 w-5" />, label: "IMAGE" },
-  "video": { icon: <Video className="h-5 w-5" />, label: "VIDÉO" },
-  "audio": { icon: <Music className="h-5 w-5" />, label: "AUDIO" },
-  "text": { icon: <MessageSquare className="h-5 w-5" />, label: "TEXTE" },
-  "3d": { icon: <Box className="h-5 w-5" />, label: "3D" },
-  "code": { icon: <Code className="h-5 w-5" />, label: "CODE" },
-  "retouch": { icon: <Wand2 className="h-5 w-5" />, label: "RETOUCHE" },
+  "image": { icon: <ImageIcon className="h-6 w-6" />, label: "IMAGE" },
+  "video": { icon: <Video className="h-6 w-6" />, label: "VIDÉO" },
+  "audio": { icon: <Music className="h-6 w-6" />, label: "AUDIO" },
+  "text": { icon: <MessageSquare className="h-6 w-6" />, label: "TEXTE" },
+  "3d": { icon: <Box className="h-6 w-6" />, label: "3D" },
+  "code": { icon: <Code className="h-6 w-6" />, label: "CODE" },
+  "retouch": { icon: <Wand2 className="h-6 w-6" />, label: "RETOUCHE" },
 };
 
 // Max generations per model with free generations info and prices in EUR
-const modelGenerationLimits: Record<string, { 
-  max: number | null; 
-  unit: string; 
-  freeGens?: number; 
-  freeUnit?: string;
-  priceEur?: string;
-  minPrice?: string;
-  remaining?: number;
-}> = {
+const modelGenerationLimits: Record<string, { max: number | null; unit: string; freeGens: number | null; freeUnit: string; priceEur: string; minPrice: string; remaining?: number }> = {
   "flux-schnell": { max: null, unit: "illimité", freeGens: null, freeUnit: "illimité", priceEur: "GRATUIT", minPrice: "0€" },
   "perchance-ai": { max: null, unit: "illimité", freeGens: null, freeUnit: "illimité", priceEur: "GRATUIT", minPrice: "0€" },
   "pollinations": { max: null, unit: "illimité", freeGens: null, freeUnit: "illimité", priceEur: "GRATUIT", minPrice: "0€" },
@@ -262,29 +247,29 @@ export function AppTileCard({ model, onOpenAPIKeyModal, onClick, viewMode = "gri
   if (viewMode === "list") {
     return (
       <TooltipProvider>
-        <div 
+        <div
           className={cn(
-            "relative w-full overflow-hidden rounded-xl transition-all duration-300 cursor-pointer",
+            "group relative w-full p-4 rounded-xl cursor-pointer",
             "bg-gradient-to-r",
             style.bgGradient,
-            "border-2",
+            "border",
             style.borderColor,
-            "hover:scale-[1.005] hover:shadow-lg hover:shadow-current/10",
-            "shadow-[inset_0_1px_0_hsl(0_0%_100%/0.1),_0_4px_12px_hsl(220_20%_4%/0.4)]"
+            "hover:scale-[1.02] hover:shadow-lg transition-all duration-300"
           )}
           onClick={onClick}
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
         >
-          <div className="flex items-center gap-4 p-4">
+          <div className="flex items-center gap-4">
+
             {/* LED Status */}
             <StatusLED isActive={isActive} size="lg" />
             
             {/* Flame + SANS CENSURE for adult content */}
             {isAdult && (
               <div className="flex items-center gap-2">
-                <AnimatedFlame size="lg" />
-                <span className="font-display text-sm font-black text-[hsl(0,100%,50%)] tracking-wider animate-pulse">
+                <AnimatedFlame size="md" />
+                <span className="text-[hsl(0,100%,60%)] text-xs font-bold tracking-wider">
                   SANS CENSURE
                 </span>
               </div>
@@ -292,19 +277,15 @@ export function AppTileCard({ model, onOpenAPIKeyModal, onClick, viewMode = "gri
             
             {/* Logo - Square or Round based on logo type */}
             <div className={cn(
-              "h-16 w-16 shrink-0",
-              isSquareLogo ? "rounded-xl" : "rounded-full",
-              "bg-gradient-to-br from-white/30 via-transparent to-black/40",
-              "shadow-[inset_-3px_-3px_8px_rgba(0,0,0,0.4),inset_3px_3px_8px_rgba(255,255,255,0.2),0_4px_12px_rgba(0,0,0,0.3)]",
-              "border-2",
-              style.borderColor,
-              "flex items-center justify-center overflow-hidden"
+              "relative w-14 h-14 flex-shrink-0 overflow-hidden",
+              isSquareLogo ? "rounded-lg" : "rounded-full",
+              "bg-black/40 border border-white/10"
             )}>
               {!imageError && logoUrl ? (
                 <img
                   src={logoUrl}
-                  alt={model.provider}
-                  className={cn("h-12 w-12 object-contain", isSquareLogo ? "rounded-lg" : "rounded-full")}
+                  alt={model.name}
+                  className="w-full h-full object-contain p-1"
                   onError={() => setImageError(true)}
                 />
               ) : (
@@ -313,24 +294,21 @@ export function AppTileCard({ model, onOpenAPIKeyModal, onClick, viewMode = "gri
             </div>
 
             {/* App Name & Provider - BIGGER FONTS */}
-            <div className="min-w-[200px]">
-              <h3 className="font-display text-xl font-black truncate tracking-wider">{model.name}</h3>
-              <p className="text-base text-muted-foreground truncate font-display">{model.provider}</p>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-display font-bold text-xl text-white truncate">
+                {model.name}
+              </h3>
+              <p className="text-base text-muted-foreground truncate">
+                {model.provider}
+              </p>
             </div>
 
             {/* Capabilities Icons */}
-            <div className="flex items-center gap-3 min-w-[150px]">
+            <div className="flex items-center gap-3">
               {capabilities.map(cap => (
                 <Tooltip key={cap}>
-                  <TooltipTrigger asChild>
-                    <div 
-                      className={cn(
-                        "h-12 w-12 rounded-lg flex items-center justify-center",
-                        "bg-gradient-to-br from-white/10 to-black/20",
-                        "shadow-[inset_-1px_-1px_3px_rgba(0,0,0,0.3),inset_1px_1px_3px_rgba(255,255,255,0.1)]",
-                        style.textColor
-                      )}
-                    >
+                  <TooltipTrigger>
+                    <div className={cn("p-2 rounded-lg", style.badgeBg, style.textColor)}>
                       {capabilityIcons[cap]?.icon}
                     </div>
                   </TooltipTrigger>
@@ -342,19 +320,19 @@ export function AppTileCard({ model, onOpenAPIKeyModal, onClick, viewMode = "gri
             </div>
 
             {/* Free/Unlimited/Paid Status - VISIBLE */}
-            <div className="min-w-[120px] text-center">
+            <div className="flex items-center gap-2">
               {isFreeApp && isUnlimited && (
-                <Badge className="bg-[hsl(142,76%,50%)]/20 text-[hsl(142,76%,50%)] font-display text-sm font-bold px-3 py-1">
+                <Badge className="bg-[hsl(174,100%,50%)]/20 text-[hsl(174,100%,50%)] border-[hsl(174,100%,50%)]/30 text-sm">
                   ∞ GRATUIT ILLIMITÉ
                 </Badge>
               )}
               {isFreeApp && !isUnlimited && (
-                <Badge className="bg-[hsl(174,100%,50%)]/20 text-[hsl(174,100%,50%)] font-display text-sm font-bold px-3 py-1">
+                <Badge className="bg-[hsl(142,76%,50%)]/20 text-[hsl(142,76%,50%)] border-[hsl(142,76%,50%)]/30 text-sm">
                   GRATUIT
                 </Badge>
               )}
               {isPaidOnly && (
-                <Badge className="bg-[hsl(45,100%,55%)]/20 text-[hsl(45,100%,55%)] font-display text-sm font-bold px-3 py-1">
+                <Badge className="bg-[hsl(45,100%,55%)]/20 text-[hsl(45,100%,55%)] border-[hsl(45,100%,55%)]/30 text-sm">
                   💰 PAYANT
                 </Badge>
               )}
@@ -362,28 +340,28 @@ export function AppTileCard({ model, onOpenAPIKeyModal, onClick, viewMode = "gri
 
             {/* Min Price for paid apps */}
             {minPriceDisplay && minPriceDisplay !== "0€" && (
-              <div className="min-w-[80px] text-center">
-                <span className="font-display text-base font-bold text-[hsl(45,100%,55%)]">
+              <div className="text-right">
+                <span className="text-sm text-muted-foreground">
                   à partir de {minPriceDisplay}
                 </span>
               </div>
             )}
 
             {/* Links - API Key & Docs */}
-            <div className="flex items-center gap-2 min-w-[150px]">
+            <div className="flex items-center gap-2">
               {config && (
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
+                      variant="ghost"
                       size="sm"
-                      variant="outline"
-                      className="btn-3d h-8 px-2 gap-1"
+                      className="h-8 px-2 text-[hsl(280,100%,65%)]"
                       onClick={(e) => {
                         e.stopPropagation();
                         window.open(config.apiUrl, '_blank');
                       }}
                     >
-                      <Key className="h-4 w-4" />
+                      <Key className="h-4 w-4 mr-1" />
                       API
                     </Button>
                   </TooltipTrigger>
@@ -395,15 +373,15 @@ export function AppTileCard({ model, onOpenAPIKeyModal, onClick, viewMode = "gri
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
+                    variant="ghost"
                     size="sm"
-                    variant="outline"
-                    className="btn-3d h-8 px-2 gap-1"
+                    className="h-8 px-2 text-muted-foreground hover:text-white"
                     onClick={(e) => {
                       e.stopPropagation();
                       window.open(model.docsUrl || model.officialUrl, '_blank');
                     }}
                   >
-                    <FileText className="h-4 w-4" />
+                    <FileText className="h-4 w-4 mr-1" />
                     Docs
                   </Button>
                 </TooltipTrigger>
@@ -414,21 +392,21 @@ export function AppTileCard({ model, onOpenAPIKeyModal, onClick, viewMode = "gri
             </div>
 
             {/* Status / Action Button */}
-            <div className="flex items-center gap-2 ml-auto">
+            <div className="flex items-center">
               {isActive ? (
-                <span className="font-display text-xl font-black text-[hsl(142,76%,50%)] tracking-wider">
+                <Badge className="bg-[hsl(142,76%,50%)]/20 text-[hsl(142,76%,50%)] border-[hsl(142,76%,50%)]/30">
                   ACTIF
-                </span>
+                </Badge>
               ) : model.apiKeyName ? (
                 <Button
                   size="sm"
-                  className="bg-[hsl(30,100%,60%)] hover:bg-[hsl(30,100%,65%)] text-black gap-2 font-display tracking-wider text-sm"
+                  className="bg-[hsl(280,100%,65%)]/20 text-[hsl(280,100%,65%)] border border-[hsl(280,100%,65%)]/30 hover:bg-[hsl(280,100%,65%)]/30"
                   onClick={(e) => {
                     e.stopPropagation();
                     onOpenAPIKeyModal?.(model.apiKeyName!);
                   }}
                 >
-                  <Key className="h-4 w-4" />
+                  <Key className="h-4 w-4 mr-1" />
                   ACTIVER
                 </Button>
               ) : null}
@@ -439,17 +417,16 @@ export function AppTileCard({ model, onOpenAPIKeyModal, onClick, viewMode = "gri
     );
   }
 
-  // GRID VIEW - Card with hover info - TAILLE RÉDUITE DE 20%
+  // GRID VIEW - Card with hover info
   return (
     <TooltipProvider>
-      <div 
+      <div
         className={cn(
-          "relative overflow-hidden rounded-lg transition-all duration-300 cursor-pointer group",
+          "group relative rounded-xl cursor-pointer transition-all duration-300",
           "bg-gradient-to-br",
           style.bgGradient,
           "border",
           style.borderColor,
-          // FIX: Animation survol - S'AGRANDIT uniformément
           "hover:scale-[1.08] hover:z-50 hover:shadow-2xl",
           "shadow-[inset_0_1px_0_hsl(0_0%_100%/0.1),_0_4px_12px_hsl(220_20%_4%/0.3)]"
         )}
@@ -457,51 +434,42 @@ export function AppTileCard({ model, onOpenAPIKeyModal, onClick, viewMode = "gri
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         style={{ 
-          minHeight: "180px", // Réduit de 240px à 180px (-25%)
+          minHeight: "240px",
           display: "flex",
-          flexDirection: "column",
-          transformOrigin: "center center",
-          // TASK-002 FIX: Ne pas changer le background au hover
+          flexDirection: "column"
         }}
       >
         {/* TOP ZONE - App Name + LED + Flame */}
-        <div className={cn(
-          "px-3 py-2 border-b shrink-0 flex items-center justify-between gap-2",
-          style.borderColor,
-          "bg-black/20"
-        )}>
+        <div className="flex items-center justify-between p-3 border-b border-white/5">
           {/* LED Status */}
-          <StatusLED isActive={isActive} size="md" />
+          <StatusLED isActive={isActive} size="sm" />
           
           {/* Nom de l'app - POLICE AUGMENTÉE 50% */}
-          <div className="flex-1 text-center">
-            <h3 className="font-display text-xl font-black text-foreground tracking-wider truncate">
+          <div className="flex-1 text-center px-2">
+            <h3 className={cn(
+              "font-display font-bold text-lg leading-tight text-white truncate"
+            )}>
               {model.name}
             </h3>
           </div>
           
           {/* Flame for adult content */}
-          {isAdult && <AnimatedFlame size="md" />}
+          {isAdult && <AnimatedFlame size="sm" />}
         </div>
 
         {/* MIDDLE ZONE - Logo + Info */}
-        <div className="flex-1 p-3 flex items-start gap-3">
+        <div className="flex-1 flex items-center gap-3 p-3">
           {/* Logo - Square or Round based on logo type */}
           <div className={cn(
-            "h-16 w-16 shrink-0",
-            isSquareLogo ? "rounded-xl" : "rounded-full",
-            "bg-gradient-to-br from-white/30 via-transparent to-black/50",
-            "shadow-[inset_-4px_-4px_10px_rgba(0,0,0,0.5),inset_4px_4px_10px_rgba(255,255,255,0.15),0_6px_16px_rgba(0,0,0,0.4)]",
-            "border-2",
-            style.borderColor,
-            "flex items-center justify-center overflow-hidden",
-            "transition-transform group-hover:scale-105"
+            "relative w-16 h-16 flex-shrink-0 overflow-hidden",
+            isSquareLogo ? "rounded-lg" : "rounded-full",
+            "bg-black/40 border border-white/10"
           )}>
             {!imageError && logoUrl ? (
               <img
                 src={logoUrl}
-                alt={model.provider}
-                className={cn("h-12 w-12 object-contain", isSquareLogo ? "rounded-lg" : "")}
+                alt={model.name}
+                className="w-full h-full object-contain p-1"
                 onError={() => setImageError(true)}
               />
             ) : (
@@ -510,35 +478,32 @@ export function AppTileCard({ model, onOpenAPIKeyModal, onClick, viewMode = "gri
           </div>
 
           {/* Info Column */}
-          <div className="flex-1 min-w-0 flex flex-col gap-1">
+          <div className="flex-1 min-w-0 space-y-2">
             {/* Provider - BIGGER FONT */}
-            <p className="text-sm text-muted-foreground font-display truncate font-bold">
+            <p className={cn(
+              "text-base font-medium text-muted-foreground truncate"
+            )}>
               {model.provider}
             </p>
             
             {/* SANS CENSURE badge for adult */}
             {isAdult && (
-              <span className="font-display text-sm font-black text-[hsl(0,100%,50%)] tracking-wider animate-pulse">
+              <Badge className="bg-[hsl(0,100%,60%)]/20 text-[hsl(0,100%,60%)] border-[hsl(0,100%,60%)]/30 text-xs">
                 SANS CENSURE
-              </span>
+              </Badge>
             )}
             
             {/* Capabilities Icons Row */}
-            <div className="flex gap-1 flex-wrap">
+            <div className="flex flex-wrap gap-1">
               {capabilities.slice(0, 4).map(cap => (
                 <Tooltip key={cap}>
-                  <TooltipTrigger asChild>
-                    <div 
-                      className={cn(
-                        "flex flex-col items-center gap-0.5",
-                        "rounded-md p-1.5",
-                        "bg-gradient-to-br from-white/10 to-black/20",
-                        "shadow-[inset_-1px_-1px_2px_rgba(0,0,0,0.3),inset_1px_1px_2px_rgba(255,255,255,0.1)]",
-                        style.textColor
-                      )}
-                    >
+                  <TooltipTrigger>
+                    <div className={cn(
+                      "flex items-center gap-1 px-2 py-1 rounded text-xs",
+                      style.badgeBg, style.textColor
+                    )}>
                       {capabilityIcons[cap]?.icon}
-                      <span className="text-[9px] font-display font-bold">{capabilityIcons[cap]?.label}</span>
+                      {capabilityIcons[cap]?.label}
                     </div>
                   </TooltipTrigger>
                   <TooltipContent>
@@ -549,19 +514,19 @@ export function AppTileCard({ model, onOpenAPIKeyModal, onClick, viewMode = "gri
             </div>
 
             {/* Free/Paid Status - VISIBLE */}
-            <div className="flex items-center gap-1 mt-1">
+            <div className="flex items-center gap-1">
               {isFreeApp && isUnlimited && (
-                <Badge className="bg-[hsl(142,76%,50%)]/30 text-[hsl(142,76%,50%)] font-display text-xs font-bold px-2 py-0.5">
+                <Badge className="bg-[hsl(174,100%,50%)]/20 text-[hsl(174,100%,50%)] border-[hsl(174,100%,50%)]/30 text-xs">
                   ∞ GRATUIT
                 </Badge>
               )}
               {isFreeApp && !isUnlimited && (
-                <Badge className="bg-[hsl(174,100%,50%)]/30 text-[hsl(174,100%,50%)] font-display text-xs font-bold px-2 py-0.5">
+                <Badge className="bg-[hsl(142,76%,50%)]/20 text-[hsl(142,76%,50%)] border-[hsl(142,76%,50%)]/30 text-xs">
                   GRATUIT
                 </Badge>
               )}
               {isPaidOnly && (
-                <Badge className="bg-[hsl(45,100%,55%)]/30 text-[hsl(45,100%,55%)] font-display text-xs font-bold px-2 py-0.5">
+                <Badge className="bg-[hsl(45,100%,55%)]/20 text-[hsl(45,100%,55%)] border-[hsl(45,100%,55%)]/30 text-xs">
                   💰 PAYANT
                 </Badge>
               )}
@@ -569,114 +534,99 @@ export function AppTileCard({ model, onOpenAPIKeyModal, onClick, viewMode = "gri
 
             {/* Generation Limit + Remaining */}
             {generationLimit && (
-              <div className="flex items-center gap-1 mt-1">
-                <Badge className={cn(
-                  "font-display text-[10px] px-2 py-0.5",
-                  generationLimit.max === null 
-                    ? "bg-[hsl(142,76%,50%)]/20 text-[hsl(142,76%,50%)]"
-                    : "bg-[hsl(45,100%,55%)]/20 text-[hsl(45,100%,55%)]"
-                )}>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span>
                   {generationLimit.max === null ? "∞" : `${generationLimit.max}${generationLimit.unit}`}
-                </Badge>
+                </span>
                 {remainingGens !== undefined && remainingGens !== null && generationLimit.max !== null && (
-                  <Badge className="font-display text-[10px] px-2 py-0.5 bg-[hsl(280,100%,65%)]/20 text-[hsl(280,100%,65%)]">
+                  <span className="text-[hsl(142,76%,50%)]">
                     {remainingGens} restants
-                  </Badge>
+                  </span>
                 )}
               </div>
             )}
           </div>
 
           {/* Right Side - Price display + Min Price */}
-          <div className="flex flex-col items-end gap-1 shrink-0">
+          <div className="text-right flex-shrink-0">
             {priceDisplay && (
-              <span className={cn(
-                "font-display text-sm font-bold",
-                priceDisplay === "GRATUIT" 
-                  ? "text-[hsl(142,76%,50%)]"
-                  : "text-[hsl(45,100%,55%)]"
-              )}>
+              <div className={cn("text-base font-bold", style.textColor)}>
                 {priceDisplay}
-              </span>
+              </div>
             )}
             {minPriceDisplay && minPriceDisplay !== "0€" && (
-              <span className="font-display text-xs text-muted-foreground">
+              <div className="text-xs text-muted-foreground">
                 min: {minPriceDisplay}
-              </span>
+              </div>
             )}
           </div>
         </div>
 
-        {/* HOVER INFO PANEL - TASK-002 FIX: Garde les couleurs, pas de fond noir */}
+        {/* HOVER INFO PANEL */}
         {isHovered && (
-          <div className={cn(
-            "absolute inset-0 flex flex-col p-3 z-10",
-            "animate-in fade-in duration-200",
-            // TASK-002 FIX: Fond semi-transparent avec les couleurs du thème
-            "bg-gradient-to-br",
-            style.bgGradient,
-            "bg-opacity-95"
-          )}>
-            <h3 className="font-display text-lg font-black text-foreground mb-2">{model.name}</h3>
-            <p className="text-xs text-muted-foreground mb-2 line-clamp-2">{model.description}</p>
+          <div className="absolute inset-0 bg-black/90 rounded-xl p-4 flex flex-col justify-between z-10 backdrop-blur-sm">
+            <h3 className="font-display font-bold text-lg text-white mb-2">{model.name}</h3>
+            <p className="text-sm text-muted-foreground line-clamp-3 mb-3">{model.description}</p>
             
             {/* Features */}
             {model.features && model.features.length > 0 && (
-              <div className="flex flex-wrap gap-1 mb-2">
+              <div className="flex flex-wrap gap-1 mb-3">
                 {model.features.slice(0, 4).map((f, idx) => (
-                  <Badge key={idx} variant="outline" className="text-[9px]">{f}</Badge>
+                  <Badge key={idx} variant="outline" className="text-xs">{f}</Badge>
                 ))}
               </div>
             )}
             
             {/* Links */}
-            <div className="flex gap-2 mt-auto">
+            <div className="flex items-center gap-2">
               {config && (
-                <a
-                  href={config.apiUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center btn-3d h-7 px-2 gap-1 text-xs rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground"
-                  onClick={(e) => e.stopPropagation()}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 text-xs text-[hsl(280,100%,65%)]"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    window.open(config.apiUrl, '_blank');
+                  }}
                 >
-                  <Key className="h-3 w-3" />
+                  <Key className="h-3 w-3 mr-1" />
                   Clé API
-                </a>
+                </Button>
               )}
-              <a
-                href={model.docsUrl || model.officialUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center btn-3d h-7 px-2 gap-1 text-xs rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground"
-                onClick={(e) => e.stopPropagation()}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 text-xs text-muted-foreground"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  window.open(model.docsUrl || model.officialUrl, '_blank');
+                }}
               >
-                <FileText className="h-3 w-3" />
+                <FileText className="h-3 w-3 mr-1" />
                 Docs
-              </a>
-              <a
-                href={model.officialUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center btn-3d h-7 px-2 gap-1 text-xs rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground"
-                onClick={(e) => e.stopPropagation()}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 text-xs text-muted-foreground"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  window.open(model.officialUrl, '_blank');
+                }}
               >
-                <ExternalLink className="h-3 w-3" />
+                <ExternalLink className="h-3 w-3 mr-1" />
                 Site
-              </a>
+              </Button>
             </div>
           </div>
         )}
 
         {/* BOTTOM ZONE - Actions & Status */}
-        <div className={cn(
-          "px-3 py-2 border-t shrink-0 flex items-center justify-between gap-2",
-          style.borderColor,
-          "bg-black/10"
-        )}>
+        <div className="flex items-center justify-between p-3 border-t border-white/5 mt-auto">
           {/* Left - Status badges */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-2">
             {isUnlimited && (
-              <Badge className="bg-[hsl(142,76%,50%)]/20 text-[hsl(142,76%,50%)] font-display text-[10px] gap-0.5 px-1.5">
+              <Badge className="bg-[hsl(174,100%,50%)]/20 text-[hsl(174,100%,50%)] border-[hsl(174,100%,50%)]/30 text-xs gap-1">
                 <InfinityIcon className="h-3 w-3" />
                 ILLIMITÉ
               </Badge>
@@ -685,27 +635,27 @@ export function AppTileCard({ model, onOpenAPIKeyModal, onClick, viewMode = "gri
 
           {/* GROS TAMPON -18 pour contenu adulte */}
           {isAdult && (
-            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center w-14 h-14 rounded-full border-4 border-[hsl(0,100%,50%)] bg-[hsl(0,100%,50%)]/20 rotate-[-15deg]">
-              <span className="font-display text-lg font-black text-[hsl(0,100%,50%)]">-18</span>
+            <div className="absolute bottom-2 right-2 transform rotate-[-15deg] opacity-40">
+              <span className="text-4xl font-black text-[hsl(0,100%,60%)] tracking-tighter">-18</span>
             </div>
           )}
 
           {/* Right - Status/Button */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-2">
             {isActive ? (
-              <span className="font-display text-sm font-black text-[hsl(142,76%,50%)]">
+              <Badge className="bg-[hsl(142,76%,50%)]/20 text-[hsl(142,76%,50%)] border-[hsl(142,76%,50%)]/30 text-xs">
                 ACTIF
-              </span>
+              </Badge>
             ) : model.apiKeyName && (
               <Button
                 size="sm"
-                className="bg-[hsl(30,100%,60%)] hover:bg-[hsl(30,100%,65%)] text-black gap-1 font-display text-[10px] h-7 px-2"
+                className="h-7 text-xs bg-[hsl(280,100%,65%)]/20 text-[hsl(280,100%,65%)] border border-[hsl(280,100%,65%)]/30 hover:bg-[hsl(280,100%,65%)]/30"
                 onClick={(e) => {
                   e.stopPropagation();
                   onOpenAPIKeyModal?.(model.apiKeyName!);
                 }}
               >
-                <Key className="h-3 w-3" />
+                <Key className="h-3 w-3 mr-1" />
                 ACTIVER
               </Button>
             )}
