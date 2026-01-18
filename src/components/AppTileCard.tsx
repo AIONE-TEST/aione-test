@@ -444,12 +444,12 @@ export function AppTileCard({ model, onOpenAPIKeyModal, onClick, viewMode = "gri
     <TooltipProvider>
       <div 
         className={cn(
-          "relative overflow-hidden rounded-lg transition-all duration-500 cursor-pointer group",
+          "relative overflow-hidden rounded-lg transition-all duration-300 cursor-pointer group",
           "bg-gradient-to-br",
           style.bgGradient,
           "border",
           style.borderColor,
-          // Animation survol: format rectangulaire horizontal
+          // TASK-002 FIX: Animation survol - S'AGRANDIT horizontalement, GARDE les couleurs
           "hover:scale-x-[1.20] hover:scale-y-[0.60] hover:z-50 hover:shadow-2xl",
           "shadow-[inset_0_1px_0_hsl(0_0%_100%/0.1),_0_4px_12px_hsl(220_20%_4%/0.3)]"
         )}
@@ -460,7 +460,8 @@ export function AppTileCard({ model, onOpenAPIKeyModal, onClick, viewMode = "gri
           minHeight: "180px", // Réduit de 240px à 180px (-25%)
           display: "flex",
           flexDirection: "column",
-          transformOrigin: "center center"
+          transformOrigin: "center center",
+          // TASK-002 FIX: Ne pas changer le background au hover
         }}
       >
         {/* TOP ZONE - App Name + LED + Flame */}
@@ -606,11 +607,15 @@ export function AppTileCard({ model, onOpenAPIKeyModal, onClick, viewMode = "gri
           </div>
         </div>
 
-        {/* HOVER INFO PANEL */}
+        {/* HOVER INFO PANEL - TASK-002 FIX: Garde les couleurs, pas de fond noir */}
         {isHovered && (
           <div className={cn(
-            "absolute inset-0 bg-black/90 flex flex-col p-3 z-10",
-            "animate-in fade-in duration-200"
+            "absolute inset-0 flex flex-col p-3 z-10",
+            "animate-in fade-in duration-200",
+            // TASK-002 FIX: Fond semi-transparent avec les couleurs du thème
+            "bg-gradient-to-br",
+            style.bgGradient,
+            "bg-opacity-95"
           )}>
             <h3 className="font-display text-lg font-black text-foreground mb-2">{model.name}</h3>
             <p className="text-xs text-muted-foreground mb-2 line-clamp-2">{model.description}</p>
@@ -627,43 +632,37 @@ export function AppTileCard({ model, onOpenAPIKeyModal, onClick, viewMode = "gri
             {/* Links */}
             <div className="flex gap-2 mt-auto">
               {config && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="btn-3d h-7 px-2 gap-1 text-xs"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    window.open(config.apiUrl, '_blank');
-                  }}
+                <a
+                  href={config.apiUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center btn-3d h-7 px-2 gap-1 text-xs rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground"
+                  onClick={(e) => e.stopPropagation()}
                 >
                   <Key className="h-3 w-3" />
                   Clé API
-                </Button>
+                </a>
               )}
-              <Button
-                size="sm"
-                variant="outline"
-                className="btn-3d h-7 px-2 gap-1 text-xs"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  window.open(model.docsUrl || model.officialUrl, '_blank');
-                }}
+              <a
+                href={model.docsUrl || model.officialUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center btn-3d h-7 px-2 gap-1 text-xs rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground"
+                onClick={(e) => e.stopPropagation()}
               >
                 <FileText className="h-3 w-3" />
                 Docs
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                className="btn-3d h-7 px-2 gap-1 text-xs"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  window.open(model.officialUrl, '_blank');
-                }}
+              </a>
+              <a
+                href={model.officialUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center btn-3d h-7 px-2 gap-1 text-xs rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground"
+                onClick={(e) => e.stopPropagation()}
               >
                 <ExternalLink className="h-3 w-3" />
                 Site
-              </Button>
+              </a>
             </div>
           </div>
         )}

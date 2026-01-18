@@ -14,6 +14,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { APIKeyManager } from "@/components/APIKeyManager";
 
 interface GenerationHistoryItem {
   id: string;
@@ -388,6 +389,9 @@ const Account = () => {
             )}
           </Card>
         </div>
+
+        {/* TASK-004: Gestionnaire de clés API */}
+        <APIKeyManager />
 
         {/* Notes section */}
         <Card className="panel-3d p-5">
