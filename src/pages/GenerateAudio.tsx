@@ -11,6 +11,8 @@ import { MediaHistoryPanel } from "@/components/MediaHistoryPanel";
 import { FloatingMediaPreview } from "@/components/FloatingMediaPreview";
 import { AppTileCardExpanded } from "@/components/AppTileCardExpanded";
 import { ModelSpecificOptions, useModelOptions } from "@/components/ModelSpecificOptions";
+import { SunoMusicInterface } from "@/components/SunoMusicInterface";
+import { InfoTooltip } from "@/components/InfoTooltip";
 import { AIModel, getModelsByCategory } from "@/data/aiModels";
 import { useAPIStatus } from "@/hooks/useAPIStatus";
 import { useCredits } from "@/hooks/useCredits";
@@ -133,127 +135,132 @@ const GenerateAudio = () => {
           </div>
         </div>
 
-        {/* Quick Actions */}
+        {/* Quick Actions avec icônes INFO */}
         <div className="flex gap-2 mb-4">
-          <Button 
-            size="sm" 
-            className={cn("gap-1 text-xs", audioMode === "music" ? "btn-3d-orange" : "btn-3d")}
-            onClick={() => setAudioMode("music")}
-          >
-            <Music className="h-4 w-4" /> MUSIQUE
-          </Button>
-          <Button 
-            size="sm" 
-            className={cn("gap-1 text-xs", audioMode === "voice" ? "btn-3d-orange" : "btn-3d")}
-            onClick={() => setAudioMode("voice")}
-          >
-            <Mic className="h-4 w-4" /> VOIX
-          </Button>
-          <Button 
-            size="sm" 
-            className={cn("gap-1 text-xs", audioMode === "clone" ? "btn-3d-orange" : "btn-3d")}
-            onClick={() => setAudioMode("clone")}
-          >
-            <Radio className="h-4 w-4" /> CLONAGE
-          </Button>
-          <Button 
-            size="sm" 
-            className={cn("gap-1 text-xs", audioMode === "effects" ? "btn-3d-orange" : "btn-3d")}
-            onClick={() => setAudioMode("effects")}
-          >
-            <Headphones className="h-4 w-4" /> EFFETS
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button 
+              size="sm" 
+              className={cn("gap-1 text-xs", audioMode === "music" ? "btn-3d-orange" : "btn-3d")}
+              onClick={() => setAudioMode("music")}
+            >
+              <Music className="h-4 w-4" /> MUSIQUE
+            </Button>
+            <InfoTooltip 
+              title="Mode Musique"
+              description="Génère des morceaux de musique complets avec mélodie, rythme et instruments."
+              example="Musique épique orchestrale style Hans Zimmer"
+            />
+          </div>
+          <div className="flex items-center gap-1">
+            <Button 
+              size="sm" 
+              className={cn("gap-1 text-xs", audioMode === "voice" ? "btn-3d-orange" : "btn-3d")}
+              onClick={() => setAudioMode("voice")}
+            >
+              <Mic className="h-4 w-4" /> VOIX
+            </Button>
+            <InfoTooltip 
+              title="Mode Voix"
+              description="Synthèse vocale text-to-speech avec différentes voix et langues."
+              example="Voix masculine grave en français"
+            />
+          </div>
+          <div className="flex items-center gap-1">
+            <Button 
+              size="sm" 
+              className={cn("gap-1 text-xs", audioMode === "clone" ? "btn-3d-orange" : "btn-3d")}
+              onClick={() => setAudioMode("clone")}
+            >
+              <Radio className="h-4 w-4" /> CLONAGE
+            </Button>
+            <InfoTooltip 
+              title="Mode Clonage"
+              description="Clone une voix à partir d'un échantillon audio pour créer une réplique."
+              example="Uploadez un audio de 30s minimum"
+            />
+          </div>
+          <div className="flex items-center gap-1">
+            <Button 
+              size="sm" 
+              className={cn("gap-1 text-xs", audioMode === "effects" ? "btn-3d-orange" : "btn-3d")}
+              onClick={() => setAudioMode("effects")}
+            >
+              <Headphones className="h-4 w-4" /> EFFETS
+            </Button>
+            <InfoTooltip 
+              title="Mode Effets"
+              description="Génère des effets sonores et bruitages pour vos projets."
+              example="Bruit de pluie, explosion, pas sur gravier"
+            />
+          </div>
         </div>
 
         {/* LAYOUT: 2/3 + 1/3 */}
         <div className="grid grid-cols-[1fr_280px] gap-4">
           {/* Colonne principale */}
           <div className="space-y-4">
-            {/* 1. FENÊTRE DE GÉNÉRATION AUDIO */}
-            <div
-              className={cn(
-                "panel-3d p-6 aspect-video flex flex-col items-center justify-center transition-all duration-300",
-                isDragging && "border-[hsl(var(--primary))] bg-[hsl(var(--primary))]/5"
-              )}
-              onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-              onDragLeave={() => setIsDragging(false)}
-              onDrop={handleDrop}
-            >
-              {isGenerating ? (
-                <div className="flex flex-col items-center gap-4">
-                  <div className="h-16 w-16 rounded-full border-4 border-[hsl(25,100%,55%)]/30 border-t-[hsl(25,100%,55%)] animate-spin" />
-                  <p className="font-display text-lg">Génération en cours...</p>
-                </div>
-              ) : generatedContent ? (
-                <div className="flex flex-col items-center gap-4 w-full max-w-md">
-                  <div className="h-24 w-24 rounded-full bg-gradient-to-br from-[hsl(25,100%,55%)] to-[hsl(45,100%,55%)] flex items-center justify-center">
-                    <Music className="h-12 w-12 text-white" />
-                  </div>
-                  <div className="flex items-center gap-3 w-full">
-                    <Button
-                      size="icon"
-                      className="h-12 w-12 rounded-full btn-3d-green"
-                      onClick={() => setIsPlaying(!isPlaying)}
-                    >
-                      {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
-                    </Button>
-                    <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
-                      <div className="h-full w-1/3 bg-gradient-to-r from-[hsl(25,100%,55%)] to-[hsl(45,100%,55%)]" />
-                    </div>
-                    <Button size="icon" variant="ghost">
-                      <Download className="h-5 w-5" />
-                    </Button>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setGeneratedContent(null)}
-                  >
-                    Nouvelle génération
-                  </Button>
-                </div>
-              ) : (
+            {/* 1. INTERFACE SUNO MUSIC - Style waveform */}
+            <SunoMusicInterface
+              audioUrl={generatedContent || undefined}
+              title={prompt.slice(0, 50) || "Nouvelle piste"}
+              artist="AIONE Music Generator"
+              isGenerating={isGenerating}
+              onGenerate={handleGenerate}
+            />
+
+            {/* Zone d'upload audio source (pour clonage/remix) */}
+            {(audioMode === "clone" || uploadedAudio) && (
+              <div
+                className={cn(
+                  "panel-3d p-4 flex items-center gap-4 transition-all duration-300",
+                  isDragging && "border-[hsl(var(--primary))] bg-[hsl(var(--primary))]/5"
+                )}
+                onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                onDragLeave={() => setIsDragging(false)}
+                onDrop={handleDrop}
+              >
                 <div 
-                  className="flex flex-col items-center gap-4 cursor-pointer"
+                  className="flex items-center gap-3 cursor-pointer flex-1"
                   onClick={() => fileInputRef.current?.click()}
                 >
                   {uploadedAudio ? (
-                    <div className="flex flex-col items-center gap-4 w-full max-w-md">
-                      <div className="flex items-center gap-3 w-full">
-                        <Button
-                          size="icon"
-                          className="h-10 w-10 rounded-full btn-3d-orange"
-                          onClick={(e) => { e.stopPropagation(); setIsPlaying(!isPlaying); }}
-                        >
-                          {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
-                        </Button>
-                        <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
-                          <div className="h-full w-1/3 bg-gradient-to-r from-[hsl(25,100%,55%)] to-[hsl(45,100%,55%)]" />
-                        </div>
+                    <>
+                      <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-[hsl(25,100%,55%)] to-[hsl(45,100%,55%)] flex items-center justify-center">
+                        <Music className="h-5 w-5 text-white" />
                       </div>
-                      <Badge>Audio source chargé</Badge>
-                    </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">Audio source chargé</p>
+                        <p className="text-xs text-muted-foreground">Prêt pour le clonage/remix</p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={(e) => { e.stopPropagation(); setUploadedAudio(null); }}
+                      >
+                        Supprimer
+                      </Button>
+                    </>
                   ) : (
                     <>
-                      <div className="h-16 w-16 rounded-full bg-gradient-to-br from-[hsl(25,100%,55%)]/20 to-[hsl(45,100%,55%)]/20 flex items-center justify-center">
-                        <Upload className="h-8 w-8 text-[hsl(25,100%,55%)]" />
+                      <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center">
+                        <Upload className="h-5 w-5 text-muted-foreground" />
                       </div>
-                      <div className="text-center">
-                        <p className="font-display text-lg text-foreground">Audio source (optionnel)</p>
-                        <p className="text-sm text-muted-foreground">Pour clonage vocal ou remix</p>
+                      <div>
+                        <p className="text-sm font-medium">Importer un audio source</p>
+                        <p className="text-xs text-muted-foreground">Pour clonage vocal ou remix</p>
                       </div>
                     </>
                   )}
                 </div>
-              )}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="audio/*"
-                className="hidden"
-                onChange={handleFileSelect}
-              />
-            </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="audio/*"
+                  className="hidden"
+                  onChange={handleFileSelect}
+                />
+              </div>
+            )}
 
             {/* 2. FENÊTRE DU PROMPT */}
             <PromptEditorEnhanced
