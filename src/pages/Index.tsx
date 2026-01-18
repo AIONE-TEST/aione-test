@@ -2,11 +2,17 @@ import { useState, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { 
   Image, Video, MessageSquare, Music, Wand2, Box, 
-  Zap, ArrowRight, Star
+  Zap, ArrowRight, Star, AppWindow, Flame, Code, Check
 } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
-import { aiModels } from "@/data/aiModels";
+import { aiModels, AIModel } from "@/data/aiModels";
+import { sortModelsInCategory } from "@/utils/appSorting";
 import { PromoBanner } from "@/components/PromptBanner";
+import { AppTileCard } from "@/components/AppTileCard";
+import { APIKeyModal } from "@/components/APIKeyModal";
+import { useAPIStatus } from "@/hooks/useAPIStatus";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 const categories = [
   { id: "llms", label: "LLMS", icon: MessageSquare, path: "/llms", color: "btn-3d-pink" },
@@ -17,23 +23,127 @@ const categories = [
   { id: "3d", label: "3D", icon: Box, path: "/3d", color: "btn-3d-green" },
 ];
 
+// Catégories pour l'affichage par section (même ordre que APPLIS IA)
+const categoryConfigs = [
+  { 
+    id: "activated", 
+    label: "APPLIS ACTIVÉES", 
+    icon: <Check className="h-5 w-5" />, 
+    color: "text-[hsl(142,76%,50%)]", 
+    bgColor: "bg-[hsl(142,76%,50%)]/10", 
+    borderColor: "border-[hsl(142,76%,50%)]/30",
+  },
+  { 
+    id: "videos", 
+    label: "VIDÉOS", 
+    icon: <Video className="h-5 w-5" />, 
+    color: "text-[hsl(280,100%,65%)]", 
+    bgColor: "bg-[hsl(280,100%,65%)]/10", 
+    borderColor: "border-[hsl(280,100%,65%)]/30",
+  },
+  { 
+    id: "images", 
+    label: "IMAGES", 
+    icon: <Image className="h-5 w-5" />, 
+    color: "text-[hsl(320,100%,60%)]", 
+    bgColor: "bg-[hsl(320,100%,60%)]/10", 
+    borderColor: "border-[hsl(320,100%,60%)]/30",
+  },
+  { 
+    id: "retouch", 
+    label: "RETOUCHES", 
+    icon: <Wand2 className="h-5 w-5" />, 
+    color: "text-[hsl(45,100%,55%)]", 
+    bgColor: "bg-[hsl(45,100%,55%)]/10", 
+    borderColor: "border-[hsl(45,100%,55%)]/30",
+  },
+  { 
+    id: "adult", 
+    label: "CONTENU ADULTE", 
+    icon: <Flame className="h-5 w-5" />, 
+    color: "text-[hsl(0,100%,60%)]", 
+    bgColor: "bg-[hsl(0,100%,60%)]/10", 
+    borderColor: "border-[hsl(0,100%,60%)]/30",
+  },
+  { 
+    id: "audio", 
+    label: "MUSIQUE", 
+    icon: <Music className="h-5 w-5" />, 
+    color: "text-[hsl(25,100%,55%)]", 
+    bgColor: "bg-[hsl(25,100%,55%)]/10", 
+    borderColor: "border-[hsl(25,100%,55%)]/30",
+  },
+  { 
+    id: "llms", 
+    label: "CHAT IA", 
+    icon: <MessageSquare className="h-5 w-5" />, 
+    color: "text-[hsl(200,100%,55%)]", 
+    bgColor: "bg-[hsl(200,100%,55%)]/10", 
+    borderColor: "border-[hsl(200,100%,55%)]/30",
+  },
+  { 
+    id: "3d", 
+    label: "3D", 
+    icon: <Box className="h-5 w-5" />, 
+    color: "text-[hsl(160,100%,50%)]", 
+    bgColor: "bg-[hsl(160,100%,50%)]/10", 
+    borderColor: "border-[hsl(160,100%,50%)]/30",
+  },
+  { 
+    id: "code", 
+    label: "CODAGE", 
+    icon: <Code className="h-5 w-5" />, 
+    color: "text-[hsl(210,100%,60%)]", 
+    bgColor: "bg-[hsl(210,100%,60%)]/10", 
+    borderColor: "border-[hsl(210,100%,60%)]/30",
+  },
+];
+
 const Index = () => {
-  // Scroll en haut de page (Point 9)
+  const { getModelsWithStatus } = useAPIStatus();
+  const [apiKeyModalOpen, setApiKeyModalOpen] = useState(false);
+  const [selectedApiKeyName, setSelectedApiKeyName] = useState<string>("");
+
+  // Scroll en haut de page
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
-  const stats = useMemo(() => {
-    const total = aiModels.length;
-    const free = aiModels.filter((m) => m.isFree).length;
-    const categoriesSet = new Set(aiModels.map((m) => m.category));
-    return { total, free, categories: categoriesSet.size };
-  }, []);
+  // TOUS les modèles avec statut (même liste que APPLIS IA)
+  const allModels = useMemo(() => {
+    return getModelsWithStatus(aiModels);
+  }, [getModelsWithStatus]);
 
-  // Tâche 12: Afficher TOUS les modèles gratuits
-  const freeModels = useMemo(() => 
-    aiModels.filter((m) => m.isFree), 
-  []);
+  const stats = useMemo(() => {
+    const total = allModels.length;
+    const free = allModels.filter((m) => m.isFree).length;
+    const categoriesSet = new Set(allModels.map((m) => m.category));
+    return { total, free, categories: categoriesSet.size };
+  }, [allModels]);
+
+  // Grouper les modèles par catégorie (même ordre que APPLIS IA)
+  const modelsByCategory = useMemo(() => {
+    const grouped: Record<string, AIModel[]> = {};
+    
+    categoryConfigs.forEach(cat => {
+      if (cat.id === "activated") {
+        grouped[cat.id] = sortModelsInCategory(
+          allModels.filter(m => m.apiStatus === "active" || m.isFree)
+        );
+      } else {
+        grouped[cat.id] = sortModelsInCategory(
+          allModels.filter(m => m.category === cat.id)
+        );
+      }
+    });
+    
+    return grouped;
+  }, [allModels]);
+
+  const handleOpenAPIKeyModal = (apiKeyName: string) => {
+    setSelectedApiKeyName(apiKeyName);
+    setApiKeyModalOpen(true);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -83,43 +193,48 @@ const Index = () => {
         {/* Bannière publicitaire G2A/G2G/Kinguin */}
         <PromoBanner />
 
-        {/* Free Models Section - TOUS les modèles gratuits (Tâche 12) */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            <Zap className="h-5 w-5 text-[hsl(142,76%,50%)]" />
-            <h2 className="font-display text-lg text-foreground">MODÈLES GRATUITS</h2>
-            <span className="font-display text-xs text-muted-foreground">
-              ({stats.free})
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-            {freeModels.map((model) => (
-              <div
-                key={model.id}
-                className="panel-3d p-4 space-y-2 hover:scale-[1.02] transition-transform"
+        {/* TOUS les modèles par catégorie (même ordre que APPLIS IA) */}
+        <div className="space-y-6">
+          {categoryConfigs.map((catConfig) => {
+            const models = modelsByCategory[catConfig.id] || [];
+            if (models.length === 0) return null;
+            
+            return (
+              <div 
+                key={catConfig.id}
+                className={cn(
+                  "rounded-xl p-4 border",
+                  catConfig.bgColor,
+                  catConfig.borderColor
+                )}
               >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h3 className="font-display text-xs text-foreground">{model.name}</h3>
-                    <p className="text-[10px] text-muted-foreground">{model.provider}</p>
-                  </div>
-                  <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[8px] font-bold bg-[hsl(142,76%,50%)/0.2] text-[hsl(142,76%,50%)]">
-                    <Zap className="h-2.5 w-2.5" />
-                    FREE
-                  </span>
+                {/* Section Title */}
+                <div className="flex items-center gap-2 mb-4">
+                  <span className={catConfig.color}>{catConfig.icon}</span>
+                  <h2 className={cn("font-display text-sm font-bold", catConfig.color)}>
+                    {catConfig.label}
+                  </h2>
+                  <Badge className={cn("text-[10px]", catConfig.bgColor, catConfig.color)}>
+                    {models.length}
+                  </Badge>
                 </div>
-                <p className="text-[10px] text-muted-foreground line-clamp-2">
-                  {model.description}
-                </p>
-                <div className="flex items-center gap-1">
-                  <span className="px-1.5 py-0.5 rounded text-[8px] bg-[hsl(220,15%,18%)] text-muted-foreground uppercase">
-                    {model.category}
-                  </span>
+
+                {/* Models Grid - 5 par ligne */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                  {models.map((model) => (
+                    <AppTileCard
+                      key={model.id}
+                      model={model}
+                      viewMode="grid"
+                      onOpenAPIKeyModal={handleOpenAPIKeyModal}
+                      onClick={() => {}}
+                      horizontal
+                    />
+                  ))}
                 </div>
               </div>
-            ))}
-          </div>
+            );
+          })}
         </div>
 
         {/* Footer */}
@@ -127,8 +242,18 @@ const Index = () => {
           <p className="font-display text-xs text-muted-foreground">
             <span className="gradient-text-pink">AIONE</span> - AI Gateway • © 2025
           </p>
+          <Link to="/cgu" className="text-xs text-muted-foreground hover:text-[hsl(174,100%,50%)] transition-colors">
+            Conditions Générales d'Utilisation
+          </Link>
         </footer>
       </main>
+
+      {/* API Key Modal */}
+      <APIKeyModal
+        isOpen={apiKeyModalOpen}
+        onClose={() => setApiKeyModalOpen(false)}
+        apiKeyName={selectedApiKeyName}
+      />
     </div>
   );
 };
