@@ -449,8 +449,8 @@ export function AppTileCard({ model, onOpenAPIKeyModal, onClick, viewMode = "gri
           style.bgGradient,
           "border",
           style.borderColor,
-          // TASK-002 FIX: Animation survol - S'AGRANDIT horizontalement, GARDE les couleurs
-          "hover:scale-x-[1.20] hover:scale-y-[0.60] hover:z-50 hover:shadow-2xl",
+          // FIX: Animation survol - S'AGRANDIT uniformément
+          "hover:scale-[1.08] hover:z-50 hover:shadow-2xl",
           "shadow-[inset_0_1px_0_hsl(0_0%_100%/0.1),_0_4px_12px_hsl(220_20%_4%/0.3)]"
         )}
         onClick={onClick}
