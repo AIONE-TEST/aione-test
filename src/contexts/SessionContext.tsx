@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { createAuthenticatedClient } from "@/lib/supabaseWithSession";
 
 interface SessionData {
   id: string;
@@ -79,8 +80,9 @@ export function SessionProvider({ children }: SessionProviderProps) {
               isAdmin: adminStatus
             });
             
-            // Update last activity
-            supabase
+            // Update last activity - use authenticated client
+            const authClient = createAuthenticatedClient();
+            authClient
               .from("user_sessions")
               .update({ last_activity: new Date().toISOString() })
               .eq("id", data.id);
@@ -139,8 +141,9 @@ export function SessionProvider({ children }: SessionProviderProps) {
     if (!session) return;
     setLastActivity(Date.now());
     
-    // Update in DB periodically (every 5 min)
-    supabase
+    // Update in DB periodically (every 5 min) - use authenticated client
+    const authClient = createAuthenticatedClient();
+    authClient
       .from("user_sessions")
       .update({ last_activity: new Date().toISOString() })
       .eq("id", session.id);
@@ -164,8 +167,9 @@ export function SessionProvider({ children }: SessionProviderProps) {
 
   const logout = async () => {
     if (session) {
-      // Log logout
-      await supabase.from("activity_logs").insert({
+      // Log logout - use authenticated client
+      const authClient = createAuthenticatedClient();
+      await authClient.from("activity_logs").insert({
         session_id: session.id,
         username: session.username,
         action: "logout",
@@ -183,7 +187,9 @@ export function SessionProvider({ children }: SessionProviderProps) {
   const updateSettings = async (newSettings: Partial<SessionData>) => {
     if (!session) return;
 
-    const { error } = await supabase
+    // Use authenticated client for updates
+    const authClient = createAuthenticatedClient();
+    const { error } = await authClient
       .from("user_sessions")
       .update(newSettings)
       .eq("id", session.id);
@@ -197,41 +203,44 @@ export function SessionProvider({ children }: SessionProviderProps) {
   const deleteHistory = async () => {
     if (!session) return;
 
+    // Use authenticated client for all delete operations
+    const authClient = createAuthenticatedClient();
+
     try {
       // Delete generation history
-      await supabase
+      await authClient
         .from("generation_history")
         .delete()
         .eq("session_id", session.id);
 
       // Delete activity logs
-      await supabase
+      await authClient
         .from("activity_logs")
         .delete()
         .eq("session_id", session.id);
 
       // Delete chat conversations and messages
-      const { data: conversations } = await supabase
+      const { data: conversations } = await authClient
         .from("chat_conversations")
         .select("id")
         .eq("session_id", session.id);
 
       if (conversations) {
         for (const conv of conversations) {
-          await supabase
+          await authClient
             .from("chat_messages")
             .delete()
             .eq("conversation_id", conv.id);
         }
         
-        await supabase
+        await authClient
           .from("chat_conversations")
           .delete()
           .eq("session_id", session.id);
       }
 
       // Clear user notes
-      await supabase
+      await authClient
         .from("user_notes")
         .update({ content: "" })
         .eq("session_id", session.id);
