@@ -17,7 +17,8 @@ interface UsernameModalProps {
   onSuccess: (sessionId: string, username: string) => void;
 }
 
-// TÂCHE 2.1: Suppression des mots de passe en dur - Utiliser les fonctions RPC
+// TÂCHE 2.1: Suppression des mots de passe en dur - Utiliser les fonctions RPC sécurisées
+// Le mot de passe admin est vérifié côté serveur via verify_admin_password RPC
 const ADMIN_USERNAME = "Mik";
 
 const LANGUAGE_OPTIONS: { code: SupportedLanguage; label: string; flag: string }[] = [
@@ -114,18 +115,12 @@ export function UsernameModal({ isOpen, onClose, onSuccess }: UsernameModalProps
     const normalizedUsername = isAdmin ? trimmedUsername : trimmedUsername.toLowerCase();
 
     // BUG FIX CRITIQUE: Admin DOIT OBLIGATOIREMENT entrer son mot de passe
-    if (isAdmin) {
-      if (!password) {
-        setError("⚠️ Mot de passe OBLIGATOIRE pour l'administrateur Mik");
-        setShowPasswordField(true);
-        setUsePassword(true);
-        return;
-      }
-      // Vérification mot de passe admin STRICT avec casse
-      if (password !== "1971") {
-        setError("❌ Mot de passe incorrect");
-        return;
-      }
+    // La vérification se fait côté serveur via verify_admin_password RPC
+    if (isAdmin && !password) {
+      setError("⚠️ Mot de passe OBLIGATOIRE pour l'administrateur Mik");
+      setShowPasswordField(true);
+      setUsePassword(true);
+      return;
     }
 
     setIsLoading(true);
