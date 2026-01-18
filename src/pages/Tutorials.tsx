@@ -45,7 +45,6 @@ const tutorials: Tutorial[] = [
     icon: <Rocket className="h-8 w-8" />,
     difficulty: "Débutant",
     duration: "5 min",
-    youtubeUrl: "https://youtube.com/watch?v=example1",
     steps: [
       "Explorez la sidebar pour naviguer entre les catégories",
       "Découvrez la section APPLIS IA pour voir tous les modèles",
@@ -62,7 +61,7 @@ const tutorials: Tutorial[] = [
     icon: <Key className="h-8 w-8" />,
     difficulty: "Débutant",
     duration: "3 min",
-    youtubeUrl: "https://youtube.com/watch?v=example2",
+    youtubeUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
     steps: [
       "Allez dans la section API KEYS",
       "Cliquez sur le service que vous souhaitez activer",
@@ -79,7 +78,7 @@ const tutorials: Tutorial[] = [
     icon: <Image className="h-8 w-8" />,
     difficulty: "Débutant",
     duration: "10 min",
-    youtubeUrl: "https://youtube.com/watch?v=example3",
+    youtubeUrl: "https://www.youtube.com/watch?v=HK6y8DAPN_0",
     steps: [
       "Sélectionnez la section IMAGE dans la sidebar",
       "Choisissez un modèle (FLUX.1 Schnell est gratuit)",
@@ -97,7 +96,7 @@ const tutorials: Tutorial[] = [
     icon: <Video className="h-8 w-8" />,
     difficulty: "Intermédiaire",
     duration: "15 min",
-    youtubeUrl: "https://youtube.com/watch?v=example4",
+    youtubeUrl: "https://www.youtube.com/watch?v=vM39qhXle4g",
     steps: [
       "Naviguez vers la section VIDÉO",
       "Choisissez entre texte-vers-vidéo ou image-vers-vidéo",
@@ -116,7 +115,7 @@ const tutorials: Tutorial[] = [
     icon: <Music className="h-8 w-8" />,
     difficulty: "Intermédiaire",
     duration: "12 min",
-    youtubeUrl: "https://youtube.com/watch?v=example5",
+    youtubeUrl: "https://www.youtube.com/watch?v=eXHPc5o5sI0",
     steps: [
       "Accédez à la section AUDIO",
       "Sélectionnez Suno AI comme modèle",
@@ -135,7 +134,7 @@ const tutorials: Tutorial[] = [
     icon: <Mic className="h-8 w-8" />,
     difficulty: "Avancé",
     duration: "20 min",
-    youtubeUrl: "https://youtube.com/watch?v=example6",
+    youtubeUrl: "https://www.youtube.com/watch?v=17_xLsqny9E",
     steps: [
       "Configurez votre clé API ElevenLabs",
       "Uploadez un échantillon audio de la voix à cloner (minimum 1 minute)",
@@ -154,7 +153,7 @@ const tutorials: Tutorial[] = [
     icon: <Box className="h-8 w-8" />,
     difficulty: "Avancé",
     duration: "25 min",
-    youtubeUrl: "https://youtube.com/watch?v=example7",
+    youtubeUrl: "https://www.youtube.com/watch?v=x60GmYq1Kbw",
     steps: [
       "Rendez-vous dans la section 3D",
       "Choisissez entre génération depuis texte ou image",
@@ -173,7 +172,7 @@ const tutorials: Tutorial[] = [
     icon: <Wand2 className="h-8 w-8" />,
     difficulty: "Intermédiaire",
     duration: "15 min",
-    youtubeUrl: "https://youtube.com/watch?v=example8",
+    youtubeUrl: "https://www.youtube.com/watch?v=2XN8zKjN0aY",
     steps: [
       "Accédez à la section RETOUCHE",
       "Uploadez l'image à modifier",
@@ -192,7 +191,7 @@ const tutorials: Tutorial[] = [
     icon: <MessageSquare className="h-8 w-8" />,
     difficulty: "Débutant",
     duration: "8 min",
-    youtubeUrl: "https://youtube.com/watch?v=example9",
+    youtubeUrl: "https://www.youtube.com/watch?v=pGOd_P7wCmA",
     steps: [
       "Naviguez vers la section LLMS",
       "Comparez les différents modèles (GPT-4, Claude, Gemini...)",
@@ -210,7 +209,7 @@ const tutorials: Tutorial[] = [
     icon: <Sparkles className="h-8 w-8" />,
     difficulty: "Avancé",
     duration: "20 min",
-    youtubeUrl: "https://youtube.com/watch?v=example10",
+    youtubeUrl: "https://www.youtube.com/watch?v=jC4v5AS4RIM",
     steps: [
       "Apprenez la structure d'un prompt efficace",
       "Utilisez des modificateurs de style (cinématique, photoréaliste...)",
@@ -379,17 +378,16 @@ const Tutorials = () => {
                       COMMENCER
                     </Button>
                     {tutorial.youtubeUrl && (
-                      <Button 
-                        variant="outline"
-                        className="gap-2 btn-3d font-display transition-all duration-200 hover:scale-105"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          window.open(tutorial.youtubeUrl, '_blank');
-                        }}
+                      <a 
+                        href={tutorial.youtubeUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="inline-flex items-center justify-center gap-2 btn-3d font-display transition-all duration-200 hover:scale-105 h-10 px-4 py-2 rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground"
                       >
                         <Youtube className="h-4 w-4 text-[hsl(0,85%,60%)]" />
                         VIDÉO
-                      </Button>
+                      </a>
                     )}
                   </div>
                 </div>
