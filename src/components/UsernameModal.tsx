@@ -356,10 +356,15 @@ export function UsernameModal({ isOpen, onClose, onSuccess }: UsernameModalProps
           )}
         </div>
 
-        {/* CORRECTION: Croix de fermeture DÉSACTIVÉE - le pop-up ne peut PAS être fermé sans identification */}
-        {/* La fermeture n'est autorisée que si l'utilisateur est déjà connecté (réouverture du modal) */}
-        {/* Pour l'instant, on RETIRE la croix car elle permet de contourner l'authentification */}
-        {/* La croix sera gérée par le parent App.tsx qui vérifie l'authentification */}
+        {/* Croix de fermeture - permet de visualiser le site sans s'identifier */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute right-4 top-4 rounded-full opacity-70 hover:opacity-100 hover:bg-[hsl(0,100%,50%)]/20 z-10"
+          onClick={onClose}
+        >
+          <X className="h-4 w-4" />
+        </Button>
 
         <DialogHeader className="mt-4">
           <DialogTitle className="font-display text-2xl font-black gradient-text-cyan tracking-wider text-center">
