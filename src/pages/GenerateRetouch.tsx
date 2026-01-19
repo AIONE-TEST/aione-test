@@ -146,10 +146,10 @@ const GenerateRetouch = () => {
         </div>
 
         {/* Layout unifié vertical - UNE SEULE fenêtre de génération */}
-        <div className="flex flex-col gap-4 max-w-4xl mb-6">
+        <div className="flex flex-col gap-4 max-w-5xl mb-6">
           
-          {/* Fenêtre de génération unifiée */}
-          <div className="panel-3d p-4">
+          {/* Fenêtre de génération unifiée - même taille que VIDEO */}
+          <div className="panel-3d p-6 min-h-[450px]">
             {/* Barre d'outils en haut */}
             <div className="flex flex-wrap gap-1 mb-4 pb-3 border-b border-border/50">
               {retouchTools.map((tool) => (
@@ -169,12 +169,11 @@ const GenerateRetouch = () => {
               ))}
             </div>
 
-            {/* Zone principale: Source + Résultat côte à côte */}
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              {/* Source */}
+            {/* Zone principale: Upload uniquement (comme VIDEO) */}
+            <div className="flex-1 flex items-center justify-center mb-4">
               <div
                 className={cn(
-                  "canvas-3d aspect-video flex items-center justify-center transition-all duration-300 cursor-pointer",
+                  "w-full h-full aspect-[16/9] flex items-center justify-center transition-all duration-300 cursor-pointer rounded-xl border-2 border-dashed border-border/50",
                   isDragging && "border-[hsl(var(--primary))] bg-[hsl(var(--primary))]/5"
                 )}
                 onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
@@ -188,59 +187,30 @@ const GenerateRetouch = () => {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-xs"
+                      className="absolute top-2 right-2 bg-black/50 hover:bg-black/70"
                       onClick={(e) => { e.stopPropagation(); setUploadedImage(null); }}
                     >
                       Changer
                     </Button>
-                    <span className="absolute bottom-2 left-2 text-xs bg-black/50 px-2 py-1 rounded">SOURCE</span>
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center gap-2 text-center p-4">
-                    <div className="h-12 w-12 rounded-full bg-gradient-to-br from-[hsl(174,100%,50%)]/20 to-[hsl(142,76%,50%)]/20 flex items-center justify-center">
-                      <Upload className="h-6 w-6 text-[hsl(var(--primary))]" />
+                  <div className="flex flex-col items-center gap-3 text-center">
+                    <div className="h-16 w-16 rounded-full bg-gradient-to-br from-[hsl(174,100%,50%)]/20 to-[hsl(142,76%,50%)]/20 flex items-center justify-center">
+                      <Upload className="h-8 w-8 text-[hsl(var(--primary))]" />
                     </div>
-                    <p className="font-display text-sm text-foreground">Glissez une image</p>
-                    <p className="text-xs text-muted-foreground">ou cliquez</p>
+                    <div>
+                      <p className="font-display text-lg text-foreground">Glissez une image/vidéo ici</p>
+                      <p className="text-sm text-muted-foreground">ou cliquez pour sélectionner</p>
+                    </div>
                   </div>
                 )}
                 <input
                   id="file-upload-retouch"
                   type="file"
-                  accept="image/*"
+                  accept="image/*,video/*"
                   className="hidden"
                   onChange={handleFileSelect}
                 />
-              </div>
-
-              {/* Résultat */}
-              <div className="canvas-3d aspect-video flex items-center justify-center relative">
-                {isGenerating ? (
-                  <div className="flex flex-col items-center gap-3">
-                    <div className="h-12 w-12 rounded-full border-4 border-[hsl(var(--primary))]/30 border-t-[hsl(var(--primary))] animate-spin" />
-                    <p className="font-display text-sm text-muted-foreground animate-pulse">Traitement...</p>
-                  </div>
-                ) : resultImage ? (
-                  <div className="relative w-full h-full">
-                    <img src={resultImage} alt="Result" className="w-full h-full object-contain" />
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="absolute top-2 right-2 bg-black/50 hover:bg-black/70"
-                    >
-                      <Download className="h-4 w-4" />
-                    </Button>
-                    <span className="absolute bottom-2 left-2 text-xs bg-black/50 px-2 py-1 rounded">RÉSULTAT</span>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center gap-2 text-center p-4">
-                    <div className="h-12 w-12 rounded-full bg-muted/50 flex items-center justify-center">
-                      <ZoomIn className="h-6 w-6 text-muted-foreground" />
-                    </div>
-                    <p className="font-display text-sm text-muted-foreground">Résultat</p>
-                    <p className="text-xs text-muted-foreground">apparaîtra ici</p>
-                  </div>
-                )}
               </div>
             </div>
           </div>
