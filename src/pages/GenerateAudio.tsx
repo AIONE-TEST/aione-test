@@ -1,5 +1,5 @@
-import { useState, useMemo, useRef, useCallback } from "react";
-import { Volume2, Sparkles, Music, Mic, Radio, Headphones, Upload, File, Download, Play, Pause, LayoutGrid, Gift, ShieldOff, Tag, Paperclip, SkipBack, SkipForward, Repeat, Shuffle, Volume1, VolumeX } from "lucide-react";
+import { useState, useMemo, useRef, useCallback, useEffect } from "react";
+import { Volume2, Sparkles, Music, Mic, Radio, Headphones, Upload, File, Download, Play, Pause, LayoutGrid, Gift, ShieldOff, Tag, Paperclip, SkipBack, SkipForward, Repeat, Shuffle, Volume1, VolumeX, Loader2 } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { ModelSelector } from "@/components/ModelSelector";
 import { AppTileCard } from "@/components/AppTileCard";
@@ -15,6 +15,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
+import { toast } from "@/hooks/use-toast";
+import WaveSurfer from "wavesurfer.js";
 
 const mediaTypes = [
   { id: "audio", label: "Audio", icon: <Music className="h-4 w-4" />, accept: "audio/*" },
@@ -25,6 +27,20 @@ const genres = ["Pop", "Rock", "Hip-Hop", "Electronic", "Jazz", "Classical", "Am
 const moods = ["Énergique", "Calme", "Triste", "Joyeux", "Épique", "Mystérieux"];
 const durations = ["15s", "30s", "60s", "120s", "240s"];
 
+// ElevenLabs voice options
+const voices = [
+  { id: "JBFqnCBsd6RMkjVDRZzb", name: "George" },
+  { id: "21m00Tcm4TlvDq8ikWAM", name: "Rachel" },
+  { id: "AZnzlk1XvdvUeBnXmlld", name: "Domi" },
+  { id: "EXAVITQu4vr4xnSDxMaL", name: "Bella" },
+  { id: "ErXwobaYiN019PkySvjV", name: "Antoni" },
+  { id: "MF3mGyEYCl7XYWbV9V6O", name: "Elli" },
+  { id: "TxGEqnHWrfWFTfGW9XjX", name: "Josh" },
+  { id: "VR6AewLTigWG4xSOukaG", name: "Arnold" },
+  { id: "pNInz6obpgDQGcFmaJgB", name: "Adam" },
+  { id: "yoZ06aMxZJJ28mfd3POQ", name: "Sam" },
+];
+
 type AudioFilter = "all" | "services" | "free" | "uncensored";
 type AudioMode = "text-to-music" | "voice-clone" | "tts" | "sfx";
 
@@ -34,23 +50,26 @@ const GenerateAudio = () => {
   const [selectedModel, setSelectedModel] = useState<AIModel | null>(null);
   const [prompt, setPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedContent, setGeneratedContent] = useState<string | null>(null);
+  const [generatedAudioUrl, setGeneratedAudioUrl] = useState<string | null>(null);
   const [uploadedAudio, setUploadedAudio] = useState<string | null>(null);
   const [selectedMediaType, setSelectedMediaType] = useState("audio");
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
+  const [selectedVoice, setSelectedVoice] = useState(voices[0]);
   const [duration, setDuration] = useState("30s");
   const [isDragging, setIsDragging] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeFilter, setActiveFilter] = useState<AudioFilter>("all");
-  const [audioMode, setAudioMode] = useState<AudioMode>("text-to-music");
+  const [audioMode, setAudioMode] = useState<AudioMode>("tts");
   const [apiKeyModalOpen, setApiKeyModalOpen] = useState(false);
   const [selectedApiKeyName, setSelectedApiKeyName] = useState<string>("");
   const [showResultPopup, setShowResultPopup] = useState(false);
   const [volume, setVolume] = useState([75]);
-  const [progress, setProgress] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [audioDuration, setAudioDuration] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const audioRef = useRef<HTMLAudioElement>(null);
+  const waveformRef = useRef<HTMLDivElement>(null);
+  const wavesurferRef = useRef<WaveSurfer | null>(null);
 
   const handleOpenAPIKeyModal = (apiKeyName: string) => {
     setSelectedApiKeyName(apiKeyName);
@@ -100,17 +119,116 @@ const GenerateAudio = () => {
     { id: "sfx", label: "SOUND FX", icon: <Headphones className="h-4 w-4" /> },
   ];
 
+  // Initialize WaveSurfer
+  useEffect(() => {
+    if (waveformRef.current && !wavesurferRef.current) {
+      wavesurferRef.current = WaveSurfer.create({
+        container: waveformRef.current,
+        waveColor: 'hsl(25, 80%, 40%)',
+        progressColor: 'hsl(25, 100%, 55%)',
+        cursorColor: 'hsl(45, 100%, 55%)',
+        barWidth: 3,
+        barRadius: 3,
+        cursorWidth: 2,
+        height: 150,
+        barGap: 2,
+        normalize: true,
+      });
+
+      wavesurferRef.current.on('play', () => setIsPlaying(true));
+      wavesurferRef.current.on('pause', () => setIsPlaying(false));
+      wavesurferRef.current.on('timeupdate', (time) => setCurrentTime(time));
+      wavesurferRef.current.on('ready', () => {
+        if (wavesurferRef.current) {
+          setAudioDuration(wavesurferRef.current.getDuration());
+        }
+      });
+    }
+
+    return () => {
+      if (wavesurferRef.current) {
+        wavesurferRef.current.destroy();
+        wavesurferRef.current = null;
+      }
+    };
+  }, []);
+
+  // Load audio into wavesurfer
+  useEffect(() => {
+    if (wavesurferRef.current && generatedAudioUrl) {
+      wavesurferRef.current.load(generatedAudioUrl);
+    }
+  }, [generatedAudioUrl]);
+
+  // Update volume
+  useEffect(() => {
+    if (wavesurferRef.current) {
+      wavesurferRef.current.setVolume(volume[0] / 100);
+    }
+  }, [volume]);
+
+  // Generate audio with ElevenLabs TTS
   const handleGenerate = async () => {
-    if (!selectedModel || !prompt.trim() || !hasCredits) return;
-    
+    if (!prompt.trim()) {
+      toast({ title: "Erreur", description: "Veuillez entrer un texte", variant: "destructive" });
+      return;
+    }
+
     setIsGenerating(true);
-    await useCredit(serviceName, "standard");
-    
-    setTimeout(() => {
+
+    try {
+      if (audioMode === "tts") {
+        // Call ElevenLabs TTS Edge Function
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elevenlabs-tts`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+              Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            },
+            body: JSON.stringify({ 
+              text: prompt, 
+              voiceId: selectedVoice.id 
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || `Erreur API: ${response.status}`);
+        }
+
+        const audioBlob = await response.blob();
+        const audioUrl = URL.createObjectURL(audioBlob);
+        setGeneratedAudioUrl(audioUrl);
+
+        toast({ title: "Succès", description: "Audio généré avec succès!" });
+      } else {
+        // Placeholder for other modes
+        toast({ 
+          title: "Mode non disponible", 
+          description: `Le mode ${audioMode} sera bientôt disponible`, 
+          variant: "destructive" 
+        });
+      }
+    } catch (error) {
+      console.error("Audio generation error:", error);
+      toast({ 
+        title: "Erreur de génération", 
+        description: error instanceof Error ? error.message : "Erreur inconnue", 
+        variant: "destructive" 
+      });
+    } finally {
       setIsGenerating(false);
-      setGeneratedContent("https://example.com/generated-audio.mp3");
-      setShowResultPopup(true);
-    }, 3000);
+    }
+  };
+
+  const handlePlayPause = () => {
+    if (wavesurferRef.current) {
+      wavesurferRef.current.playPause();
+    }
   };
 
   const handleDrop = useCallback((e: React.DragEvent) => {
@@ -138,14 +256,22 @@ const GenerateAudio = () => {
     }
   };
 
-  const canGenerateNow = Boolean(selectedModel) && prompt.trim().length > 0;
-  const currentMediaType = mediaTypes.find(m => m.id === selectedMediaType);
+  const handleDownload = () => {
+    if (generatedAudioUrl) {
+      const a = document.createElement('a');
+      a.href = generatedAudioUrl;
+      a.download = `audio-${Date.now()}.mp3`;
+      a.click();
+    }
+  };
 
-  // Simulated waveform bars
-  const waveformBars = Array.from({ length: 60 }, (_, i) => ({
-    height: Math.random() * 80 + 20,
-    active: i < (progress / 100) * 60
-  }));
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const canGenerateNow = prompt.trim().length > 0;
 
   return (
     <div className="min-h-screen bg-background">
@@ -209,13 +335,13 @@ const GenerateAudio = () => {
           ))}
         </div>
 
-        {/* Layout unifié vertical - MÊME TAILLE QUE VIDEO */}
-        <div className="flex flex-col gap-4 max-w-5xl mb-6">
+        {/* Layout unifié vertical - +25% de taille */}
+        <div className="flex flex-col gap-4 max-w-6xl mb-6">
           
-          {/* Zone principale - Visualiseur Audio style Suno */}
+          {/* Zone principale - Visualiseur Audio avec WaveSurfer */}
           <div
             className={cn(
-              "panel-3d p-6 min-h-[450px] aspect-[16/9] flex flex-col transition-all duration-300",
+              "panel-3d p-6 min-h-[562px] aspect-[16/9] flex flex-col transition-all duration-300",
               isDragging && "border-[hsl(25,100%,55%)] bg-[hsl(25,100%,55%)]/5"
             )}
             onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
@@ -231,7 +357,9 @@ const GenerateAudio = () => {
                 </div>
                 <div className="text-center">
                   <p className="font-display text-xl text-foreground mb-2">Génération en cours...</p>
-                  <p className="text-sm text-muted-foreground">Création de votre {audioMode === "text-to-music" ? "musique" : "audio"}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {audioMode === "tts" ? "ElevenLabs génère votre audio" : `Création de votre ${audioMode === "text-to-music" ? "musique" : "audio"}`}
+                  </p>
                 </div>
                 {/* Animated waveform during generation */}
                 <div className="flex items-end justify-center gap-1 h-16 w-full max-w-md">
@@ -247,42 +375,20 @@ const GenerateAudio = () => {
                   ))}
                 </div>
               </div>
-            ) : generatedContent || uploadedAudio ? (
-              /* Player style Suno */
+            ) : generatedAudioUrl ? (
+              /* Player avec WaveSurfer */
               <div className="flex-1 flex flex-col">
-                {/* Waveform visualization */}
+                {/* WaveSurfer visualization */}
                 <div className="flex-1 flex items-center justify-center px-4">
-                  <div className="flex items-end justify-center gap-[2px] h-full w-full max-w-3xl py-8">
-                    {waveformBars.map((bar, i) => (
-                      <div
-                        key={i}
-                        className={cn(
-                          "w-2 rounded-full transition-all duration-150",
-                          bar.active 
-                            ? "bg-gradient-to-t from-[hsl(25,100%,55%)] to-[hsl(45,100%,55%)]" 
-                            : "bg-muted-foreground/30"
-                        )}
-                        style={{ height: `${bar.height}%` }}
-                      />
-                    ))}
-                  </div>
+                  <div ref={waveformRef} className="w-full max-w-3xl" />
                 </div>
 
                 {/* Controls */}
                 <div className="px-6 pb-4">
-                  {/* Progress bar */}
-                  <div className="mb-4">
-                    <Slider
-                      value={[progress]}
-                      onValueChange={(v) => setProgress(v[0])}
-                      max={100}
-                      step={1}
-                      className="w-full"
-                    />
-                    <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                      <span>0:{String(Math.floor(progress * 0.3)).padStart(2, '0')}</span>
-                      <span>0:30</span>
-                    </div>
+                  {/* Time display */}
+                  <div className="flex justify-between text-xs text-muted-foreground mb-4">
+                    <span>{formatTime(currentTime)}</span>
+                    <span>{formatTime(audioDuration)}</span>
                   </div>
 
                   {/* Playback controls */}
@@ -297,7 +403,7 @@ const GenerateAudio = () => {
                       <Button
                         size="icon"
                         className="h-14 w-14 rounded-full btn-3d-orange"
-                        onClick={() => setIsPlaying(!isPlaying)}
+                        onClick={handlePlayPause}
                       >
                         {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6 ml-1" />}
                       </Button>
@@ -324,31 +430,31 @@ const GenerateAudio = () => {
                     </div>
 
                     {/* Download */}
-                    <Button variant="ghost" size="sm" className="gap-2">
+                    <Button variant="ghost" size="sm" className="gap-2" onClick={handleDownload}>
                       <Download className="h-4 w-4" />
                       Télécharger
                     </Button>
                   </div>
                 </div>
-
-                <audio ref={audioRef} src={generatedContent || uploadedAudio || undefined} className="hidden" />
               </div>
             ) : (
               /* Empty state - Upload zone */
               <div 
                 className="flex-1 flex flex-col items-center justify-center cursor-pointer"
-                onClick={() => document.getElementById('file-upload-audio')?.click()}
+                onClick={() => audioMode === "voice-clone" && document.getElementById('file-upload-audio')?.click()}
               >
                 <div className="h-20 w-20 rounded-full bg-gradient-to-br from-[hsl(25,100%,55%)]/20 to-[hsl(45,100%,55%)]/20 flex items-center justify-center mb-4">
-                  <Upload className="h-10 w-10 text-[hsl(25,100%,55%)]" />
+                  {audioMode === "voice-clone" ? <Upload className="h-10 w-10 text-[hsl(25,100%,55%)]" /> : <Music className="h-10 w-10 text-[hsl(25,100%,55%)]" />}
                 </div>
                 <p className="font-display text-xl text-foreground mb-2">
                   {audioMode === "voice-clone" ? "Importez un audio à cloner" : "Prêt à générer"}
                 </p>
                 <p className="text-sm text-muted-foreground text-center max-w-md">
-                  {audioMode === "voice-clone" 
+                  {audioMode === "tts" 
+                    ? "Entrez du texte et sélectionnez une voix ElevenLabs pour générer"
+                    : audioMode === "voice-clone" 
                     ? "Glissez un fichier audio ou cliquez pour sélectionner"
-                    : "Entrez votre prompt et sélectionnez un modèle pour commencer"
+                    : "Entrez votre prompt pour commencer"
                   }
                 </p>
                 {audioMode === "voice-clone" && (
@@ -378,11 +484,11 @@ const GenerateAudio = () => {
                 onChange={(e) => setPrompt(e.target.value)}
                 placeholder={
                   audioMode === "text-to-music" 
-                    ? "Décrivez la musique... Ex: Musique épique orchestrale, style Hans Zimmer, avec violons et percussions"
+                    ? "Décrivez la musique... Ex: Musique épique orchestrale, style Hans Zimmer"
                     : audioMode === "tts"
-                    ? "Entrez le texte à convertir en voix..."
+                    ? "Entrez le texte à convertir en voix avec ElevenLabs..."
                     : audioMode === "sfx"
-                    ? "Décrivez l'effet sonore... Ex: Explosion massive, tonnerre, pluie tropicale"
+                    ? "Décrivez l'effet sonore... Ex: Explosion massive, tonnerre"
                     : "Entrez le texte à dire avec la voix clonée..."
                 }
                 className="input-3d min-h-[50px] text-sm resize-none flex-1"
@@ -391,7 +497,7 @@ const GenerateAudio = () => {
                 onClick={handleGenerate}
                 isGenerating={isGenerating}
                 canGenerate={canGenerateNow}
-                hasCredits={hasCredits}
+                hasCredits={true}
               />
             </div>
           </div>
@@ -415,6 +521,29 @@ const GenerateAudio = () => {
                   className="w-full"
                 />
               </div>
+
+              {/* Voice selector for TTS */}
+              {audioMode === "tts" && (
+                <div>
+                  <label className="font-display text-xs text-muted-foreground mb-1 block">VOIX ELEVENLABS</label>
+                  <div className="flex flex-wrap gap-1">
+                    {voices.slice(0, 4).map((voice) => (
+                      <Button
+                        key={voice.id}
+                        size="sm"
+                        variant={selectedVoice.id === voice.id ? "default" : "outline"}
+                        onClick={() => setSelectedVoice(voice)}
+                        className={cn(
+                          "h-7 px-2 text-xs",
+                          selectedVoice.id === voice.id ? "btn-3d-orange" : "btn-3d"
+                        )}
+                      >
+                        {voice.name}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Genre (for music) */}
               {audioMode === "text-to-music" && (
@@ -489,7 +618,7 @@ const GenerateAudio = () => {
               <CreditsDisplay 
                 credits={credits} 
                 totalCredits={totalCredits} 
-                serviceName={selectedModel?.name}
+                serviceName={selectedModel?.name || "ElevenLabs"}
                 compact
               />
             </div>
@@ -523,7 +652,7 @@ const GenerateAudio = () => {
       <MediaResultPopup
         isOpen={showResultPopup}
         onClose={() => setShowResultPopup(false)}
-        mediaUrl={generatedContent}
+        mediaUrl={generatedAudioUrl}
         mediaType="audio"
         prompt={prompt}
         model={selectedModel?.name}

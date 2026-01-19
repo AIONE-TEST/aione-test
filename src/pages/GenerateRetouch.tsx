@@ -146,10 +146,10 @@ const GenerateRetouch = () => {
         </div>
 
         {/* Layout unifié vertical - UNE SEULE fenêtre de génération */}
-        <div className="flex flex-col gap-4 max-w-5xl mb-6">
+        <div className="flex flex-col gap-4 max-w-6xl mb-6">
           
-          {/* Fenêtre de génération unifiée - même taille que VIDEO */}
-          <div className="panel-3d p-6 min-h-[450px]">
+          {/* Fenêtre de génération unifiée - +25% de taille */}
+          <div className="panel-3d p-6 min-h-[562px]">
             {/* Barre d'outils en haut */}
             <div className="flex flex-wrap gap-1 mb-4 pb-3 border-b border-border/50">
               {retouchTools.map((tool) => (
