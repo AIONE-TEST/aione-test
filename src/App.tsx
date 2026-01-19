@@ -23,14 +23,18 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
 function AppContent() {
-  const { session, isLoading, isAuthenticated, login } = useSession();
+  const { isLoading, isAuthenticated, login } = useSession();
   const [showUsernameModal, setShowUsernameModal] = useState(false);
 
+  // Pop-up d'identification conservé dans le code mais désactivé provisoirement.
+  // Pour le réactiver plus tard, passer à `true`.
+  const LOGIN_MODAL_ENABLED = false;
+
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (LOGIN_MODAL_ENABLED && !isLoading && !isAuthenticated) {
       setShowUsernameModal(true);
     }
-  }, [isLoading, isAuthenticated]);
+  }, [LOGIN_MODAL_ENABLED, isLoading, isAuthenticated]);
 
   const handleLoginSuccess = (sessionId: string, username: string) => {
     login(sessionId, username);
@@ -51,8 +55,8 @@ function AppContent() {
   return (
     <>
       <UsernameModal
-        isOpen={showUsernameModal}
-        onClose={() => {}}
+        isOpen={LOGIN_MODAL_ENABLED && showUsernameModal}
+        onClose={() => setShowUsernameModal(false)}
         onSuccess={handleLoginSuccess}
       />
       
@@ -79,7 +83,6 @@ function AppContent() {
     </>
   );
 }
-
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <SessionProvider>
