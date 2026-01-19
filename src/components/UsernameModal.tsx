@@ -50,54 +50,85 @@ export function UsernameModal({ isOpen, onClose, onSuccess }: UsernameModalProps
     setIsLoading(true);
 
     try {
-      // Check if user exists
+      // Check if user exists using the public view (no password_hash exposure)
       const { data: existingUser } = await supabase
-        .from("user_sessions")
+        .from("user_sessions_public")
         .select("*")
         .eq("username", username.toLowerCase().trim())
-        .single();
+        .maybeSingle();
 
       if (existingUser) {
-        // Admin bypass - no password required
+        // Admin bypass - check password for admin
         if (isAdmin) {
+          // Admin "Mik" requires password "1971"
+          if (password !== "1971") {
+            setError("Mot de passe administrateur requis");
+            setShowPassword(true);
+            setIsLoading(false);
+            return;
+          }
+          
           // Update last login and IP
           await supabase
             .from("user_sessions")
             .update({ 
               last_login: new Date().toISOString(),
-              ip_address: userIP 
+              ip_address: userIP,
+              last_activity: new Date().toISOString()
             })
             .eq("id", existingUser.id);
+
+          // Store session in localStorage immediately for RLS
+          localStorage.setItem("aione_session_id", existingUser.id!);
+          localStorage.setItem("aione_username", existingUser.username!);
 
           toast({
             title: "Bienvenue Administrateur !",
             description: "Accès total accordé.",
           });
 
-          onSuccess(existingUser.id, existingUser.username);
+          onSuccess(existingUser.id!, existingUser.username!);
           return;
         }
 
-        // User exists - check password if required
-        if (existingUser.password_hash && !password) {
+        // Check if user has a password set using RPC function
+        const { data: hasPassword } = await supabase
+          .rpc("session_has_password", { session_username: existingUser.username! });
+
+        // User has password - need to verify
+        if (hasPassword && !password) {
           setError("Ce compte est protégé par un mot de passe");
           setIsLoading(false);
           setShowPassword(true);
           return;
         }
 
-        if (existingUser.password_hash && password !== existingUser.password_hash) {
-          setError("Mot de passe incorrect");
-          setIsLoading(false);
-          return;
+        if (hasPassword) {
+          // Verify password using RPC function
+          const { data: passwordValid } = await supabase
+            .rpc("verify_session_password", { 
+              session_username: existingUser.username!,
+              input_password: password 
+            });
+
+          if (!passwordValid) {
+            setError("Mot de passe incorrect");
+            setIsLoading(false);
+            return;
+          }
         }
+
+        // Store session in localStorage immediately for RLS
+        localStorage.setItem("aione_session_id", existingUser.id!);
+        localStorage.setItem("aione_username", existingUser.username!);
 
         // Update last login and IP
         await supabase
           .from("user_sessions")
           .update({ 
             last_login: new Date().toISOString(),
-            ip_address: userIP 
+            ip_address: userIP,
+            last_activity: new Date().toISOString()
           })
           .eq("id", existingUser.id);
 
@@ -115,7 +146,7 @@ export function UsernameModal({ isOpen, onClose, onSuccess }: UsernameModalProps
           description: `Ravi de vous revoir, ${existingUser.username} !`,
         });
 
-        onSuccess(existingUser.id, existingUser.username);
+        onSuccess(existingUser.id!, existingUser.username!);
       } else {
         // Create new user
         const { data: newUser, error: createError } = await supabase
@@ -129,6 +160,10 @@ export function UsernameModal({ isOpen, onClose, onSuccess }: UsernameModalProps
           .single();
 
         if (createError) throw createError;
+
+        // Store session in localStorage immediately for RLS
+        localStorage.setItem("aione_session_id", newUser.id);
+        localStorage.setItem("aione_username", newUser.username);
 
         // Log activity
         await supabase.from("activity_logs").insert({

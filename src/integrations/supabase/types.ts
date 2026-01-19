@@ -50,6 +50,13 @@ export type Database = {
             referencedRelation: "user_sessions"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "activity_logs_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "user_sessions_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       api_keys: {
@@ -107,6 +114,13 @@ export type Database = {
             columns: ["session_id"]
             isOneToOne: false
             referencedRelation: "user_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_conversations_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "user_sessions_public"
             referencedColumns: ["id"]
           },
         ]
@@ -221,6 +235,13 @@ export type Database = {
             referencedRelation: "user_sessions"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "generation_history_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "user_sessions_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       notifications: {
@@ -274,6 +295,30 @@ export type Database = {
         }
         Relationships: []
       }
+      support_messages: {
+        Row: {
+          created_at: string
+          from_username: string
+          id: string
+          is_read: boolean | null
+          message: string
+        }
+        Insert: {
+          created_at?: string
+          from_username: string
+          id?: string
+          is_read?: boolean | null
+          message: string
+        }
+        Update: {
+          created_at?: string
+          from_username?: string
+          id?: string
+          is_read?: boolean | null
+          message?: string
+        }
+        Relationships: []
+      }
       user_api_keys: {
         Row: {
           created_at: string
@@ -305,6 +350,13 @@ export type Database = {
             columns: ["session_id"]
             isOneToOne: false
             referencedRelation: "user_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_api_keys_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "user_sessions_public"
             referencedColumns: ["id"]
           },
         ]
@@ -340,6 +392,13 @@ export type Database = {
             columns: ["session_id"]
             isOneToOne: false
             referencedRelation: "user_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_notes_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "user_sessions_public"
             referencedColumns: ["id"]
           },
         ]
@@ -409,37 +468,73 @@ export type Database = {
         }
         Relationships: []
       }
-      user_sessions: {
+      user_roles: {
         Row: {
           created_at: string
           id: string
-          ip_address: string | null
-          last_login: string | null
-          password_hash: string | null
-          save_history: boolean | null
-          settings: Json | null
-          updated_at: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string | null
           username: string
         }
         Insert: {
           created_at?: string
           id?: string
-          ip_address?: string | null
-          last_login?: string | null
-          password_hash?: string | null
-          save_history?: boolean | null
-          settings?: Json | null
-          updated_at?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string | null
           username: string
         }
         Update: {
           created_at?: string
           id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string | null
+          username?: string
+        }
+        Relationships: []
+      }
+      user_sessions: {
+        Row: {
+          created_at: string
+          failed_attempts: number | null
+          id: string
+          ip_address: string | null
+          last_activity: string | null
+          last_login: string | null
+          locked_until: string | null
+          password_hash: string | null
+          save_history: boolean | null
+          settings: Json | null
+          stay_connected: boolean | null
+          updated_at: string
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          failed_attempts?: number | null
+          id?: string
           ip_address?: string | null
+          last_activity?: string | null
           last_login?: string | null
+          locked_until?: string | null
           password_hash?: string | null
           save_history?: boolean | null
           settings?: Json | null
+          stay_connected?: boolean | null
+          updated_at?: string
+          username: string
+        }
+        Update: {
+          created_at?: string
+          failed_attempts?: number | null
+          id?: string
+          ip_address?: string | null
+          last_activity?: string | null
+          last_login?: string | null
+          locked_until?: string | null
+          password_hash?: string | null
+          save_history?: boolean | null
+          settings?: Json | null
+          stay_connected?: boolean | null
           updated_at?: string
           username?: string
         }
@@ -447,13 +542,91 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      active_users: {
+        Row: {
+          last_activity: string | null
+          last_login: string | null
+          username: string | null
+        }
+        Insert: {
+          last_activity?: string | null
+          last_login?: string | null
+          username?: string | null
+        }
+        Update: {
+          last_activity?: string | null
+          last_login?: string | null
+          username?: string | null
+        }
+        Relationships: []
+      }
+      user_sessions_public: {
+        Row: {
+          created_at: string | null
+          failed_attempts: number | null
+          id: string | null
+          last_activity: string | null
+          last_login: string | null
+          locked_until: string | null
+          save_history: boolean | null
+          settings: Json | null
+          stay_connected: boolean | null
+          updated_at: string | null
+          username: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          failed_attempts?: number | null
+          id?: string | null
+          last_activity?: string | null
+          last_login?: string | null
+          locked_until?: string | null
+          save_history?: boolean | null
+          settings?: Json | null
+          stay_connected?: boolean | null
+          updated_at?: string | null
+          username?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          failed_attempts?: number | null
+          id?: string | null
+          last_activity?: string | null
+          last_login?: string | null
+          locked_until?: string | null
+          save_history?: boolean | null
+          settings?: Json | null
+          stay_connected?: boolean | null
+          updated_at?: string | null
+          username?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _username: string
+        }
+        Returns: boolean
+      }
+      is_admin: { Args: { _username: string }; Returns: boolean }
+      session_has_password: {
+        Args: { session_username: string }
+        Returns: boolean
+      }
+      verify_admin_password: {
+        Args: { admin_password: string; admin_username: string }
+        Returns: boolean
+      }
+      verify_session_password: {
+        Args: { input_password: string; session_username: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -580,6 +753,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+    },
   },
 } as const

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface SessionData {
@@ -16,6 +16,7 @@ interface SessionContextType {
   login: (sessionId: string, username: string) => void;
   logout: () => void;
   updateSettings: (settings: Partial<SessionData>) => Promise<void>;
+  getHeaders: () => Record<string, string>;
 }
 
 const SessionContext = createContext<SessionContextType | undefined>(undefined);
@@ -36,27 +37,43 @@ export function SessionProvider({ children }: SessionProviderProps) {
   const [session, setSession] = useState<SessionData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Get session headers for RLS
+  const getHeaders = useCallback(() => {
+    const sessionId = localStorage.getItem("aione_session_id") || "";
+    const username = localStorage.getItem("aione_username") || "";
+    return {
+      "x-session-id": sessionId,
+      "x-username": username,
+    };
+  }, []);
+
   // Check for existing session on mount
   useEffect(() => {
     const storedSessionId = localStorage.getItem("aione_session_id");
     const storedUsername = localStorage.getItem("aione_username");
 
     if (storedSessionId && storedUsername) {
-      // Verify session still exists in DB
+      // Verify session still exists in DB - use view to avoid password_hash exposure
       supabase
-        .from("user_sessions")
+        .from("user_sessions_public")
         .select("*")
         .eq("id", storedSessionId)
-        .single()
+        .maybeSingle()
         .then(({ data, error }) => {
           if (data && !error) {
             setSession({
-              id: data.id,
-              username: data.username,
-              ip_address: data.ip_address,
-              save_history: data.save_history,
+              id: data.id!,
+              username: data.username!,
+              save_history: data.save_history || false,
               settings: data.settings as Record<string, any>,
             });
+            
+            // Update last activity
+            supabase
+              .from("user_sessions")
+              .update({ last_activity: new Date().toISOString() })
+              .eq("id", storedSessionId)
+              .then(() => {});
           } else {
             // Clear invalid session
             localStorage.removeItem("aione_session_id");
@@ -78,12 +95,16 @@ export function SessionProvider({ children }: SessionProviderProps) {
   const logout = async () => {
     if (session) {
       // Log logout
-      await supabase.from("activity_logs").insert({
-        session_id: session.id,
-        username: session.username,
-        action: "logout",
-        details: {}
-      });
+      try {
+        await supabase.from("activity_logs").insert({
+          session_id: session.id,
+          username: session.username,
+          action: "logout",
+          details: {}
+        });
+      } catch (e) {
+        console.error("Logout log error:", e);
+      }
     }
     
     localStorage.removeItem("aione_session_id");
@@ -113,6 +134,7 @@ export function SessionProvider({ children }: SessionProviderProps) {
         login,
         logout,
         updateSettings,
+        getHeaders,
       }}
     >
       {children}

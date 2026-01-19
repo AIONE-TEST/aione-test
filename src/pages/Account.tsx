@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { User, Image, Video, Music, History, Settings, Save, Camera, FileText, Download, Trash2, LogOut, Shield } from "lucide-react";
+import { User, Image, Video, Music, History, Settings, Save, Camera, FileText, Download, Trash2, LogOut, Shield, Eye, EyeOff, Key } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,11 +7,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useSession } from "@/contexts/SessionContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { GenerationGallery } from "@/components/GenerationGallery";
 
 interface GenerationHistoryItem {
   id: string;
@@ -134,10 +136,16 @@ const Account = () => {
     window.location.reload();
   };
 
-  // Filter history by type
+  // Filter by type for tabs
   const imageHistory = history.filter(h => h.type === "image" || h.type === "retouch");
   const videoHistory = history.filter(h => h.type === "video");
   const audioHistory = history.filter(h => h.type === "audio");
+
+  const handleDeleteItem = async (id: string) => {
+    await supabase.from("generation_history").delete().eq("id", id);
+    setHistory(prev => prev.filter(h => h.id !== id));
+    toast({ title: "Élément supprimé" });
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -237,7 +245,7 @@ const Account = () => {
             </div>
           </div>
 
-          {/* Colonne droite - Galerie médias */}
+          {/* Colonne droite - Galerie médias avec onglets */}
           <Card className="panel-3d p-5">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-display text-lg font-bold gradient-text-purple flex items-center gap-2">
@@ -247,69 +255,57 @@ const Account = () => {
               <Badge variant="outline">{history.length} éléments</Badge>
             </div>
 
-            {history.length === 0 ? (
-              <div className="text-center py-12">
-                <History className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-                <p className="font-display text-lg text-muted-foreground">AUCUNE GÉNÉRATION</p>
-                <p className="text-sm text-muted-foreground mt-1">Vos créations apparaîtront ici</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-h-[400px] overflow-y-auto pr-2">
-                {history.map((item) => (
-                  <div 
-                    key={item.id}
-                    className={cn(
-                      "relative rounded-lg overflow-hidden border-2 cursor-pointer hover:scale-105 transition-transform",
-                      item.type === "image" || item.type === "retouch" ? "border-[hsl(320,100%,60%)]/30" :
-                      item.type === "video" ? "border-[hsl(280,100%,65%)]/30" :
-                      "border-[hsl(25,100%,55%)]/30",
-                      // Aspect ratio based on item
-                      item.aspect_ratio === "9:16" ? "aspect-[9/16]" :
-                      item.aspect_ratio === "16:9" ? "aspect-video" :
-                      item.aspect_ratio === "4:3" ? "aspect-[4/3]" :
-                      "aspect-square"
-                    )}
-                  >
-                    {item.thumbnail_url || item.result_url ? (
-                      item.type === "audio" ? (
-                        <div className="w-full h-full bg-gradient-to-br from-[hsl(25,100%,55%)]/20 to-[hsl(45,100%,55%)]/20 flex items-center justify-center">
-                          <Music className="h-8 w-8 text-[hsl(25,100%,55%)]" />
-                        </div>
-                      ) : (
-                        <img 
-                          src={item.thumbnail_url || item.result_url || ""} 
-                          alt={item.prompt || "Generated"} 
-                          className="w-full h-full object-cover"
-                        />
-                      )
-                    ) : (
-                      <div className="w-full h-full bg-muted flex items-center justify-center">
-                        {item.type === "video" ? <Video className="h-6 w-6 text-muted-foreground" /> :
-                         item.type === "audio" ? <Music className="h-6 w-6 text-muted-foreground" /> :
-                         <Image className="h-6 w-6 text-muted-foreground" />}
-                      </div>
-                    )}
-                    
-                    {/* Type badge */}
-                    <Badge className={cn(
-                      "absolute top-1 left-1 text-[9px] px-1.5 py-0",
-                      item.type === "image" || item.type === "retouch" ? "bg-[hsl(320,100%,60%)]/80" :
-                      item.type === "video" ? "bg-[hsl(280,100%,65%)]/80" :
-                      "bg-[hsl(25,100%,55%)]/80"
-                    )}>
-                      {item.type.toUpperCase()}
-                    </Badge>
+            <Tabs defaultValue="all" className="w-full">
+              <TabsList className="grid w-full grid-cols-4 mb-4">
+                <TabsTrigger value="all" className="text-xs">
+                  TOUS ({history.length})
+                </TabsTrigger>
+                <TabsTrigger value="images" className="text-xs">
+                  <Image className="h-3 w-3 mr-1" />
+                  IMAGES ({imageHistory.length})
+                </TabsTrigger>
+                <TabsTrigger value="videos" className="text-xs">
+                  <Video className="h-3 w-3 mr-1" />
+                  VIDÉOS ({videoHistory.length})
+                </TabsTrigger>
+                <TabsTrigger value="audio" className="text-xs">
+                  <Music className="h-3 w-3 mr-1" />
+                  AUDIO ({audioHistory.length})
+                </TabsTrigger>
+              </TabsList>
 
-                    {/* Video icon overlay */}
-                    {item.type === "video" && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                        <Video className="h-8 w-8 text-white/80" />
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
+              <TabsContent value="all">
+                <GenerationGallery 
+                  items={history} 
+                  onDelete={handleDeleteItem}
+                  maxHeight="400px"
+                />
+              </TabsContent>
+
+              <TabsContent value="images">
+                <GenerationGallery 
+                  items={imageHistory} 
+                  onDelete={handleDeleteItem}
+                  maxHeight="400px"
+                />
+              </TabsContent>
+
+              <TabsContent value="videos">
+                <GenerationGallery 
+                  items={videoHistory} 
+                  onDelete={handleDeleteItem}
+                  maxHeight="400px"
+                />
+              </TabsContent>
+
+              <TabsContent value="audio">
+                <GenerationGallery 
+                  items={audioHistory} 
+                  onDelete={handleDeleteItem}
+                  maxHeight="400px"
+                />
+              </TabsContent>
+            </Tabs>
           </Card>
         </div>
 
