@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useCallback } from "react";
-import { ImageIcon, Sparkles, Upload, Image, File, Paperclip, LayoutGrid, Gift, ShieldOff, Tag } from "lucide-react";
+import { ImageIcon, Sparkles, Upload, Image, File, Paperclip, LayoutGrid, Gift, ShieldOff, Tag, Wand2, Languages } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { ModelSelector } from "@/components/ModelSelector";
 import { AppTileCard } from "@/components/AppTileCard";
@@ -7,13 +7,21 @@ import { MediaResultPopup } from "@/components/MediaResultPopup";
 import { APIKeyModal } from "@/components/APIKeyModal";
 import { CreditsDisplay } from "@/components/CreditsDisplay";
 import { GenerateButton } from "@/components/GenerateButton";
+import { PromptHelperModal } from "@/components/PromptHelperModal";
 import { AIModel, getModelsByCategory } from "@/data/aiModels";
 import { useAPIStatus } from "@/hooks/useAPIStatus";
 import { useCredits } from "@/hooks/useCredits";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+
+const languages = [
+  { code: "fr", name: "FR" }, { code: "en", name: "EN" }, { code: "es", name: "ES" },
+  { code: "de", name: "DE" }, { code: "it", name: "IT" }, { code: "pt", name: "PT" },
+  { code: "ja", name: "JA" }, { code: "zh", name: "ZH" }, { code: "ko", name: "KO" },
+];
 
 const mediaTypes = [
   { id: "image", label: "Image", icon: <Image className="h-4 w-4" />, accept: "image/*" },
@@ -42,6 +50,8 @@ const GenerateImages = () => {
   const [activeFilter, setActiveFilter] = useState<ImageFilter>("all");
   const [apiKeyModalOpen, setApiKeyModalOpen] = useState(false);
   const [selectedApiKeyName, setSelectedApiKeyName] = useState<string>("");
+  const [selectedLanguage, setSelectedLanguage] = useState("fr");
+  const [showPromptHelper, setShowPromptHelper] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleOpenAPIKeyModal = (apiKeyName: string) => {
@@ -193,24 +203,35 @@ const GenerateImages = () => {
             />
           </div>
 
-          {/* Zone Prompt */}
+          {/* Zone Prompt avec aide */}
           <div className="panel-3d p-3">
             <div className="flex gap-2 items-start">
-              <Button variant="ghost" size="icon" className="h-10 w-10 flex-shrink-0">
-                <Paperclip className="h-5 w-5 text-muted-foreground" />
+              <Button variant="ghost" size="icon" className="h-16 w-16 flex-shrink-0">
+                <Paperclip className="h-12 w-12 text-muted-foreground" />
               </Button>
-              <Textarea
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                placeholder="Décrivez l'image... Ex: Paysage fantastique, montagnes de cristal, style Ghibli"
-                className="input-3d min-h-[50px] text-sm resize-none flex-1"
-              />
-              <GenerateButton
-                onClick={handleGenerate}
-                isGenerating={isGenerating}
-                canGenerate={canGenerateNow}
-                hasCredits={hasCredits}
-              />
+              <div className="flex-1 flex flex-col">
+                <div className="flex items-center justify-between mb-1 px-1">
+                  <div className="flex items-center gap-1">
+                    <Languages className="h-3 w-3 text-muted-foreground" />
+                    <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
+                      <SelectTrigger className="h-6 w-14 text-xs border-0 bg-transparent hover:bg-muted/50">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {languages.map((lang) => (
+                          <SelectItem key={lang.code} value={lang.code} className="text-xs">{lang.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={() => setShowPromptHelper(true)} className="h-6 px-2 text-xs gap-1 text-muted-foreground hover:text-[hsl(var(--primary))]">
+                    <Wand2 className="h-3 w-3" />
+                    Aide au prompt
+                  </Button>
+                </div>
+                <Textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="Décrivez l'image... Ex: Paysage fantastique, montagnes de cristal" className="input-3d min-h-[50px] text-sm resize-none" spellCheck={true} lang={selectedLanguage} />
+              </div>
+              <GenerateButton onClick={handleGenerate} isGenerating={isGenerating} canGenerate={canGenerateNow} hasCredits={hasCredits} />
             </div>
           </div>
 
@@ -343,11 +364,8 @@ const GenerateImages = () => {
       />
 
       {/* API Key Modal */}
-      <APIKeyModal
-        isOpen={apiKeyModalOpen}
-        onClose={() => setApiKeyModalOpen(false)}
-        apiKeyName={selectedApiKeyName}
-      />
+      <APIKeyModal isOpen={apiKeyModalOpen} onClose={() => setApiKeyModalOpen(false)} apiKeyName={selectedApiKeyName} />
+      <PromptHelperModal isOpen={showPromptHelper} onClose={() => setShowPromptHelper(false)} originalPrompt={prompt} />
     </div>
   );
 };

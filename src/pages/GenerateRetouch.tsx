@@ -218,8 +218,9 @@ const GenerateRetouch = () => {
           {/* Zone Prompt */}
           <div className="panel-3d p-3">
             <div className="flex gap-2 items-start">
-              <Button variant="ghost" size="icon" className="h-10 w-10 flex-shrink-0">
-                <Paperclip className="h-5 w-5 text-muted-foreground" />
+              {/* Paperclip x3 */}
+              <Button variant="ghost" size="icon" className="h-16 w-16 flex-shrink-0">
+                <Paperclip className="h-12 w-12 text-muted-foreground" />
               </Button>
               <Textarea
                 value={prompt}
