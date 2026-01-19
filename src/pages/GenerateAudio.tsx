@@ -167,7 +167,13 @@ const GenerateAudio = () => {
     }
   }, [volume]);
 
-  // Generate audio with ElevenLabs TTS
+  // Get duration in seconds from string
+  const getDurationSeconds = () => {
+    const match = duration.match(/(\d+)/);
+    return match ? parseInt(match[1]) : 30;
+  };
+
+  // Generate audio with ElevenLabs APIs
   const handleGenerate = async () => {
     if (!prompt.trim()) {
       toast({ title: "Erreur", description: "Veuillez entrer un texte", variant: "destructive" });
@@ -177,42 +183,71 @@ const GenerateAudio = () => {
     setIsGenerating(true);
 
     try {
-      if (audioMode === "tts") {
-        // Call ElevenLabs TTS Edge Function
-        const response = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elevenlabs-tts`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-              Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-            },
-            body: JSON.stringify({ 
-              text: prompt, 
-              voiceId: selectedVoice.id 
-            }),
-          }
-        );
+      let endpoint = "";
+      let requestBody: Record<string, unknown> = {};
 
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.error || `Erreur API: ${response.status}`);
-        }
-
-        const audioBlob = await response.blob();
-        const audioUrl = URL.createObjectURL(audioBlob);
-        setGeneratedAudioUrl(audioUrl);
-
-        toast({ title: "Succès", description: "Audio généré avec succès!" });
-      } else {
-        // Placeholder for other modes
-        toast({ 
-          title: "Mode non disponible", 
-          description: `Le mode ${audioMode} sera bientôt disponible`, 
-          variant: "destructive" 
-        });
+      switch (audioMode) {
+        case "tts":
+          endpoint = "elevenlabs-tts";
+          requestBody = { text: prompt, voiceId: selectedVoice.id };
+          break;
+        case "sfx":
+          endpoint = "elevenlabs-sfx";
+          requestBody = { prompt, duration: Math.min(getDurationSeconds(), 22) };
+          break;
+        case "text-to-music":
+          // Note: ElevenLabs Music API requires a premium subscription
+          // Using SFX as fallback for musical sounds
+          toast({ 
+            title: "Mode Musique", 
+            description: "La génération de musique nécessite un abonnement premium ElevenLabs. Utilisation du mode SFX pour les sons musicaux.", 
+          });
+          endpoint = "elevenlabs-sfx";
+          const musicPrompt = `${selectedGenre ? selectedGenre + " music, " : ""}${selectedMood ? selectedMood + " mood, " : ""}${prompt}`;
+          requestBody = { prompt: musicPrompt, duration: Math.min(getDurationSeconds(), 22) };
+          break;
+        case "voice-clone":
+          toast({ 
+            title: "Mode Voice Clone", 
+            description: "Ce mode nécessite un fichier audio de référence. Fonctionnalité à venir.", 
+            variant: "destructive" 
+          });
+          setIsGenerating(false);
+          return;
+        default:
+          throw new Error("Mode non supporté");
       }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${endpoint}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify(requestBody),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Erreur API: ${response.status}`);
+      }
+
+      const audioBlob = await response.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
+      setGeneratedAudioUrl(audioUrl);
+
+      const modeLabels: Record<AudioMode, string> = {
+        "tts": "Speech",
+        "sfx": "Effet sonore",
+        "text-to-music": "Musique",
+        "voice-clone": "Voice Clone"
+      };
+
+      toast({ title: "Succès", description: `${modeLabels[audioMode]} généré avec succès!` });
     } catch (error) {
       console.error("Audio generation error:", error);
       toast({ 
