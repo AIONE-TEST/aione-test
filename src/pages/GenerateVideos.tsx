@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useCallback } from "react";
-import { Video, Sparkles, Camera, Film, Type, Upload, Image, File, Paperclip } from "lucide-react";
+import { Video, Sparkles, Camera, Film, Upload, Image, File, Paperclip } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { ModelSelector } from "@/components/ModelSelector";
 import { AppTileCard } from "@/components/AppTileCard";
@@ -110,7 +110,6 @@ const GenerateVideos = () => {
   };
 
   const canGenerateNow = Boolean(selectedModel) && prompt.trim().length > 0;
-  const currentMediaType = mediaTypes.find(m => m.id === selectedMediaType);
 
   return (
     <div className="min-h-screen bg-background">
@@ -132,158 +131,165 @@ const GenerateVideos = () => {
           </div>
         </div>
 
-        {/* Layout: 2 colonnes - Upload à gauche, Options à droite */}
-        <div className="grid grid-cols-[1fr_300px] gap-4 mb-6">
-          {/* Colonne gauche - Zone Upload + Prompt */}
-          <div className="space-y-3">
-            {/* Zone Upload (principale) */}
-            <div
-              className={cn(
-                "panel-3d p-4 aspect-[16/9] flex items-center justify-center transition-all duration-300 cursor-pointer",
-                isDragging && "border-[hsl(var(--primary))] bg-[hsl(var(--primary))]/5"
-              )}
-              onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-              onDragLeave={() => setIsDragging(false)}
-              onDrop={handleDrop}
-              onClick={() => document.getElementById('file-upload-videos')?.click()}
-            >
-              {uploadedImage ? (
-                <div className="relative w-full h-full">
-                  <img src={uploadedImage} alt="Source" className="w-full h-full object-contain" />
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="absolute top-2 right-2 bg-black/50 hover:bg-black/70"
-                    onClick={(e) => { e.stopPropagation(); setUploadedImage(null); }}
-                  >
-                    Changer
-                  </Button>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center gap-3 text-center">
-                  <div className="h-16 w-16 rounded-full bg-gradient-to-br from-[hsl(280,100%,65%)]/20 to-[hsl(320,100%,60%)]/20 flex items-center justify-center">
-                    <Upload className="h-8 w-8 text-[hsl(280,100%,65%)]" />
-                  </div>
-                  <div>
-                    <p className="font-display text-lg text-foreground">Glissez une image ici</p>
-                    <p className="text-sm text-muted-foreground">ou cliquez pour sélectionner</p>
-                  </div>
-                </div>
-              )}
-              <input
-                id="file-upload-videos"
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleFileSelect}
-              />
-            </div>
-
-            {/* Prompt compact */}
-            <div className="panel-3d p-3">
-              <div className="flex gap-2 items-start">
-                <Button variant="ghost" size="icon" className="h-10 w-10 flex-shrink-0">
-                  <Paperclip className="h-5 w-5 text-muted-foreground" />
+        {/* Layout unifié vertical */}
+        <div className="flex flex-col gap-4 max-w-4xl mb-6">
+          {/* Zone Upload (principale) */}
+          <div
+            className={cn(
+              "panel-3d p-4 aspect-[16/9] flex items-center justify-center transition-all duration-300 cursor-pointer",
+              isDragging && "border-[hsl(var(--primary))] bg-[hsl(var(--primary))]/5"
+            )}
+            onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+            onDragLeave={() => setIsDragging(false)}
+            onDrop={handleDrop}
+            onClick={() => document.getElementById('file-upload-videos')?.click()}
+          >
+            {uploadedImage ? (
+              <div className="relative w-full h-full">
+                <img src={uploadedImage} alt="Source" className="w-full h-full object-contain" />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="absolute top-2 right-2 bg-black/50 hover:bg-black/70"
+                  onClick={(e) => { e.stopPropagation(); setUploadedImage(null); }}
+                >
+                  Changer
                 </Button>
-                <Textarea
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  placeholder="Décrivez la vidéo... Ex: Château steampunk, cinématique 4K"
-                  className="input-3d min-h-[50px] text-sm resize-none flex-1"
-                />
-                <GenerateButton
-                  onClick={handleGenerate}
-                  isGenerating={isGenerating}
-                  canGenerate={canGenerateNow}
-                  hasCredits={hasCredits}
-                />
               </div>
+            ) : (
+              <div className="flex flex-col items-center gap-3 text-center">
+                <div className="h-16 w-16 rounded-full bg-gradient-to-br from-[hsl(280,100%,65%)]/20 to-[hsl(320,100%,60%)]/20 flex items-center justify-center">
+                  <Upload className="h-8 w-8 text-[hsl(280,100%,65%)]" />
+                </div>
+                <div>
+                  <p className="font-display text-lg text-foreground">Glissez une image ici</p>
+                  <p className="text-sm text-muted-foreground">ou cliquez pour sélectionner</p>
+                </div>
+              </div>
+            )}
+            <input
+              id="file-upload-videos"
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleFileSelect}
+            />
+          </div>
+
+          {/* Zone Prompt */}
+          <div className="panel-3d p-3">
+            <div className="flex gap-2 items-start">
+              <Button variant="ghost" size="icon" className="h-10 w-10 flex-shrink-0">
+                <Paperclip className="h-5 w-5 text-muted-foreground" />
+              </Button>
+              <Textarea
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                placeholder="Décrivez la vidéo... Ex: Château steampunk, cinématique 4K"
+                className="input-3d min-h-[50px] text-sm resize-none flex-1"
+              />
+              <GenerateButton
+                onClick={handleGenerate}
+                isGenerating={isGenerating}
+                canGenerate={canGenerateNow}
+                hasCredits={hasCredits}
+              />
             </div>
           </div>
 
-          {/* Colonne droite - Options compactes */}
-          <div className="panel-3d p-3 space-y-3">
-            <div className="flex items-center gap-2 mb-2">
+          {/* MODÈLES AI & OPTIONS - Horizontal sous le prompt */}
+          <div className="panel-3d p-4">
+            <div className="flex items-center gap-2 mb-3">
               <Sparkles className="h-4 w-4 text-[hsl(var(--secondary))]" />
-              <span className="font-display text-sm font-bold">MODÈLES AI</span>
+              <span className="font-display text-sm font-bold">MODÈLES AI & OPTIONS</span>
             </div>
 
-            <ModelSelector
-              models={models}
-              selectedModel={selectedModel}
-              onSelectModel={setSelectedModel}
-              category="videos"
-              className="w-full"
-            />
-
-            {/* Type de média */}
-            <div className="flex gap-1">
-              {mediaTypes.map((type) => (
-                <Button
-                  key={type.id}
-                  size="sm"
-                  variant={selectedMediaType === type.id ? "default" : "outline"}
-                  onClick={() => setSelectedMediaType(type.id)}
-                  className={cn(
-                    "flex-1 h-8 text-xs gap-1",
-                    selectedMediaType === type.id ? "btn-3d-cyan" : "btn-3d"
-                  )}
-                >
-                  {type.icon}
-                  {type.label}
-                </Button>
-              ))}
-            </div>
-
-            {/* Format */}
-            <div>
-              <label className="font-display text-xs text-muted-foreground block mb-1">FORMAT</label>
-              <div className="flex gap-1">
-                {aspectRatios.map((ratio) => (
-                  <Button
-                    key={ratio}
-                    size="sm"
-                    variant={aspectRatio === ratio ? "default" : "outline"}
-                    onClick={() => setAspectRatio(ratio)}
-                    className={cn(
-                      "flex-1 h-7 px-2 text-xs",
-                      aspectRatio === ratio ? "btn-3d-pink" : "btn-3d"
-                    )}
-                  >
-                    {ratio}
-                  </Button>
-                ))}
+            <div className="grid grid-cols-4 gap-4">
+              {/* Sélecteur de modèle */}
+              <div>
+                <label className="font-display text-xs text-muted-foreground mb-1 block">MOTEUR AI</label>
+                <ModelSelector
+                  models={models}
+                  selectedModel={selectedModel}
+                  onSelectModel={setSelectedModel}
+                  category="videos"
+                  className="w-full"
+                />
               </div>
-            </div>
 
-            {/* Qualité */}
-            <div>
-              <label className="font-display text-xs text-muted-foreground block mb-1">QUALITÉ</label>
-              <div className="flex gap-1">
-                {qualities.map((q) => (
-                  <Button
-                    key={q}
-                    size="sm"
-                    variant={quality === q ? "default" : "outline"}
-                    onClick={() => setQuality(q)}
-                    className={cn(
-                      "flex-1 h-7 px-2 text-xs",
-                      quality === q ? "btn-3d-green" : "btn-3d"
-                    )}
-                  >
-                    {q}
-                  </Button>
-                ))}
+              {/* Type de média */}
+              <div>
+                <label className="font-display text-xs text-muted-foreground mb-1 block">MÉDIA</label>
+                <div className="flex gap-1">
+                  {mediaTypes.map((type) => (
+                    <Button
+                      key={type.id}
+                      size="sm"
+                      variant={selectedMediaType === type.id ? "default" : "outline"}
+                      onClick={() => setSelectedMediaType(type.id)}
+                      className={cn(
+                        "flex-1 h-8 text-xs gap-1",
+                        selectedMediaType === type.id ? "btn-3d-cyan" : "btn-3d"
+                      )}
+                    >
+                      {type.icon}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Format */}
+              <div>
+                <label className="font-display text-xs text-muted-foreground mb-1 block">FORMAT</label>
+                <div className="flex gap-1">
+                  {aspectRatios.map((ratio) => (
+                    <Button
+                      key={ratio}
+                      size="sm"
+                      variant={aspectRatio === ratio ? "default" : "outline"}
+                      onClick={() => setAspectRatio(ratio)}
+                      className={cn(
+                        "flex-1 h-8 px-2 text-xs",
+                        aspectRatio === ratio ? "btn-3d-pink" : "btn-3d"
+                      )}
+                    >
+                      {ratio}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Qualité */}
+              <div>
+                <label className="font-display text-xs text-muted-foreground mb-1 block">QUALITÉ</label>
+                <div className="flex gap-1">
+                  {qualities.map((q) => (
+                    <Button
+                      key={q}
+                      size="sm"
+                      variant={quality === q ? "default" : "outline"}
+                      onClick={() => setQuality(q)}
+                      className={cn(
+                        "flex-1 h-8 px-2 text-xs",
+                        quality === q ? "btn-3d-green" : "btn-3d"
+                      )}
+                    >
+                      {q}
+                    </Button>
+                  ))}
+                </div>
               </div>
             </div>
 
             {/* Credits Display */}
-            <CreditsDisplay 
-              credits={credits} 
-              totalCredits={totalCredits} 
-              serviceName={selectedModel?.name}
-              compact
-            />
+            <div className="mt-3 pt-3 border-t border-border/50">
+              <CreditsDisplay 
+                credits={credits} 
+                totalCredits={totalCredits} 
+                serviceName={selectedModel?.name}
+                compact
+              />
+            </div>
           </div>
         </div>
 
