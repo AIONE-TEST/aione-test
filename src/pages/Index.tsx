@@ -2,10 +2,10 @@ import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { 
   Image, Video, MessageSquare, Music, Wand2, Box, 
-  Zap, ArrowRight, Star
+  Zap, ArrowRight, Star, Infinity, Clock
 } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
-import { aiModels, AICategory, categoryLabels, getModelsByCategory } from "@/data/aiModels";
+import { aiModels, AICategory, categoryLabels, getModelsByCategory, getUnlimitedFreeModels, getLimitedFreeModels } from "@/data/aiModels";
 
 const categories = [
   { id: "llms", label: "LLMS", icon: MessageSquare, path: "/llms", color: "btn-3d-pink" },
@@ -35,13 +35,16 @@ const Index = () => {
   const stats = useMemo(() => {
     const total = aiModels.length;
     const free = aiModels.filter((m) => m.isFree).length;
+    const unlimited = aiModels.filter((m) => m.freeType === "unlimited").length;
     const categoriesSet = new Set(aiModels.map((m) => m.category));
-    return { total, free, categories: categoriesSet.size };
+    return { total, free, unlimited, categories: categoriesSet.size };
   }, []);
 
-  const freeModels = useMemo(() => 
-    aiModels.filter((m) => m.isFree).slice(0, 8), 
-  []);
+  // Modèles gratuits illimités (en premier)
+  const unlimitedFreeModels = useMemo(() => getUnlimitedFreeModels(), []);
+  
+  // Modèles gratuits limités (en second)
+  const limitedFreeModels = useMemo(() => getLimitedFreeModels(), []);
 
   // Grouper les modèles par catégorie (non-free inclus)
   const modelsByCategory = useMemo(() => {
@@ -73,9 +76,18 @@ const Index = () => {
               <p className="font-display text-[10px] text-muted-foreground">MODÈLES</p>
             </div>
             <div className="text-center">
-              <p className="font-display text-3xl font-bold text-[hsl(142,76%,50%)]">{stats.free}</p>
+              <p className="font-display text-3xl font-bold text-[hsl(142,76%,50%)]">{stats.unlimited}</p>
+              <p className="font-display text-[10px] text-muted-foreground">ILLIMITÉS</p>
+            </div>
+            <div className="text-center">
+              <p className="font-display text-3xl font-bold text-[hsl(45,100%,50%)]">{stats.free}</p>
               <p className="font-display text-[10px] text-muted-foreground">GRATUITS</p>
             </div>
+            <div className="text-center">
+              <p className="font-display text-3xl font-bold text-[hsl(320,100%,60%)]">{stats.categories}</p>
+              <p className="font-display text-[10px] text-muted-foreground">CATÉGORIES</p>
+            </div>
+          </div>
             <div className="text-center">
               <p className="font-display text-3xl font-bold text-[hsl(320,100%,60%)]">{stats.categories}</p>
               <p className="font-display text-[10px] text-muted-foreground">CATÉGORIES</p>
@@ -97,18 +109,18 @@ const Index = () => {
           ))}
         </div>
 
-        {/* Free Models Section */}
-        <div className="space-y-4 mb-10">
+        {/* 1. MODÈLES GRATUITS + ILLIMITÉS - Toujours en premier */}
+        <div className="space-y-4 mb-8 p-4 rounded-xl border bg-[hsl(142,76%,50%)]/5 border-[hsl(142,76%,50%)]/30">
           <div className="flex items-center gap-3">
-            <Zap className="h-5 w-5 text-[hsl(142,76%,50%)]" />
-            <h2 className="font-display text-lg text-foreground">MODÈLES GRATUITS</h2>
+            <Infinity className="h-5 w-5 text-[hsl(142,76%,50%)]" />
+            <h2 className="font-display text-lg font-bold text-[hsl(142,76%,50%)]">MODÈLES GRATUITS + ILLIMITÉS</h2>
             <span className="font-display text-xs text-muted-foreground">
-              ({stats.free})
+              ({unlimitedFreeModels.length})
             </span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-            {freeModels.map((model) => (
+            {unlimitedFreeModels.map((model) => (
               <div
                 key={model.id}
                 className="panel-3d p-4 space-y-2 hover:scale-[1.02] transition-transform"
@@ -119,8 +131,47 @@ const Index = () => {
                     <p className="text-[10px] text-muted-foreground">{model.provider}</p>
                   </div>
                   <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[8px] font-bold bg-[hsl(142,76%,50%)/0.2] text-[hsl(142,76%,50%)]">
+                    <Infinity className="h-2.5 w-2.5" />
+                    ILLIMITÉ
+                  </span>
+                </div>
+                <p className="text-[10px] text-muted-foreground line-clamp-2">
+                  {model.description}
+                </p>
+                <div className="flex items-center gap-1">
+                  <span className="px-1.5 py-0.5 rounded text-[8px] bg-[hsl(220,15%,18%)] text-muted-foreground uppercase">
+                    {model.category}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* 2. MODÈLES GRATUITS / LIMITÉS - En second */}
+        <div className="space-y-4 mb-8 p-4 rounded-xl border bg-[hsl(45,100%,50%)]/5 border-[hsl(45,100%,50%)]/30">
+          <div className="flex items-center gap-3">
+            <Clock className="h-5 w-5 text-[hsl(45,100%,50%)]" />
+            <h2 className="font-display text-lg font-bold text-[hsl(45,100%,50%)]">MODÈLES GRATUITS / LIMITÉS</h2>
+            <span className="font-display text-xs text-muted-foreground">
+              ({limitedFreeModels.length})
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+            {limitedFreeModels.map((model) => (
+              <div
+                key={model.id}
+                className="panel-3d p-4 space-y-2 hover:scale-[1.02] transition-transform"
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h3 className="font-display text-xs text-foreground">{model.name}</h3>
+                    <p className="text-[10px] text-muted-foreground">{model.provider}</p>
+                  </div>
+                  <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[8px] font-bold bg-[hsl(45,100%,50%)/0.2] text-[hsl(45,100%,50%)]">
                     <Zap className="h-2.5 w-2.5" />
-                    FREE
+                    FREE TIER
                   </span>
                 </div>
                 <p className="text-[10px] text-muted-foreground line-clamp-2">

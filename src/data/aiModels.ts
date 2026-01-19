@@ -10,6 +10,9 @@ export type AICategory =
   | 'code' 
   | 'adult';  // Renamed from 'uncensored' to 'adult'
 
+// Types pour les catégories de gratuité
+export type FreeType = 'unlimited' | 'limited' | 'paid';
+
 // Labels français pour les catégories
 export const categoryLabels: Record<AICategory | 'all', string> = {
   all: "TOUTES",
@@ -23,6 +26,13 @@ export const categoryLabels: Record<AICategory | 'all', string> = {
   code: "CODAGE"
 };
 
+// Labels pour les types de gratuité
+export const freeTypeLabels: Record<FreeType, string> = {
+  unlimited: "GRATUITS + ILLIMITÉS",
+  limited: "GRATUITS / LIMITÉS",
+  paid: "PREMIUM"
+};
+
 export type APIStatus = 'free' | 'active' | 'inactive';
 
 export interface AIModel {
@@ -32,6 +42,7 @@ export interface AIModel {
   category: AICategory;
   apiStatus: APIStatus;
   isFree: boolean;
+  freeType?: FreeType; // unlimited = gratuit illimité, limited = gratuit avec quota, paid = payant
   price?: string;
   badges: string[];
   officialUrl: string;
@@ -274,6 +285,7 @@ export const aiModels: AIModel[] = [
     category: "images",
     apiStatus: "free",
     isFree: true,
+    freeType: "limited",
     badges: ["FREE", "FAST", "🔥"],
     officialUrl: "https://blackforestlabs.ai",
     apiUrl: "https://replicate.com/black-forest-labs/flux-schnell",
@@ -288,6 +300,7 @@ export const aiModels: AIModel[] = [
     category: "images",
     apiStatus: "free",
     isFree: true,
+    freeType: "limited",
     badges: ["FREE", "FAST"],
     officialUrl: "https://stability.ai",
     apiUrl: "https://replicate.com/bytedance/sdxl-lightning-4step",
@@ -302,6 +315,7 @@ export const aiModels: AIModel[] = [
     category: "images",
     apiStatus: "free",
     isFree: true,
+    freeType: "unlimited",
     badges: ["FREE", "UNLIMITED", "NO SIGNUP"],
     officialUrl: "https://perchance.org/ai-text-to-image-generator",
     apiUrl: "https://perchance.org/ai-text-to-image-generator",
@@ -316,6 +330,7 @@ export const aiModels: AIModel[] = [
     category: "images",
     apiStatus: "free",
     isFree: true,
+    freeType: "limited",
     badges: ["FREE TIER", "TEXT", "🔥"],
     officialUrl: "https://ideogram.ai",
     apiUrl: "https://ideogram.ai",
@@ -330,6 +345,7 @@ export const aiModels: AIModel[] = [
     category: "images",
     apiStatus: "free",
     isFree: true,
+    freeType: "limited",
     badges: ["FREE", "AESTHETIC"],
     officialUrl: "https://playground.ai",
     apiUrl: "https://playground.ai",
@@ -344,7 +360,8 @@ export const aiModels: AIModel[] = [
     category: "images",
     apiStatus: "free",
     isFree: true,
-    badges: ["FREE", "OPEN", "API"],
+    freeType: "unlimited",
+    badges: ["FREE", "UNLIMITED", "NO SIGNUP"],
     officialUrl: "https://pollinations.ai",
     apiUrl: "https://pollinations.ai",
     docsUrl: "https://github.com/pollinations/pollinations",
@@ -358,6 +375,7 @@ export const aiModels: AIModel[] = [
     category: "images",
     apiStatus: "free",
     isFree: true,
+    freeType: "limited",
     badges: ["FREE TIER", "MODELS"],
     officialUrl: "https://tensor.art",
     apiUrl: "https://tensor.art",
@@ -372,7 +390,8 @@ export const aiModels: AIModel[] = [
     category: "images",
     apiStatus: "free",
     isFree: true,
-    badges: ["FREE", "OPEN SOURCE"],
+    freeType: "unlimited",
+    badges: ["FREE", "UNLIMITED", "OPEN SOURCE"],
     officialUrl: "https://pixart-alpha.github.io",
     apiUrl: "https://huggingface.co/spaces/PixArt-alpha/PixArt-alpha",
     docsUrl: "https://github.com/PixArt-alpha/PixArt-alpha",
@@ -554,12 +573,13 @@ export const aiModels: AIModel[] = [
     category: "llms",
     apiStatus: "free",
     isFree: true,
-    badges: ["FREE", "🔓", "UNCENSORED"],
+    freeType: "unlimited",
+    badges: ["FREE", "UNLIMITED", "🔓", "UNCENSORED"],
     officialUrl: "https://venice.ai",
     apiUrl: "https://venice.ai/chat",
     docsUrl: "https://docs.venice.ai",
     provider: "Venice.ai",
-    features: ["Non-censuré", "24B paramètres", "Gratuit"],
+    features: ["Non-censuré", "24B paramètres", "Gratuit illimité"],
   },
   {
     id: "gemini-flash",
@@ -568,7 +588,8 @@ export const aiModels: AIModel[] = [
     category: "llms",
     apiStatus: "free",
     isFree: true,
-    badges: ["FREE", "FAST", "Official"],
+    freeType: "limited",
+    badges: ["FREE TIER", "FAST", "Official"],
     officialUrl: "https://ai.google.dev",
     apiUrl: "https://aistudio.google.com/app/apikey",
     docsUrl: "https://ai.google.dev/docs",
@@ -582,7 +603,8 @@ export const aiModels: AIModel[] = [
     category: "llms",
     apiStatus: "free",
     isFree: true,
-    badges: ["FREE", "OPEN SOURCE", "🔥"],
+    freeType: "unlimited",
+    badges: ["FREE", "UNLIMITED", "OPEN SOURCE", "🔥"],
     officialUrl: "https://llama.meta.com",
     apiUrl: "https://openrouter.ai/keys",
     docsUrl: "https://llama.meta.com/docs",
@@ -596,7 +618,8 @@ export const aiModels: AIModel[] = [
     category: "llms",
     apiStatus: "free",
     isFree: true,
-    badges: ["FREE", "MASSIVE", "🔥"],
+    freeType: "unlimited",
+    badges: ["FREE", "UNLIMITED", "MASSIVE", "🔥"],
     officialUrl: "https://llama.meta.com",
     apiUrl: "https://openrouter.ai/keys",
     docsUrl: "https://llama.meta.com/docs",
@@ -610,12 +633,13 @@ export const aiModels: AIModel[] = [
     category: "llms",
     apiStatus: "free",
     isFree: true,
-    badges: ["FREE", "CODE", "🔥"],
+    freeType: "unlimited",
+    badges: ["FREE", "UNLIMITED", "CODE", "🔥"],
     officialUrl: "https://deepseek.com",
     apiUrl: "https://chat.deepseek.com",
     docsUrl: "https://platform.deepseek.com/docs",
     provider: "DeepSeek",
-    features: ["Code expert", "Math", "Gratuit"],
+    features: ["Code expert", "Math", "Gratuit illimité"],
   },
   {
     id: "qwen-2.5-72b",
@@ -624,7 +648,8 @@ export const aiModels: AIModel[] = [
     category: "llms",
     apiStatus: "free",
     isFree: true,
-    badges: ["FREE", "MULTILINGUAL"],
+    freeType: "unlimited",
+    badges: ["FREE", "UNLIMITED", "MULTILINGUAL"],
     officialUrl: "https://qwen.alibaba.com",
     apiUrl: "https://huggingface.co/Qwen",
     docsUrl: "https://github.com/QwenLM/Qwen",
@@ -638,6 +663,7 @@ export const aiModels: AIModel[] = [
     category: "llms",
     apiStatus: "free",
     isFree: true,
+    freeType: "limited",
     badges: ["FREE TIER", "FRENCH", "🇫🇷"],
     officialUrl: "https://mistral.ai",
     apiUrl: "https://console.mistral.ai",
@@ -652,7 +678,8 @@ export const aiModels: AIModel[] = [
     category: "llms",
     apiStatus: "free",
     isFree: true,
-    badges: ["FREE", "ULTRA-FAST", "⚡"],
+    freeType: "limited",
+    badges: ["FREE TIER", "ULTRA-FAST", "⚡"],
     officialUrl: "https://groq.com",
     apiUrl: "https://console.groq.com/keys",
     docsUrl: "https://console.groq.com/docs",
@@ -666,7 +693,8 @@ export const aiModels: AIModel[] = [
     category: "llms",
     apiStatus: "free",
     isFree: true,
-    badges: ["FREE", "SEARCH", "SOURCES"],
+    freeType: "limited",
+    badges: ["FREE TIER", "SEARCH", "SOURCES"],
     officialUrl: "https://perplexity.ai",
     apiUrl: "https://perplexity.ai",
     docsUrl: "https://docs.perplexity.ai",
@@ -680,6 +708,7 @@ export const aiModels: AIModel[] = [
     category: "llms",
     apiStatus: "free",
     isFree: true,
+    freeType: "limited",
     badges: ["FREE TRIAL", "RAG"],
     officialUrl: "https://cohere.com",
     apiUrl: "https://dashboard.cohere.com/api-keys",
@@ -694,12 +723,13 @@ export const aiModels: AIModel[] = [
     category: "llms",
     apiStatus: "free",
     isFree: true,
-    badges: ["FREE", "MULTI-MODEL"],
+    freeType: "unlimited",
+    badges: ["FREE", "UNLIMITED", "MULTI-MODEL"],
     officialUrl: "https://huggingface.co/chat",
     apiUrl: "https://huggingface.co/chat",
     docsUrl: "https://huggingface.co/docs",
     provider: "Hugging Face",
-    features: ["Multi-modèles", "Gratuit", "Open source"],
+    features: ["Multi-modèles", "Gratuit illimité", "Open source"],
   },
   
   // PREMIUM - LLMs
@@ -844,12 +874,13 @@ export const aiModels: AIModel[] = [
     category: "videos",
     apiStatus: "free",
     isFree: true,
-    badges: ["FREE", "OPEN SOURCE"],
+    freeType: "unlimited",
+    badges: ["FREE", "UNLIMITED", "OPEN SOURCE"],
     officialUrl: "https://github.com/guoyww/AnimateDiff",
     apiUrl: "https://replicate.com/lucataco/animate-diff",
     docsUrl: "https://github.com/guoyww/AnimateDiff",
     provider: "Community",
-    features: ["Image-to-video", "Gratuit", "Open source"],
+    features: ["Image-to-video", "Gratuit illimité", "Open source"],
   },
   {
     id: "stable-video",
@@ -858,7 +889,8 @@ export const aiModels: AIModel[] = [
     category: "videos",
     apiStatus: "free",
     isFree: true,
-    badges: ["FREE", "4s clips"],
+    freeType: "limited",
+    badges: ["FREE TIER", "4s clips"],
     officialUrl: "https://stability.ai",
     apiUrl: "https://huggingface.co/spaces/stabilityai/stable-video-diffusion",
     docsUrl: "https://stability.ai/stable-video",
@@ -872,12 +904,13 @@ export const aiModels: AIModel[] = [
     category: "videos",
     apiStatus: "free",
     isFree: true,
+    freeType: "limited",
     badges: ["FREE TIER", "EASY"],
     officialUrl: "https://haiper.ai",
     apiUrl: "https://haiper.ai",
     docsUrl: "https://haiper.ai",
     provider: "Haiper",
-    features: ["Gratuit", "Simple", "Text-to-video"],
+    features: ["Gratuit limité", "Simple", "Text-to-video"],
   },
   {
     id: "luma-dream-machine-free",
@@ -886,6 +919,7 @@ export const aiModels: AIModel[] = [
     category: "videos",
     apiStatus: "free",
     isFree: true,
+    freeType: "limited",
     badges: ["FREE TIER", "HIGH QUALITY"],
     officialUrl: "https://lumalabs.ai/dream-machine",
     apiUrl: "https://lumalabs.ai/dream-machine",
@@ -900,6 +934,7 @@ export const aiModels: AIModel[] = [
     category: "videos",
     apiStatus: "free",
     isFree: true,
+    freeType: "limited",
     badges: ["FREE CREDITS", "ARTISTIC"],
     officialUrl: "https://kaiber.ai",
     apiUrl: "https://kaiber.ai",
@@ -914,12 +949,13 @@ export const aiModels: AIModel[] = [
     category: "videos",
     apiStatus: "free",
     isFree: true,
-    badges: ["FREE", "EFFECTS"],
+    freeType: "limited",
+    badges: ["FREE TIER", "EFFECTS"],
     officialUrl: "https://pixverse.ai",
     apiUrl: "https://pixverse.ai",
     docsUrl: "https://pixverse.ai",
     provider: "PixVerse",
-    features: ["Gratuit", "Effets spéciaux", "Simple"],
+    features: ["Gratuit limité", "Effets spéciaux", "Simple"],
   },
   {
     id: "invideo-free",
@@ -928,6 +964,7 @@ export const aiModels: AIModel[] = [
     category: "videos",
     apiStatus: "free",
     isFree: true,
+    freeType: "limited",
     badges: ["FREE TIER", "MARKETING"],
     officialUrl: "https://invideo.io",
     apiUrl: "https://invideo.io",
@@ -1510,6 +1547,7 @@ export const aiModels: AIModel[] = [
     category: "audio",
     apiStatus: "free",
     isFree: true,
+    freeType: "limited",
     badges: ["FREE TIER", "🎵", "🔥"],
     officialUrl: "https://suno.ai",
     apiUrl: "https://suno.ai",
@@ -1524,6 +1562,7 @@ export const aiModels: AIModel[] = [
     category: "audio",
     apiStatus: "free",
     isFree: true,
+    freeType: "limited",
     badges: ["FREE TIER", "🎵"],
     officialUrl: "https://udio.com",
     apiUrl: "https://udio.com",
@@ -1538,7 +1577,8 @@ export const aiModels: AIModel[] = [
     category: "audio",
     apiStatus: "free",
     isFree: true,
-    badges: ["FREE", "OPEN SOURCE", "TTS"],
+    freeType: "unlimited",
+    badges: ["FREE", "UNLIMITED", "OPEN SOURCE", "TTS"],
     officialUrl: "https://github.com/suno-ai/bark",
     apiUrl: "https://replicate.com/suno-ai/bark",
     docsUrl: "https://github.com/suno-ai/bark",
@@ -1552,7 +1592,8 @@ export const aiModels: AIModel[] = [
     category: "audio",
     apiStatus: "free",
     isFree: true,
-    badges: ["FREE", "OPEN SOURCE", "CLONE"],
+    freeType: "unlimited",
+    badges: ["FREE", "UNLIMITED", "OPEN SOURCE", "CLONE"],
     officialUrl: "https://coqui.ai",
     apiUrl: "https://github.com/coqui-ai/TTS",
     docsUrl: "https://tts.readthedocs.io",
@@ -1566,7 +1607,8 @@ export const aiModels: AIModel[] = [
     category: "audio",
     apiStatus: "free",
     isFree: true,
-    badges: ["FREE", "TRANSCRIPTION", "99 LANGS"],
+    freeType: "unlimited",
+    badges: ["FREE", "UNLIMITED", "TRANSCRIPTION", "99 LANGS"],
     officialUrl: "https://openai.com/whisper",
     apiUrl: "https://github.com/openai/whisper",
     docsUrl: "https://github.com/openai/whisper",
@@ -1580,6 +1622,7 @@ export const aiModels: AIModel[] = [
     category: "audio",
     apiStatus: "free",
     isFree: true,
+    freeType: "limited",
     badges: ["FREE TIER", "HIGH QUALITY"],
     officialUrl: "https://elevenlabs.io",
     apiUrl: "https://elevenlabs.io",
@@ -1682,6 +1725,7 @@ export const aiModels: AIModel[] = [
     category: "3d",
     apiStatus: "free",
     isFree: true,
+    freeType: "limited",
     badges: ["FREE TIER", "3D", "FAST"],
     officialUrl: "https://tripo3d.ai",
     apiUrl: "https://tripo3d.ai",
@@ -1696,7 +1740,8 @@ export const aiModels: AIModel[] = [
     category: "3d",
     apiStatus: "free",
     isFree: true,
-    badges: ["FREE", "OPEN SOURCE"],
+    freeType: "unlimited",
+    badges: ["FREE", "UNLIMITED", "OPEN SOURCE"],
     officialUrl: "https://github.com/openai/point-e",
     apiUrl: "https://huggingface.co/spaces/openai/point-e",
     docsUrl: "https://github.com/openai/point-e",
@@ -1710,7 +1755,8 @@ export const aiModels: AIModel[] = [
     category: "3d",
     apiStatus: "free",
     isFree: true,
-    badges: ["FREE", "MESH"],
+    freeType: "unlimited",
+    badges: ["FREE", "UNLIMITED", "MESH"],
     officialUrl: "https://github.com/openai/shap-e",
     apiUrl: "https://huggingface.co/spaces/hysts/Shap-E",
     docsUrl: "https://github.com/openai/shap-e",
@@ -1724,6 +1770,7 @@ export const aiModels: AIModel[] = [
     category: "3d",
     apiStatus: "free",
     isFree: true,
+    freeType: "limited",
     badges: ["FREE TIER", "SIMPLE"],
     officialUrl: "https://lumalabs.ai/genie",
     apiUrl: "https://lumalabs.ai/genie",
@@ -1810,6 +1857,7 @@ export const aiModels: AIModel[] = [
     category: "retouch",
     apiStatus: "free",
     isFree: true,
+    freeType: "limited",
     badges: ["FREE TIER", "FAST"],
     officialUrl: "https://remove.bg",
     apiUrl: "https://remove.bg/api",
@@ -1824,7 +1872,8 @@ export const aiModels: AIModel[] = [
     category: "retouch",
     apiStatus: "free",
     isFree: true,
-    badges: ["FREE", "OPEN SOURCE", "LOCAL"],
+    freeType: "unlimited",
+    badges: ["FREE", "UNLIMITED", "OPEN SOURCE", "LOCAL"],
     officialUrl: "https://upscayl.org",
     apiUrl: "https://github.com/upscayl/upscayl",
     docsUrl: "https://github.com/upscayl/upscayl",
@@ -1838,7 +1887,8 @@ export const aiModels: AIModel[] = [
     category: "retouch",
     apiStatus: "free",
     isFree: true,
-    badges: ["FREE", "OPEN SOURCE"],
+    freeType: "unlimited",
+    badges: ["FREE", "UNLIMITED", "OPEN SOURCE"],
     officialUrl: "https://github.com/xinntao/Real-ESRGAN",
     apiUrl: "https://replicate.com/nightmareai/real-esrgan",
     docsUrl: "https://github.com/xinntao/Real-ESRGAN",
@@ -1852,7 +1902,8 @@ export const aiModels: AIModel[] = [
     category: "retouch",
     apiStatus: "free",
     isFree: true,
-    badges: ["FREE", "INPAINTING"],
+    freeType: "limited",
+    badges: ["FREE TIER", "INPAINTING"],
     officialUrl: "https://cleanup.pictures",
     apiUrl: "https://cleanup.pictures",
     docsUrl: "https://cleanup.pictures",
@@ -1866,6 +1917,7 @@ export const aiModels: AIModel[] = [
     category: "retouch",
     apiStatus: "free",
     isFree: true,
+    freeType: "limited",
     badges: ["FREE TIER", "MOBILE"],
     officialUrl: "https://photoroom.com",
     apiUrl: "https://photoroom.com",
@@ -1968,6 +2020,7 @@ export const aiModels: AIModel[] = [
     category: "code",
     apiStatus: "free",
     isFree: true,
+    freeType: "limited",
     badges: ["FREE TIER", "IDE", "🔥"],
     officialUrl: "https://cursor.sh",
     apiUrl: "https://cursor.sh",
@@ -1982,7 +2035,8 @@ export const aiModels: AIModel[] = [
     category: "code",
     apiStatus: "free",
     isFree: true,
-    badges: ["FREE", "Official"],
+    freeType: "unlimited",
+    badges: ["FREE", "UNLIMITED", "Official"],
     officialUrl: "https://codeium.com",
     apiUrl: "https://codeium.com",
     docsUrl: "https://codeium.com/docs",
@@ -1996,6 +2050,7 @@ export const aiModels: AIModel[] = [
     category: "code",
     apiStatus: "free",
     isFree: true,
+    freeType: "limited",
     badges: ["FREE TIER", "LOCAL"],
     officialUrl: "https://tabnine.com",
     apiUrl: "https://tabnine.com",
@@ -2010,7 +2065,8 @@ export const aiModels: AIModel[] = [
     category: "code",
     apiStatus: "free",
     isFree: true,
-    badges: ["FREE", "OPEN SOURCE"],
+    freeType: "unlimited",
+    badges: ["FREE", "UNLIMITED", "OPEN SOURCE"],
     officialUrl: "https://continue.dev",
     apiUrl: "https://github.com/continuedev/continue",
     docsUrl: "https://docs.continue.dev",
@@ -2024,7 +2080,8 @@ export const aiModels: AIModel[] = [
     category: "code",
     apiStatus: "free",
     isFree: true,
-    badges: ["FREE", "TERMINAL", "OPEN SOURCE"],
+    freeType: "unlimited",
+    badges: ["FREE", "UNLIMITED", "TERMINAL", "OPEN SOURCE"],
     officialUrl: "https://aider.chat",
     apiUrl: "https://github.com/paul-gauthier/aider",
     docsUrl: "https://aider.chat/docs",
@@ -2222,6 +2279,20 @@ export const getModelsByCategory = (category: AICategory): AIModel[] => {
 
 export const getFreeModels = (): AIModel[] => {
   return aiModels.filter(model => model.isFree);
+};
+
+// Obtenir les modèles gratuits illimités (pas de quota, pas de limite)
+export const getUnlimitedFreeModels = (): AIModel[] => {
+  return aiModels.filter(model => 
+    model.isFree && model.freeType === 'unlimited'
+  );
+};
+
+// Obtenir les modèles gratuits mais limités (quota journalier/mensuel)
+export const getLimitedFreeModels = (): AIModel[] => {
+  return aiModels.filter(model => 
+    model.isFree && model.freeType === 'limited'
+  );
 };
 
 export const getActiveModels = (): AIModel[] => {
