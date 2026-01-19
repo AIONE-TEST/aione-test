@@ -88,13 +88,7 @@ const Index = () => {
               <p className="font-display text-[10px] text-muted-foreground">CATÉGORIES</p>
             </div>
           </div>
-            <div className="text-center">
-              <p className="font-display text-3xl font-bold text-[hsl(320,100%,60%)]">{stats.categories}</p>
-              <p className="font-display text-[10px] text-muted-foreground">CATÉGORIES</p>
-            </div>
-          </div>
         </div>
-
         {/* Category Buttons */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-10">
           {categories.map((cat) => (
