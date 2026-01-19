@@ -604,14 +604,23 @@ export type Database = {
       }
     }
     Functions: {
-      has_role: {
-        Args: {
-          _role: Database["public"]["Enums"]["app_role"]
-          _username: string
-        }
-        Returns: boolean
-      }
+      has_role:
+        | {
+            Args: {
+              _role: Database["public"]["Enums"]["app_role"]
+              _user_id: string
+            }
+            Returns: boolean
+          }
+        | {
+            Args: {
+              _role: Database["public"]["Enums"]["app_role"]
+              _username: string
+            }
+            Returns: boolean
+          }
       is_admin: { Args: { _username: string }; Returns: boolean }
+      is_admin_by_uid: { Args: { _user_id: string }; Returns: boolean }
       session_has_password: {
         Args: { session_username: string }
         Returns: boolean

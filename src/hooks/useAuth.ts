@@ -1,8 +1,8 @@
-import { useState, useEffect, createContext, useContext } from "react";
+import { useState, useEffect } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
-interface AuthContextType {
+export interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
@@ -12,17 +12,7 @@ interface AuthContextType {
   signInWithGoogle: () => Promise<{ error: Error | null }>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within AuthProvider");
-  }
-  return context;
-}
-
-export function useAuthState() {
+export function useAuthState(): AuthContextType {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
@@ -62,6 +52,7 @@ export function useAuthState() {
       options: {
         emailRedirectTo: window.location.origin,
         data: {
+          display_name: displayName,
           full_name: displayName,
         },
       },
@@ -93,6 +84,3 @@ export function useAuthState() {
     signInWithGoogle,
   };
 }
-
-export { AuthContext };
-export type { AuthContextType };

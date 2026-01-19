@@ -4,8 +4,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { SessionProvider, useSession } from "@/contexts/SessionContext";
-import { UsernameModal } from "@/components/UsernameModal";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { AuthModal } from "@/components/auth/AuthModal";
 import Index from "./pages/Index";
 import LLMs from "./pages/LLMs";
 import GenerateImages from "./pages/GenerateImages";
@@ -22,7 +22,7 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-// Récupère le flag de mode développement depuis localStorage
+// Get dev mode flag from localStorage
 const getDevModeFromStorage = () => {
   try {
     return localStorage.getItem("AIONE_DEV_MODE") === "true";
@@ -32,11 +32,11 @@ const getDevModeFromStorage = () => {
 };
 
 function AppContent() {
-  const { isLoading, isAuthenticated, login } = useSession();
-  const [showUsernameModal, setShowUsernameModal] = useState(false);
+  const { user, loading } = useAuth();
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [devModeEnabled, setDevModeEnabled] = useState(getDevModeFromStorage());
 
-  // Écoute les changements du mode développement depuis la page Compte
+  // Listen for dev mode changes from Account page
   useEffect(() => {
     const handleDevModeChange = (event: CustomEvent) => {
       setDevModeEnabled(event.detail);
@@ -47,21 +47,14 @@ function AppContent() {
     };
   }, []);
 
-  // Pop-up d'identification : contrôlé par le toggle Mode Développement
-  // devModeEnabled = true → affiche le pop-up d'identification
-  // devModeEnabled = false → pop-up masqué (défaut pendant développement)
+  // Show auth modal when dev mode enabled and not authenticated
   useEffect(() => {
-    if (devModeEnabled && !isLoading && !isAuthenticated) {
-      setShowUsernameModal(true);
+    if (devModeEnabled && !loading && !user) {
+      setShowAuthModal(true);
     }
-  }, [devModeEnabled, isLoading, isAuthenticated]);
+  }, [devModeEnabled, loading, user]);
 
-  const handleLoginSuccess = (sessionId: string, username: string) => {
-    login(sessionId, username);
-    setShowUsernameModal(false);
-  };
-
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -74,10 +67,9 @@ function AppContent() {
 
   return (
     <>
-      <UsernameModal
-        isOpen={devModeEnabled && showUsernameModal}
-        onClose={() => setShowUsernameModal(false)}
-        onSuccess={handleLoginSuccess}
+      <AuthModal
+        isOpen={devModeEnabled && showAuthModal && !user}
+        onClose={() => setShowAuthModal(false)}
       />
       
       <BrowserRouter>
@@ -103,15 +95,16 @@ function AppContent() {
     </>
   );
 }
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <SessionProvider>
+    <AuthProvider>
       <TooltipProvider>
         <Toaster />
         <Sonner />
         <AppContent />
       </TooltipProvider>
-    </SessionProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 
