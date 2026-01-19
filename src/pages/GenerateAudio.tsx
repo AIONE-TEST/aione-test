@@ -1,44 +1,56 @@
 import { useState, useMemo, useRef, useCallback } from "react";
-import { Volume2, Sparkles, Zap, Music, Mic, Radio, Headphones, Upload, File, Type, Download, Play, Pause, LayoutGrid, Gift, ShieldOff, Tag } from "lucide-react";
+import { Volume2, Sparkles, Music, Mic, Radio, Headphones, Upload, File, Download, Play, Pause, LayoutGrid, Gift, ShieldOff, Tag, Paperclip, SkipBack, SkipForward, Repeat, Shuffle, Volume1, VolumeX } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { ModelSelector } from "@/components/ModelSelector";
 import { AppTileCard } from "@/components/AppTileCard";
 import { APIKeyModal } from "@/components/APIKeyModal";
+import { MediaResultPopup } from "@/components/MediaResultPopup";
+import { CreditsDisplay } from "@/components/CreditsDisplay";
+import { GenerateButton } from "@/components/GenerateButton";
 import { AIModel, getModelsByCategory } from "@/data/aiModels";
 import { useAPIStatus } from "@/hooks/useAPIStatus";
+import { useCredits } from "@/hooks/useCredits";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { StatusLED } from "@/components/StatusLED";
+import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
 
 const mediaTypes = [
-  { id: "audio", label: "Audio", icon: <Music className="h-5 w-5" />, accept: "audio/*" },
-  { id: "document", label: "Document", icon: <File className="h-5 w-5" />, accept: ".pdf,.doc,.docx,.txt" },
+  { id: "audio", label: "Audio", icon: <Music className="h-4 w-4" />, accept: "audio/*" },
+  { id: "document", label: "Lyrics", icon: <File className="h-4 w-4" />, accept: ".txt,.doc,.docx" },
 ];
 
-const qualities = ["standard", "hd", "ultra"];
-const durations = ["15s", "30s", "60s", "120s"];
+const genres = ["Pop", "Rock", "Hip-Hop", "Electronic", "Jazz", "Classical", "Ambient", "Cinematic"];
+const moods = ["Énergique", "Calme", "Triste", "Joyeux", "Épique", "Mystérieux"];
+const durations = ["15s", "30s", "60s", "120s", "240s"];
 
 type AudioFilter = "all" | "services" | "free" | "uncensored";
+type AudioMode = "text-to-music" | "voice-clone" | "tts" | "sfx";
 
 const GenerateAudio = () => {
   const { getModelsWithStatus } = useAPIStatus();
+  const { getCreditsForService, getTotalCreditsForService, canGenerate: hasCreditsForService, useCredit } = useCredits();
   const [selectedModel, setSelectedModel] = useState<AIModel | null>(null);
   const [prompt, setPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedContent, setGeneratedContent] = useState<string | null>(null);
   const [uploadedAudio, setUploadedAudio] = useState<string | null>(null);
-  const [favorites, setFavorites] = useState<string[]>([]);
   const [selectedMediaType, setSelectedMediaType] = useState("audio");
-  const [quality, setQuality] = useState("standard");
+  const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
+  const [selectedMood, setSelectedMood] = useState<string | null>(null);
   const [duration, setDuration] = useState("30s");
   const [isDragging, setIsDragging] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeFilter, setActiveFilter] = useState<AudioFilter>("all");
+  const [audioMode, setAudioMode] = useState<AudioMode>("text-to-music");
   const [apiKeyModalOpen, setApiKeyModalOpen] = useState(false);
   const [selectedApiKeyName, setSelectedApiKeyName] = useState<string>("");
+  const [showResultPopup, setShowResultPopup] = useState(false);
+  const [volume, setVolume] = useState([75]);
+  const [progress, setProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
 
   const handleOpenAPIKeyModal = (apiKeyName: string) => {
     setSelectedApiKeyName(apiKeyName);
@@ -66,40 +78,39 @@ const GenerateAudio = () => {
     }
   }, [allModels, activeFilter]);
 
-  const filterCounts = useMemo(() => ({
-    all: allModels.length,
-    services: allModels.filter(m => m.apiStatus === "active").length,
-    free: allModels.filter(m => m.isFree || m.apiStatus === "free").length,
-    uncensored: allModels.filter(m => 
-      m.badges.some(b => b.toLowerCase().includes("uncensored") || b.toLowerCase().includes("nsfw") || b === "18+") ||
-      m.name.toLowerCase().includes("uncensored")
-    ).length,
-  }), [allModels]);
-
   const freeModelsCount = filteredModels.filter(m => m.isFree).length;
 
+  // Get credits for selected model
+  const serviceName = selectedModel?.provider || "audio";
+  const credits = getCreditsForService(serviceName, "standard");
+  const totalCredits = getTotalCreditsForService(serviceName, "standard");
+  const hasCredits = hasCreditsForService(serviceName, "standard");
+
   const filters: { id: AudioFilter; label: string; icon: React.ReactNode }[] = [
-    { id: "all", label: "Catégories", icon: <LayoutGrid className="h-4 w-4" /> },
-    { id: "services", label: "Services", icon: <Tag className="h-4 w-4" /> },
-    { id: "free", label: "Gratuits", icon: <Gift className="h-4 w-4" /> },
-    { id: "uncensored", label: "Sans Censure", icon: <ShieldOff className="h-4 w-4" /> },
+    { id: "all", label: "Tous", icon: <LayoutGrid className="h-3 w-3" /> },
+    { id: "services", label: "Actifs", icon: <Tag className="h-3 w-3" /> },
+    { id: "free", label: "Gratuits", icon: <Gift className="h-3 w-3" /> },
+    { id: "uncensored", label: "-18", icon: <ShieldOff className="h-3 w-3" /> },
+  ];
+
+  const modes: { id: AudioMode; label: string; icon: React.ReactNode }[] = [
+    { id: "text-to-music", label: "TEXT TO MUSIC", icon: <Music className="h-4 w-4" /> },
+    { id: "tts", label: "TEXT TO SPEECH", icon: <Mic className="h-4 w-4" /> },
+    { id: "voice-clone", label: "VOICE CLONE", icon: <Radio className="h-4 w-4" /> },
+    { id: "sfx", label: "SOUND FX", icon: <Headphones className="h-4 w-4" /> },
   ];
 
   const handleGenerate = async () => {
-    if (!selectedModel || !prompt.trim()) return;
+    if (!selectedModel || !prompt.trim() || !hasCredits) return;
     
     setIsGenerating(true);
+    await useCredit(serviceName, "standard");
+    
     setTimeout(() => {
       setIsGenerating(false);
-    }, 5000);
-  };
-
-  const toggleFavorite = (modelId: string) => {
-    setFavorites((prev) =>
-      prev.includes(modelId)
-        ? prev.filter((id) => id !== modelId)
-        : [...prev, modelId]
-    );
+      setGeneratedContent("https://example.com/generated-audio.mp3");
+      setShowResultPopup(true);
+    }, 3000);
   };
 
   const handleDrop = useCallback((e: React.DragEvent) => {
@@ -127,378 +138,372 @@ const GenerateAudio = () => {
     }
   };
 
-  const handleImportClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const canGenerate = Boolean(selectedModel) && prompt.trim().length > 0;
+  const canGenerateNow = Boolean(selectedModel) && prompt.trim().length > 0;
   const currentMediaType = mediaTypes.find(m => m.id === selectedMediaType);
+
+  // Simulated waveform bars
+  const waveformBars = Array.from({ length: 60 }, (_, i) => ({
+    height: Math.random() * 80 + 20,
+    active: i < (progress / 100) * 60
+  }));
 
   return (
     <div className="min-h-screen bg-background">
       <Sidebar />
 
-      <main className="ml-[373px] min-h-screen p-6">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-4 mb-2">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[hsl(25,100%,55%)] to-[hsl(45,100%,55%)] glow-orange">
-              <Volume2 className="h-7 w-7 text-white" />
-            </div>
-            <div>
-              <h1 className="font-display text-3xl font-black tracking-wider" style={{
-                background: "linear-gradient(135deg, hsl(25,100%,55%), hsl(45,100%,55%))",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent"
-              }}>
-                GÉNÉRATION AUDIO & VOIX
-              </h1>
-              <p className="text-lg text-muted-foreground tracking-wide">
-                Créez de la musique et des voix avec l'IA • <span className="text-[hsl(25,100%,55%)] font-bold">{filteredModels.length} modèles</span> disponibles
-              </p>
-            </div>
+      <main className="ml-[373px] min-h-screen p-4">
+        {/* Header compact */}
+        <div className="flex items-center gap-3 mb-4">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[hsl(25,100%,55%)] to-[hsl(45,100%,55%)] glow-orange">
+            <Volume2 className="h-5 w-5 text-white" />
+          </div>
+          <div className="flex-1">
+            <h1 className="font-display text-xl font-black" style={{
+              background: "linear-gradient(135deg, hsl(25,100%,55%), hsl(45,100%,55%))",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent"
+            }}>
+              GÉNÉRATION MUSIQUE & VOIX
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              <span className="text-[hsl(25,100%,55%)] font-bold">{filteredModels.length}</span> modèles • <span className="text-[hsl(142,76%,50%)]">{freeModelsCount} gratuits</span>
+            </p>
+          </div>
+          {/* Filtres compacts */}
+          <div className="flex gap-1">
+            {filters.map((filter) => (
+              <Button
+                key={filter.id}
+                variant={activeFilter === filter.id ? "default" : "outline"}
+                size="sm"
+                onClick={() => setActiveFilter(filter.id)}
+                className={cn(
+                  "gap-1 text-xs h-7 px-2",
+                  activeFilter === filter.id ? "btn-3d-orange" : ""
+                )}
+              >
+                {filter.icon}
+                {filter.label}
+              </Button>
+            ))}
           </div>
         </div>
 
-        {/* Filter Buttons */}
-        <div className="flex flex-wrap gap-3 mb-6">
-          {filters.map((filter) => (
+        {/* Mode Buttons - Style Suno */}
+        <div className="flex gap-2 mb-4">
+          {modes.map((mode) => (
             <Button
-              key={filter.id}
-              variant={activeFilter === filter.id ? "default" : "outline"}
-              size="sm"
-              onClick={() => setActiveFilter(filter.id)}
+              key={mode.id}
+              variant={audioMode === mode.id ? "default" : "outline"}
+              onClick={() => setAudioMode(mode.id)}
               className={cn(
-                "gap-2 text-sm font-semibold transition-all",
-                activeFilter === filter.id 
+                "gap-2 font-display text-sm",
+                audioMode === mode.id 
                   ? "btn-3d-orange" 
-                  : "hover:border-[hsl(25,100%,55%)]/50"
+                  : "btn-3d hover:border-[hsl(25,100%,55%)]/50"
               )}
             >
-              {filter.icon}
-              {filter.label}
-              <span className={cn(
-                "ml-1 px-1.5 py-0.5 rounded-full text-xs",
-                activeFilter === filter.id 
-                  ? "bg-black/20 text-white" 
-                  : "bg-muted text-muted-foreground"
-              )}>
-                {filterCounts[filter.id]}
-              </span>
+              {mode.icon}
+              {mode.label}
             </Button>
           ))}
         </div>
 
-        {/* Quick Actions */}
-        <div className="flex gap-3 mb-6">
-          <Button className="btn-3d-orange gap-2 text-base hover:scale-105 transition-transform">
-            <Music className="h-5 w-5" />
-            TEXT TO MUSIC
-          </Button>
-          <Button className="btn-3d gap-2 text-base hover:scale-105 transition-transform">
-            <Mic className="h-5 w-5" />
-            TEXT TO SPEECH
-          </Button>
-          <Button className="btn-3d gap-2 text-base hover:scale-105 transition-transform">
-            <Radio className="h-5 w-5" />
-            VOICE CLONING
-          </Button>
-          <Button className="btn-3d gap-2 text-base hover:scale-105 transition-transform">
-            <Headphones className="h-5 w-5" />
-            SOUND EFFECTS
-          </Button>
-        </div>
-
-        {/* Main Layout - ORDER: Source -> Result -> Prompt -> Engine */}
-        <div className="flex flex-col gap-6 max-w-6xl mb-10">
+        {/* Layout unifié vertical - MÊME TAILLE QUE VIDEO */}
+        <div className="flex flex-col gap-4 max-w-5xl mb-6">
           
-          {/* 1. AUDIO SOURCE - En haut */}
-          <div className="panel-3d p-6">
-            <div className="flex items-center justify-between mb-4">
-              <span className="font-display text-xl font-bold text-foreground">AUDIO SOURCE (OPTIONNEL)</span>
-              {uploadedAudio && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setUploadedAudio(null)}
-                  className="text-muted-foreground hover:text-foreground"
-                >
-                  Changer
-                </Button>
-              )}
-            </div>
-            
-            <div
-              className={cn(
-                "canvas-3d aspect-[3/1] flex items-center justify-center transition-all duration-300 cursor-pointer",
-                isDragging && "border-[hsl(var(--primary))] bg-[hsl(var(--primary))]/5"
-              )}
-              onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-              onDragLeave={() => setIsDragging(false)}
-              onDrop={handleDrop}
-              onClick={() => document.getElementById('file-upload-audio')?.click()}
-            >
-              {uploadedAudio ? (
-                <div className="flex items-center gap-6 w-full px-8">
-                  <Button
-                    size="lg"
-                    className="h-16 w-16 rounded-full btn-3d-orange"
-                    onClick={(e) => { e.stopPropagation(); setIsPlaying(!isPlaying); }}
-                  >
-                    {isPlaying ? <Pause className="h-8 w-8" /> : <Play className="h-8 w-8" />}
-                  </Button>
-                  <div className="flex-1">
-                    <div className="h-2 bg-muted rounded-full overflow-hidden">
-                      <div className="h-full w-1/3 bg-gradient-to-r from-[hsl(25,100%,55%)] to-[hsl(45,100%,55%)]" />
+          {/* Zone principale - Visualiseur Audio style Suno */}
+          <div
+            className={cn(
+              "panel-3d p-6 min-h-[450px] aspect-[16/9] flex flex-col transition-all duration-300",
+              isDragging && "border-[hsl(25,100%,55%)] bg-[hsl(25,100%,55%)]/5"
+            )}
+            onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+            onDragLeave={() => setIsDragging(false)}
+            onDrop={handleDrop}
+          >
+            {isGenerating ? (
+              /* Animation de génération */
+              <div className="flex-1 flex flex-col items-center justify-center gap-6">
+                <div className="relative">
+                  <div className="h-24 w-24 rounded-full border-4 border-[hsl(25,100%,55%)]/30 border-t-[hsl(25,100%,55%)] animate-spin" />
+                  <Music className="h-10 w-10 text-[hsl(25,100%,55%)] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                </div>
+                <div className="text-center">
+                  <p className="font-display text-xl text-foreground mb-2">Génération en cours...</p>
+                  <p className="text-sm text-muted-foreground">Création de votre {audioMode === "text-to-music" ? "musique" : "audio"}</p>
+                </div>
+                {/* Animated waveform during generation */}
+                <div className="flex items-end justify-center gap-1 h-16 w-full max-w-md">
+                  {Array.from({ length: 30 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className="w-2 bg-gradient-to-t from-[hsl(25,100%,55%)] to-[hsl(45,100%,55%)] rounded-full animate-pulse"
+                      style={{ 
+                        height: `${Math.random() * 100}%`,
+                        animationDelay: `${i * 50}ms`
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+            ) : generatedContent || uploadedAudio ? (
+              /* Player style Suno */
+              <div className="flex-1 flex flex-col">
+                {/* Waveform visualization */}
+                <div className="flex-1 flex items-center justify-center px-4">
+                  <div className="flex items-end justify-center gap-[2px] h-full w-full max-w-3xl py-8">
+                    {waveformBars.map((bar, i) => (
+                      <div
+                        key={i}
+                        className={cn(
+                          "w-2 rounded-full transition-all duration-150",
+                          bar.active 
+                            ? "bg-gradient-to-t from-[hsl(25,100%,55%)] to-[hsl(45,100%,55%)]" 
+                            : "bg-muted-foreground/30"
+                        )}
+                        style={{ height: `${bar.height}%` }}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Controls */}
+                <div className="px-6 pb-4">
+                  {/* Progress bar */}
+                  <div className="mb-4">
+                    <Slider
+                      value={[progress]}
+                      onValueChange={(v) => setProgress(v[0])}
+                      max={100}
+                      step={1}
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                      <span>0:{String(Math.floor(progress * 0.3)).padStart(2, '0')}</span>
+                      <span>0:30</span>
                     </div>
                   </div>
-                  <audio src={uploadedAudio} className="hidden" />
-                </div>
-              ) : (
-                <div className="flex flex-col items-center gap-4 text-center px-8">
-                  <div className="h-16 w-16 rounded-full bg-gradient-to-br from-[hsl(25,100%,55%)]/20 to-[hsl(45,100%,55%)]/20 flex items-center justify-center">
-                    <Upload className="h-8 w-8 text-[hsl(25,100%,55%)]" />
-                  </div>
-                  <div>
-                    <p className="font-display text-lg text-foreground mb-2">
-                      Glissez-déposez un fichier audio ici
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      ou cliquez pour sélectionner (Voice Cloning)
-                    </p>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Formats acceptés : MP3, WAV, OGG, FLAC · Max 50MB
-                  </p>
-                </div>
-              )}
-              <input
-                id="file-upload-audio"
-                type="file"
-                accept="audio/*"
-                className="hidden"
-                onChange={handleFileSelect}
-              />
-            </div>
-          </div>
 
-          {/* 2. RÉSULTAT - En dessous */}
-          <div className="panel-3d p-6">
-            <div className="flex items-center justify-between mb-4">
-              <span className="font-display text-xl font-bold text-foreground">RÉSULTAT</span>
-              {generatedContent && (
-                <Button variant="ghost" size="sm" className="gap-2">
-                  <Download className="h-4 w-4" />
-                  Télécharger
-                </Button>
-              )}
-            </div>
-            
-            <div className="canvas-3d aspect-[3/1] flex items-center justify-center">
-              {isGenerating ? (
-                <div className="flex flex-col items-center gap-4">
-                  <div className="h-16 w-16 rounded-full border-4 border-[hsl(25,100%,55%)]/30 border-t-[hsl(25,100%,55%)] animate-spin" />
-                  <p className="font-display text-lg text-muted-foreground animate-pulse">
-                    Génération en cours...
-                  </p>
-                </div>
-              ) : generatedContent ? (
-                <div className="flex items-center gap-6 w-full px-8">
-                  <Button size="lg" className="h-16 w-16 rounded-full btn-3d-green">
-                    <Play className="h-8 w-8" />
-                  </Button>
-                  <div className="flex-1">
-                    <div className="h-2 bg-muted rounded-full overflow-hidden">
-                      <div className="h-full w-0 bg-gradient-to-r from-[hsl(142,76%,50%)] to-[hsl(174,100%,50%)]" />
+                  {/* Playback controls */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <Shuffle className="h-4 w-4 text-muted-foreground" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <SkipBack className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        className="h-14 w-14 rounded-full btn-3d-orange"
+                        onClick={() => setIsPlaying(!isPlaying)}
+                      >
+                        {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6 ml-1" />}
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <SkipForward className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <Repeat className="h-4 w-4 text-muted-foreground" />
+                      </Button>
                     </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center gap-4 text-center px-8">
-                  <div className="h-16 w-16 rounded-full bg-muted/50 flex items-center justify-center">
-                    <Music className="h-8 w-8 text-muted-foreground" />
-                  </div>
-                  <p className="font-display text-lg text-muted-foreground">
-                    L'audio généré apparaîtra ici
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Entrez un prompt et lancez la génération
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
 
-          {/* 3. ÉDITEUR DE PROMPT - Compact */}
-          <div className="panel-3d p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Type className="h-4 w-4 text-[hsl(var(--primary))]" />
-              <span className="font-display text-sm font-bold">PROMPT</span>
-            </div>
-            
-            <Textarea
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              placeholder="Décrivez l'audio... Ex: Musique épique orchestrale, style Hans Zimmer"
-              className="input-3d min-h-[60px] text-base resize-none mb-3"
+                    {/* Volume */}
+                    <div className="flex items-center gap-2 w-32">
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        {volume[0] === 0 ? <VolumeX className="h-4 w-4" /> : <Volume1 className="h-4 w-4" />}
+                      </Button>
+                      <Slider
+                        value={volume}
+                        onValueChange={setVolume}
+                        max={100}
+                        step={1}
+                        className="flex-1"
+                      />
+                    </div>
+
+                    {/* Download */}
+                    <Button variant="ghost" size="sm" className="gap-2">
+                      <Download className="h-4 w-4" />
+                      Télécharger
+                    </Button>
+                  </div>
+                </div>
+
+                <audio ref={audioRef} src={generatedContent || uploadedAudio || undefined} className="hidden" />
+              </div>
+            ) : (
+              /* Empty state - Upload zone */
+              <div 
+                className="flex-1 flex flex-col items-center justify-center cursor-pointer"
+                onClick={() => document.getElementById('file-upload-audio')?.click()}
+              >
+                <div className="h-20 w-20 rounded-full bg-gradient-to-br from-[hsl(25,100%,55%)]/20 to-[hsl(45,100%,55%)]/20 flex items-center justify-center mb-4">
+                  <Upload className="h-10 w-10 text-[hsl(25,100%,55%)]" />
+                </div>
+                <p className="font-display text-xl text-foreground mb-2">
+                  {audioMode === "voice-clone" ? "Importez un audio à cloner" : "Prêt à générer"}
+                </p>
+                <p className="text-sm text-muted-foreground text-center max-w-md">
+                  {audioMode === "voice-clone" 
+                    ? "Glissez un fichier audio ou cliquez pour sélectionner"
+                    : "Entrez votre prompt et sélectionnez un modèle pour commencer"
+                  }
+                </p>
+                {audioMode === "voice-clone" && (
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Formats: MP3, WAV, OGG, FLAC • Max 50MB
+                  </p>
+                )}
+              </div>
+            )}
+            <input
+              id="file-upload-audio"
+              type="file"
+              accept="audio/*"
+              className="hidden"
+              onChange={handleFileSelect}
             />
+          </div>
 
-            <div className="flex items-center justify-between">
-              <Badge className="bg-[hsl(142,76%,50%)]/20 text-[hsl(142,76%,50%)] border-[hsl(142,76%,50%)]/30 text-sm px-2 py-0.5">
-                {freeModelsCount} GRATUITS
-              </Badge>
-              
-              <Button
-                onClick={handleGenerate}
-                disabled={!canGenerate || isGenerating}
-                className="btn-3d-orange text-base px-6 py-4 font-display font-bold"
-              >
-                {isGenerating ? "..." : "GÉNÉRER"}
+          {/* Zone Prompt */}
+          <div className="panel-3d p-3">
+            <div className="flex gap-2 items-start">
+              <Button variant="ghost" size="icon" className="h-10 w-10 flex-shrink-0">
+                <Paperclip className="h-5 w-5 text-muted-foreground" />
               </Button>
+              <Textarea
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                placeholder={
+                  audioMode === "text-to-music" 
+                    ? "Décrivez la musique... Ex: Musique épique orchestrale, style Hans Zimmer, avec violons et percussions"
+                    : audioMode === "tts"
+                    ? "Entrez le texte à convertir en voix..."
+                    : audioMode === "sfx"
+                    ? "Décrivez l'effet sonore... Ex: Explosion massive, tonnerre, pluie tropicale"
+                    : "Entrez le texte à dire avec la voix clonée..."
+                }
+                className="input-3d min-h-[50px] text-sm resize-none flex-1"
+              />
+              <GenerateButton
+                onClick={handleGenerate}
+                isGenerating={isGenerating}
+                canGenerate={canGenerateNow}
+                hasCredits={hasCredits}
+              />
             </div>
           </div>
 
-          {/* 4. MOTEUR DE GÉNÉRATION & OPTIONS - En bas */}
-          <div className="panel-3d p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Sparkles className="h-5 w-5 text-[hsl(var(--secondary))]" />
-              <span className="font-display text-lg font-bold">MOTEUR DE GÉNÉRATION & OPTIONS</span>
+          {/* MODÈLES AI & OPTIONS */}
+          <div className="panel-3d p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Sparkles className="h-4 w-4 text-[hsl(var(--secondary))]" />
+              <span className="font-display text-sm font-bold">MODÈLES AI & OPTIONS</span>
             </div>
 
-            {/* Gros bouton d'import média */}
-            <div className="mb-6">
-              <label className="font-display text-sm text-muted-foreground mb-3 block">
-                IMPORTER UN MÉDIA
-              </label>
-              
-              {/* Sélection type de média */}
-              <div className="flex flex-wrap gap-2 mb-4">
-                {mediaTypes.map((type) => (
-                  <Button
-                    key={type.id}
-                    size="sm"
-                    variant={selectedMediaType === type.id ? "default" : "outline"}
-                    onClick={() => setSelectedMediaType(type.id)}
-                    className={cn(
-                      "gap-2",
-                      selectedMediaType === type.id ? "btn-3d-cyan" : "btn-3d"
-                    )}
-                  >
-                    {type.icon}
-                    {type.label}
-                  </Button>
-                ))}
+            <div className="grid grid-cols-4 gap-4">
+              {/* Sélecteur de modèle */}
+              <div>
+                <label className="font-display text-xs text-muted-foreground mb-1 block">MOTEUR AI</label>
+                <ModelSelector
+                  models={filteredModels}
+                  selectedModel={selectedModel}
+                  onSelectModel={setSelectedModel}
+                  category="audio"
+                  className="w-full"
+                />
               </div>
 
-              {/* Bouton d'import */}
-              <Button
-                onClick={handleImportClick}
-                className="w-full h-16 btn-3d-purple gap-3 text-lg font-display font-bold tracking-wider"
-              >
-                <Upload className="h-6 w-6" />
-                IMPORTER {currentMediaType?.label.toUpperCase()}
-              </Button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept={currentMediaType?.accept}
-                className="hidden"
-                onChange={handleFileSelect}
-              />
-            </div>
+              {/* Genre (for music) */}
+              {audioMode === "text-to-music" && (
+                <div>
+                  <label className="font-display text-xs text-muted-foreground mb-1 block">GENRE</label>
+                  <div className="flex flex-wrap gap-1">
+                    {genres.slice(0, 4).map((genre) => (
+                      <Button
+                        key={genre}
+                        size="sm"
+                        variant={selectedGenre === genre ? "default" : "outline"}
+                        onClick={() => setSelectedGenre(selectedGenre === genre ? null : genre)}
+                        className={cn(
+                          "h-7 px-2 text-xs",
+                          selectedGenre === genre ? "btn-3d-orange" : "btn-3d"
+                        )}
+                      >
+                        {genre}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
-            {/* Sélecteur de modèle */}
-            <div className="mb-6">
-              <label className="font-display text-sm text-muted-foreground mb-3 block">
-                MOTEUR DE GÉNÉRATION AI
-              </label>
-              <ModelSelector
-                models={filteredModels}
-                selectedModel={selectedModel}
-                onSelectModel={setSelectedModel}
-                category="audio"
-                className="w-full"
-              />
+              {/* Mood (for music) */}
+              {audioMode === "text-to-music" && (
+                <div>
+                  <label className="font-display text-xs text-muted-foreground mb-1 block">AMBIANCE</label>
+                  <div className="flex flex-wrap gap-1">
+                    {moods.slice(0, 3).map((mood) => (
+                      <Button
+                        key={mood}
+                        size="sm"
+                        variant={selectedMood === mood ? "default" : "outline"}
+                        onClick={() => setSelectedMood(selectedMood === mood ? null : mood)}
+                        className={cn(
+                          "h-7 px-2 text-xs",
+                          selectedMood === mood ? "btn-3d-pink" : "btn-3d"
+                        )}
+                      >
+                        {mood}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
-              <div className="mt-4 space-y-2 text-sm">
-                <div className="flex items-center gap-2">
-                  <StatusLED isActive={!!selectedModel} />
-                  <span className="text-muted-foreground">
-                    {selectedModel ? selectedModel.name : "Aucun modèle sélectionné"}
-                  </span>
+              {/* Duration */}
+              <div>
+                <label className="font-display text-xs text-muted-foreground mb-1 block">DURÉE</label>
+                <div className="flex gap-1">
+                  {durations.slice(0, 4).map((d) => (
+                    <Button
+                      key={d}
+                      size="sm"
+                      variant={duration === d ? "default" : "outline"}
+                      onClick={() => setDuration(d)}
+                      className={cn(
+                        "flex-1 h-7 px-1 text-xs",
+                        duration === d ? "btn-3d-green" : "btn-3d"
+                      )}
+                    >
+                      {d}
+                    </Button>
+                  ))}
                 </div>
               </div>
             </div>
 
-            {/* Duration */}
-            <div className="mb-4">
-              <label className="font-display text-sm text-muted-foreground mb-2 block">
-                DURÉE
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {durations.map((d) => (
-                  <Button
-                    key={d}
-                    size="sm"
-                    variant={duration === d ? "default" : "outline"}
-                    onClick={() => setDuration(d)}
-                    className={duration === d ? "btn-3d-pink" : "btn-3d"}
-                  >
-                    {d}
-                  </Button>
-                ))}
-              </div>
-            </div>
-
-            {/* Quality */}
-            <div className="mb-4">
-              <label className="font-display text-sm text-muted-foreground mb-2 block">
-                QUALITÉ
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {qualities.map((q) => (
-                  <Button
-                    key={q}
-                    size="sm"
-                    variant={quality === q ? "default" : "outline"}
-                    onClick={() => setQuality(q)}
-                    className={quality === q ? "btn-3d-green" : "btn-3d"}
-                  >
-                    {q.toUpperCase()}
-                  </Button>
-                ))}
-              </div>
-            </div>
-
-            {/* Options supplémentaires */}
-            <div className="pt-4 border-t border-border/50 space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Format de sortie</span>
-                <span className="font-bold text-foreground">MP3, WAV, FLAC</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Durée max</span>
-                <span className="font-bold text-foreground">5 minutes</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Quota restant</span>
-                <span className="font-bold text-[hsl(142,76%,50%)]">50 générations</span>
-              </div>
+            {/* Credits Display */}
+            <div className="mt-3 pt-3 border-t border-border/50">
+              <CreditsDisplay 
+                credits={credits} 
+                totalCredits={totalCredits} 
+                serviceName={selectedModel?.name}
+                compact
+              />
             </div>
           </div>
         </div>
 
-        {/* Models Section - Style APPLIS IA */}
+        {/* Grille des modèles */}
         <div className="mb-6">
-          <div className="flex items-center gap-3 mb-6">
-            <Volume2 className="h-6 w-6 text-[hsl(25,100%,55%)]" />
-            <h2 className="font-display text-2xl font-bold">MODÈLES AUDIO COMPATIBLES</h2>
-            <Badge variant="outline" className="text-base px-3">
-              {filteredModels.length}
-            </Badge>
+          <div className="flex items-center gap-3 mb-4">
+            <Music className="h-5 w-5 text-[hsl(25,100%,55%)]" />
+            <h2 className="font-display text-lg font-bold">MODÈLES AUDIO COMPATIBLES</h2>
+            <Badge variant="outline" className="text-sm">{filteredModels.length}</Badge>
           </div>
 
-          {/* Grid avec le même style que APPLIS IA */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {filteredModels.map((model) => (
               <AppTileCard
@@ -512,14 +517,24 @@ const GenerateAudio = () => {
             ))}
           </div>
         </div>
-
-        {/* API Key Modal */}
-        <APIKeyModal
-          isOpen={apiKeyModalOpen}
-          onClose={() => setApiKeyModalOpen(false)}
-          apiKeyName={selectedApiKeyName}
-        />
       </main>
+
+      {/* Popup Résultat */}
+      <MediaResultPopup
+        isOpen={showResultPopup}
+        onClose={() => setShowResultPopup(false)}
+        mediaUrl={generatedContent}
+        mediaType="audio"
+        prompt={prompt}
+        model={selectedModel?.name}
+      />
+
+      {/* API Key Modal */}
+      <APIKeyModal
+        isOpen={apiKeyModalOpen}
+        onClose={() => setApiKeyModalOpen(false)}
+        apiKeyName={selectedApiKeyName}
+      />
     </div>
   );
 };
