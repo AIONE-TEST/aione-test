@@ -149,11 +149,11 @@ const GenerateImages = () => {
         </div>
 
         {/* Layout unifié vertical - même structure que Video */}
-        <div className="flex flex-col gap-4 max-w-5xl mb-6">
-          {/* Zone Upload (principale) */}
+        <div className="flex flex-col gap-4 max-w-6xl mb-6">
+          {/* Zone Upload (principale) - +25% de taille */}
           <div
             className={cn(
-              "panel-3d p-6 min-h-[450px] aspect-[16/9] flex items-center justify-center transition-all duration-300 cursor-pointer",
+              "panel-3d p-6 min-h-[562px] aspect-[16/9] flex items-center justify-center transition-all duration-300 cursor-pointer",
               isDragging && "border-[hsl(var(--primary))] bg-[hsl(var(--primary))]/5"
             )}
             onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}

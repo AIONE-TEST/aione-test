@@ -253,8 +253,8 @@ const LLMs = () => {
           </div>
         </div>
 
-        {/* Chat pleine largeur - même taille que fenêtre de génération VIDEO */}
-        <div className="panel-3d flex flex-col overflow-hidden max-w-5xl min-h-[450px]" style={{ aspectRatio: "16/9" }}>
+        {/* Chat pleine largeur - +25% de taille */}
+        <div className="panel-3d flex flex-col overflow-hidden max-w-6xl min-h-[562px]" style={{ aspectRatio: "16/9" }}>
           {/* Model Selector compact */}
           <div className="p-3 border-b border-border/50 flex items-center gap-3">
             <Sparkles className="h-4 w-4 text-[hsl(45,100%,55%)]" />

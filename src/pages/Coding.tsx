@@ -154,11 +154,11 @@ if __name__ == "__main__":
           </div>
         </div>
 
-        {/* Main Layout: Terminal + Editor - même taille que fenêtre génération VIDEO */}
-        <div className="flex flex-col gap-4 max-w-5xl">
+        {/* Main Layout: Terminal + Editor - +25% de taille */}
+        <div className="flex flex-col gap-4 max-w-6xl">
           
-          {/* TERMINAL - même taille que fenêtre VIDEO */}
-          <div className="min-h-[450px]" style={{ aspectRatio: "16/9" }}>
+          {/* TERMINAL - +25% de taille */}
+          <div className="min-h-[562px]" style={{ aspectRatio: "16/9" }}>
             <Card className="panel-3d h-full flex flex-col">
               <div className="flex items-center justify-between px-4 py-2 border-b border-border/50 shrink-0">
                 <div className="flex items-center gap-2">
@@ -201,8 +201,8 @@ if __name__ == "__main__":
             </Card>
           </div>
 
-          {/* EDITOR - même taille que fenêtre VIDEO */}
-          <div className="min-h-[450px]" style={{ aspectRatio: "16/9" }}>
+          {/* EDITOR - +25% de taille */}
+          <div className="min-h-[562px]" style={{ aspectRatio: "16/9" }}>
             <Card className="panel-3d h-full flex flex-col">
               <div className="flex items-center justify-between px-4 py-2 border-b border-border/50 shrink-0">
                 <div className="flex items-center gap-2">
