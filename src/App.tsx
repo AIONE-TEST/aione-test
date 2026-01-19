@@ -22,19 +22,39 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+// Récupère le flag de mode développement depuis localStorage
+const getDevModeFromStorage = () => {
+  try {
+    return localStorage.getItem("AIONE_DEV_MODE") === "true";
+  } catch {
+    return false;
+  }
+};
+
 function AppContent() {
   const { isLoading, isAuthenticated, login } = useSession();
   const [showUsernameModal, setShowUsernameModal] = useState(false);
+  const [devModeEnabled, setDevModeEnabled] = useState(getDevModeFromStorage());
 
-  // Pop-up d'identification conservé dans le code mais désactivé provisoirement.
-  // Pour le réactiver plus tard, passer à `true`.
-  const LOGIN_MODAL_ENABLED = false;
-
+  // Écoute les changements du mode développement depuis la page Compte
   useEffect(() => {
-    if (LOGIN_MODAL_ENABLED && !isLoading && !isAuthenticated) {
+    const handleDevModeChange = (event: CustomEvent) => {
+      setDevModeEnabled(event.detail);
+    };
+    window.addEventListener("devModeChanged", handleDevModeChange as EventListener);
+    return () => {
+      window.removeEventListener("devModeChanged", handleDevModeChange as EventListener);
+    };
+  }, []);
+
+  // Pop-up d'identification : contrôlé par le toggle Mode Développement
+  // devModeEnabled = true → affiche le pop-up d'identification
+  // devModeEnabled = false → pop-up masqué (défaut pendant développement)
+  useEffect(() => {
+    if (devModeEnabled && !isLoading && !isAuthenticated) {
       setShowUsernameModal(true);
     }
-  }, [LOGIN_MODAL_ENABLED, isLoading, isAuthenticated]);
+  }, [devModeEnabled, isLoading, isAuthenticated]);
 
   const handleLoginSuccess = (sessionId: string, username: string) => {
     login(sessionId, username);
@@ -55,7 +75,7 @@ function AppContent() {
   return (
     <>
       <UsernameModal
-        isOpen={LOGIN_MODAL_ENABLED && showUsernameModal}
+        isOpen={devModeEnabled && showUsernameModal}
         onClose={() => setShowUsernameModal(false)}
         onSuccess={handleLoginSuccess}
       />

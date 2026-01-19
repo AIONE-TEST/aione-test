@@ -5,7 +5,7 @@ import {
   Zap, ArrowRight, Star
 } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
-import { aiModels } from "@/data/aiModels";
+import { aiModels, AICategory, categoryLabels, getModelsByCategory } from "@/data/aiModels";
 
 const categories = [
   { id: "llms", label: "LLMS", icon: MessageSquare, path: "/llms", color: "btn-3d-pink" },
@@ -15,6 +15,21 @@ const categories = [
   { id: "retouch", label: "RETOUCH", icon: Wand2, path: "/retouch", color: "btn-3d-cyan" },
   { id: "3d", label: "3D", icon: Box, path: "/3d", color: "btn-3d-green" },
 ];
+
+// Ordre des catégories tel que dans "applis ia"
+const categoryOrder: AICategory[] = ["videos", "images", "retouch", "adult", "audio", "llms", "3d", "code"];
+
+// Couleurs des sections par catégorie
+const categoryColors: Record<AICategory, { bg: string; border: string; text: string; badge: string }> = {
+  videos: { bg: "bg-[hsl(280,100%,65%)]/5", border: "border-[hsl(280,100%,65%)]/30", text: "text-[hsl(280,100%,65%)]", badge: "bg-[hsl(280,100%,65%)]/20" },
+  images: { bg: "bg-[hsl(320,100%,60%)]/5", border: "border-[hsl(320,100%,60%)]/30", text: "text-[hsl(320,100%,60%)]", badge: "bg-[hsl(320,100%,60%)]/20" },
+  retouch: { bg: "bg-[hsl(174,100%,50%)]/5", border: "border-[hsl(174,100%,50%)]/30", text: "text-[hsl(174,100%,50%)]", badge: "bg-[hsl(174,100%,50%)]/20" },
+  adult: { bg: "bg-[hsl(0,70%,50%)]/5", border: "border-[hsl(0,70%,50%)]/30", text: "text-[hsl(0,70%,50%)]", badge: "bg-[hsl(0,70%,50%)]/20" },
+  audio: { bg: "bg-[hsl(25,100%,55%)]/5", border: "border-[hsl(25,100%,55%)]/30", text: "text-[hsl(25,100%,55%)]", badge: "bg-[hsl(25,100%,55%)]/20" },
+  llms: { bg: "bg-[hsl(210,100%,60%)]/5", border: "border-[hsl(210,100%,60%)]/30", text: "text-[hsl(210,100%,60%)]", badge: "bg-[hsl(210,100%,60%)]/20" },
+  "3d": { bg: "bg-[hsl(142,76%,50%)]/5", border: "border-[hsl(142,76%,50%)]/30", text: "text-[hsl(142,76%,50%)]", badge: "bg-[hsl(142,76%,50%)]/20" },
+  code: { bg: "bg-[hsl(45,100%,50%)]/5", border: "border-[hsl(45,100%,50%)]/30", text: "text-[hsl(45,100%,50%)]", badge: "bg-[hsl(45,100%,50%)]/20" },
+};
 
 const Index = () => {
   const stats = useMemo(() => {
@@ -27,6 +42,15 @@ const Index = () => {
   const freeModels = useMemo(() => 
     aiModels.filter((m) => m.isFree).slice(0, 8), 
   []);
+
+  // Grouper les modèles par catégorie (non-free inclus)
+  const modelsByCategory = useMemo(() => {
+    const result: Record<AICategory, typeof aiModels> = {} as any;
+    for (const cat of categoryOrder) {
+      result[cat] = getModelsByCategory(cat);
+    }
+    return result;
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
@@ -74,7 +98,7 @@ const Index = () => {
         </div>
 
         {/* Free Models Section */}
-        <div className="space-y-4">
+        <div className="space-y-4 mb-10">
           <div className="flex items-center gap-3">
             <Zap className="h-5 w-5 text-[hsl(142,76%,50%)]" />
             <h2 className="font-display text-lg text-foreground">MODÈLES GRATUITS</h2>
@@ -111,6 +135,62 @@ const Index = () => {
             ))}
           </div>
         </div>
+
+        {/* All Categories Sections - identique au style "modèles gratuits" */}
+        {categoryOrder.map((cat) => {
+          const models = modelsByCategory[cat];
+          if (!models || models.length === 0) return null;
+          
+          const colors = categoryColors[cat];
+          const label = categoryLabels[cat];
+
+          return (
+            <div key={cat} className={`space-y-4 mb-8 p-4 rounded-xl border ${colors.bg} ${colors.border}`}>
+              <div className="flex items-center gap-3">
+                <h2 className={`font-display text-lg font-bold ${colors.text}`}>{label}</h2>
+                <span className="font-display text-xs text-muted-foreground">
+                  ({models.length})
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                {models.map((model) => (
+                  <div
+                    key={model.id}
+                    className="panel-3d p-4 space-y-2 hover:scale-[1.02] transition-transform"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h3 className="font-display text-xs text-foreground">{model.name}</h3>
+                        <p className="text-[10px] text-muted-foreground">{model.provider}</p>
+                      </div>
+                      {model.isFree ? (
+                        <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[8px] font-bold bg-[hsl(142,76%,50%)/0.2] text-[hsl(142,76%,50%)]">
+                          <Zap className="h-2.5 w-2.5" />
+                          FREE
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded text-[8px] font-bold bg-[hsl(25,100%,55%)]/20 text-[hsl(25,100%,55%)]">
+                          {model.price || "PREMIUM"}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-muted-foreground line-clamp-2">
+                      {model.description}
+                    </p>
+                    <div className="flex items-center gap-1 flex-wrap">
+                      {model.badges.slice(0, 3).map((badge, i) => (
+                        <span key={i} className={`px-1.5 py-0.5 rounded text-[8px] ${colors.badge} ${colors.text}`}>
+                          {badge}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })}
 
         {/* Footer */}
         <footer className="mt-12 pt-6 border-t border-[hsl(220,15%,20%)] text-center">
