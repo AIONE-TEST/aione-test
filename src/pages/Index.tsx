@@ -2,30 +2,32 @@ import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { 
   Image, Video, MessageSquare, Music, Wand2, Box, 
-  Zap, ArrowRight, Star, Infinity, Clock, Code
+  Zap, ArrowRight, Star, Infinity, Clock, Code, Coins
 } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { aiModels, AICategory, categoryLabels, getModelsByCategory, getUnlimitedFreeModels, getLimitedFreeModels } from "@/data/aiModels";
+import { useCredits } from "@/hooks/useCredits";
 
-// Fonction pour afficher les icônes de capacités selon la catégorie
+// Fonction pour afficher les icônes de capacités selon la catégorie (grande taille, couleur jaune)
 const getCategoryIcon = (category: AICategory) => {
+  const iconClass = "h-5 w-5 text-[hsl(45,100%,55%)]";
   switch (category) {
     case "images":
-      return <Image className="h-3 w-3" />;
+      return <Image className={iconClass} />;
     case "videos":
-      return <Video className="h-3 w-3" />;
+      return <Video className={iconClass} />;
     case "llms":
-      return <MessageSquare className="h-3 w-3" />;
+      return <MessageSquare className={iconClass} />;
     case "audio":
-      return <Music className="h-3 w-3" />;
+      return <Music className={iconClass} />;
     case "retouch":
-      return <Wand2 className="h-3 w-3" />;
+      return <Wand2 className={iconClass} />;
     case "3d":
-      return <Box className="h-3 w-3" />;
+      return <Box className={iconClass} />;
     case "code":
-      return <Code className="h-3 w-3" />;
+      return <Code className={iconClass} />;
     case "adult":
-      return <Image className="h-3 w-3" />;
+      return <Image className={iconClass} />;
     default:
       return null;
   }
@@ -56,6 +58,8 @@ const categoryColors: Record<AICategory, { bg: string; border: string; text: str
 };
 
 const Index = () => {
+  const { getCreditsForService, getTotalCreditsForService } = useCredits();
+
   const stats = useMemo(() => {
     const total = aiModels.length;
     const free = aiModels.filter((m) => m.isFree).length;
@@ -149,14 +153,14 @@ const Index = () => {
                     <p className="text-[10px] text-muted-foreground">{model.provider}</p>
                   </div>
                   <span className="font-display text-sm font-black text-[hsl(142,76%,50%)] tracking-wide">
-                    UNLIMITED
+                    GRATUIT & ILLIMITÉ
                   </span>
                 </div>
                 <p className="text-[10px] text-muted-foreground line-clamp-2">
                   {model.description}
                 </p>
                 <div className="flex items-center gap-2">
-                  <span className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[8px] bg-[hsl(220,15%,18%)] text-muted-foreground uppercase">
+                  <span className="flex items-center gap-2 px-2 py-1 rounded text-[10px] bg-[hsl(220,15%,18%)] text-[hsl(45,100%,55%)] uppercase font-bold">
                     {getCategoryIcon(model.category)}
                     {model.category}
                   </span>
@@ -177,31 +181,40 @@ const Index = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-            {limitedFreeModels.map((model) => (
-              <div
-                key={model.id}
-                className="panel-3d p-4 space-y-2 hover:scale-[1.02] transition-transform"
-              >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h3 className="font-display text-xs text-foreground">{model.name}</h3>
-                    <p className="text-[10px] text-muted-foreground">{model.provider}</p>
+            {limitedFreeModels.map((model) => {
+              const credits = getCreditsForService(model.category);
+              const totalCredits = getTotalCreditsForService(model.category);
+              
+              return (
+                <div
+                  key={model.id}
+                  className="panel-3d p-4 space-y-2 hover:scale-[1.02] transition-transform"
+                >
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h3 className="font-display text-xs text-foreground">{model.name}</h3>
+                      <p className="text-[10px] text-muted-foreground">{model.provider}</p>
+                    </div>
+                    <span className="font-display text-sm font-black text-[hsl(142,76%,50%)] tracking-wide">
+                      GRATUIT / LIMITÉ
+                    </span>
                   </div>
-                  <span className="font-display text-sm font-black text-[hsl(142,76%,50%)] tracking-wide">
-                    FREE
-                  </span>
+                  <p className="text-[10px] text-muted-foreground line-clamp-2">
+                    {model.description}
+                  </p>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="flex items-center gap-2 px-2 py-1 rounded text-[10px] bg-[hsl(220,15%,18%)] text-[hsl(45,100%,55%)] uppercase font-bold">
+                      {getCategoryIcon(model.category)}
+                      {model.category}
+                    </span>
+                    <span className="flex items-center gap-1 px-2 py-1 rounded text-[10px] bg-[hsl(142,76%,50%)]/10 text-[hsl(142,76%,50%)] font-bold">
+                      <Coins className="h-3 w-3" />
+                      {credits}/{totalCredits} crédits
+                    </span>
+                  </div>
                 </div>
-                <p className="text-[10px] text-muted-foreground line-clamp-2">
-                  {model.description}
-                </p>
-                <div className="flex items-center gap-2">
-                  <span className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[8px] bg-[hsl(220,15%,18%)] text-muted-foreground uppercase">
-                    {getCategoryIcon(model.category)}
-                    {model.category}
-                  </span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
@@ -235,23 +248,28 @@ const Index = () => {
                       </div>
                       {model.freeType === "unlimited" ? (
                         <span className="font-display text-sm font-black text-[hsl(142,76%,50%)] tracking-wide">
-                          UNLIMITED
+                          GRATUIT & ILLIMITÉ
                         </span>
                       ) : model.isFree ? (
                         <span className="font-display text-sm font-black text-[hsl(142,76%,50%)] tracking-wide">
-                          FREE
+                          GRATUIT / LIMITÉ
                         </span>
                       ) : (
-                        <span className="px-2 py-0.5 rounded text-[8px] font-bold bg-[hsl(25,100%,55%)]/20 text-[hsl(25,100%,55%)]">
-                          {model.price || "PREMIUM"}
-                        </span>
+                        <div className="text-right">
+                          <span className="font-display text-sm font-black text-[hsl(0,70%,60%)] block">
+                            PAYANT
+                          </span>
+                          {model.price && (
+                            <span className="text-[10px] text-muted-foreground">{model.price}</span>
+                          )}
+                        </div>
                       )}
                     </div>
                     <p className="text-[10px] text-muted-foreground line-clamp-2">
                       {model.description}
                     </p>
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[8px] bg-[hsl(220,15%,18%)] text-muted-foreground uppercase">
+                      <span className="flex items-center gap-2 px-2 py-1 rounded text-[10px] bg-[hsl(220,15%,18%)] text-[hsl(45,100%,55%)] uppercase font-bold">
                         {getCategoryIcon(model.category)}
                         {model.category}
                       </span>

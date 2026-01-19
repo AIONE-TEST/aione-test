@@ -1,8 +1,8 @@
 import { useState, useMemo, useCallback } from "react";
-import { AppWindow, Sparkles, Key, Check, Zap, Flame, Search, LayoutGrid, List, Image, Video, MessageSquare, Music, Wand2, Box, Code } from "lucide-react";
+import { AppWindow, Sparkles, Key, Check, Zap, Flame, Search, LayoutGrid, List, Image, Video, MessageSquare, Music, Wand2, Box, Code, Infinity, Clock, CreditCard } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { SessionTimer } from "@/components/SessionTimer";
-import { AIModel, aiModels } from "@/data/aiModels";
+import { AIModel, aiModels, FreeType, getUnlimitedFreeModels, getLimitedFreeModels } from "@/data/aiModels";
 import { sortAIModels, sortModelsInCategory } from "@/utils/appSorting";
 import { useAPIStatus } from "@/hooks/useAPIStatus";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +13,7 @@ import { AdultDisclaimerModal } from "@/components/AdultDisclaimerModal";
 import { AppDetailModal } from "@/components/AppDetailModal";
 import { AppTileCard } from "@/components/AppTileCard";
 import { cn } from "@/lib/utils";
+import { useCredits } from "@/hooks/useCredits";
 
 interface CategoryConfig {
   id: string;
@@ -100,11 +101,29 @@ const categoryConfigs: CategoryConfig[] = [
   },
 ];
 
+// Filtres par type de gratuité
+interface FreeTypeFilter {
+  id: FreeType | "all";
+  label: string;
+  icon: React.ReactNode;
+  color: string;
+  bgColor: string;
+}
+
+const freeTypeFilters: FreeTypeFilter[] = [
+  { id: "all", label: "TOUS", icon: <AppWindow className="h-4 w-4" />, color: "text-[hsl(174,100%,50%)]", bgColor: "bg-[hsl(174,100%,50%)]/10" },
+  { id: "unlimited", label: "ILLIMITÉ", icon: <Infinity className="h-4 w-4" />, color: "text-[hsl(142,76%,50%)]", bgColor: "bg-[hsl(142,76%,50%)]/10" },
+  { id: "limited", label: "LIMITÉ", icon: <Clock className="h-4 w-4" />, color: "text-[hsl(45,100%,55%)]", bgColor: "bg-[hsl(45,100%,55%)]/10" },
+  { id: "paid", label: "PREMIUM", icon: <CreditCard className="h-4 w-4" />, color: "text-[hsl(25,100%,55%)]", bgColor: "bg-[hsl(25,100%,55%)]/10" },
+];
+
 const Apps = () => {
   const { getModelsWithStatus, refetch } = useAPIStatus();
+  const { getCreditsForService, getTotalCreditsForService } = useCredits();
   const [apiKeyModalOpen, setApiKeyModalOpen] = useState(false);
   const [selectedApiKeyName, setSelectedApiKeyName] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedFreeType, setSelectedFreeType] = useState<FreeType | "all">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [adultModalOpen, setAdultModalOpen] = useState(false);
@@ -174,9 +193,14 @@ const Apps = () => {
       result = result.filter(m => m.category === selectedCategory);
     }
 
+    // Free type filter
+    if (selectedFreeType !== "all") {
+      result = result.filter(m => m.freeType === selectedFreeType);
+    }
+
     // Sort with priority: video, image, retouch, audio, llms, then unlimited/free first
     return sortAIModels(result);
-  }, [allModels, selectedCategory, searchQuery]);
+  }, [allModels, selectedCategory, searchQuery, selectedFreeType]);
 
   const stats = useMemo(() => {
     return {
@@ -379,7 +403,7 @@ const Apps = () => {
           </div>
 
           {/* 8 Category Filters with distinct colors */}
-          <div className="flex flex-wrap gap-2 mb-8">
+          <div className="flex flex-wrap gap-2 mb-4">
             {categoryConfigs.map((cat) => {
               const isSelected = selectedCategory === cat.id;
               const count = getCategoryCounts[cat.id] || 0;
@@ -401,6 +425,32 @@ const Apps = () => {
                   <Badge variant="secondary" className="ml-1 h-6 px-2 font-display">
                     {count}
                   </Badge>
+                </Button>
+              );
+            })}
+          </div>
+
+          {/* Free Type Filters */}
+          <div className="flex flex-wrap gap-2 mb-8">
+            <span className="text-sm text-muted-foreground font-display mr-2 self-center">TYPE:</span>
+            {freeTypeFilters.map((filter) => {
+              const isSelected = selectedFreeType === filter.id;
+              
+              return (
+                <Button
+                  key={filter.id}
+                  variant={isSelected ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSelectedFreeType(filter.id)}
+                  className={cn(
+                    "gap-1.5 transition-all duration-300 font-display tracking-wider text-xs",
+                    isSelected 
+                      ? cn("scale-105", filter.bgColor, filter.color)
+                      : "btn-3d hover:scale-102"
+                  )}
+                >
+                  <span className={isSelected ? "" : filter.color}>{filter.icon}</span>
+                  <span>{filter.label}</span>
                 </Button>
               );
             })}
