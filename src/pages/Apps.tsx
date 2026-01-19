@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { AppWindow, Sparkles, Key, Check, Zap, Flame, Search, LayoutGrid, List, Image, Video, MessageSquare, Music, Wand2, Box, Code } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { SessionTimer } from "@/components/SessionTimer";
@@ -12,7 +12,6 @@ import { APIKeyModal } from "@/components/APIKeyModal";
 import { AdultDisclaimerModal } from "@/components/AdultDisclaimerModal";
 import { AppDetailModal } from "@/components/AppDetailModal";
 import { AppTileCard } from "@/components/AppTileCard";
-import { LMarenaButton } from "@/components/LMarenaButton";
 import { cn } from "@/lib/utils";
 
 interface CategoryConfig {
@@ -25,7 +24,7 @@ interface CategoryConfig {
   sectionBg: string;
 }
 
-// 8 catégories distinctes avec couleurs différentes et sections - ORDRE CORRECT
+// 8 catégories distinctes avec couleurs différentes et sections
 const categoryConfigs: CategoryConfig[] = [
   { 
     id: "all", 
@@ -91,24 +90,6 @@ const categoryConfigs: CategoryConfig[] = [
     sectionBg: "bg-gradient-to-br from-[hsl(25,100%,25%)]/20 to-[hsl(25,100%,15%)]/30"
   },
   { 
-    id: "llms", 
-    label: "CHAT IA", 
-    icon: <MessageSquare className="h-6 w-6" />, 
-    color: "text-[hsl(200,100%,55%)]", 
-    bgColor: "bg-[hsl(200,100%,55%)]/10", 
-    borderColor: "border-[hsl(200,100%,55%)]/30",
-    sectionBg: "bg-gradient-to-br from-[hsl(200,100%,25%)]/20 to-[hsl(200,100%,15%)]/30"
-  },
-  { 
-    id: "3d", 
-    label: "3D", 
-    icon: <Box className="h-6 w-6" />, 
-    color: "text-[hsl(160,100%,50%)]", 
-    bgColor: "bg-[hsl(160,100%,50%)]/10", 
-    borderColor: "border-[hsl(160,100%,50%)]/30",
-    sectionBg: "bg-gradient-to-br from-[hsl(160,100%,25%)]/20 to-[hsl(160,100%,15%)]/30"
-  },
-  { 
     id: "code", 
     label: "CODAGE", 
     icon: <Code className="h-6 w-6" />, 
@@ -130,11 +111,6 @@ const Apps = () => {
   const [pendingAdultModel, setPendingAdultModel] = useState<AIModel | null>(null);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [selectedDetailModel, setSelectedDetailModel] = useState<AIModel | null>(null);
-
-  // Scroll en haut de page (Point 9)
-  useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, []);
 
   // Get ALL models including those from API Keys
   const allModels = useMemo(() => {
@@ -217,7 +193,7 @@ const Apps = () => {
       activated: allModels.filter(m => m.apiStatus === "active" || m.isFree).length,
     };
     
-    ["videos", "images", "retouch", "adult", "audio", "llms", "3d", "code"].forEach(cat => {
+    ["images", "videos", "audio", "retouch", "code", "adult"].forEach(cat => {
       counts[cat] = allModels.filter(m => m.category === cat).length;
     });
     
@@ -290,11 +266,11 @@ const Apps = () => {
           </Badge>
         </div>
 
-        {/* Models Grid - 5 fenêtres par ligne, taille réduite de 20% */}
+        {/* Models Grid - Max 4 per row, horizontal cards */}
         <div className={cn(
           viewMode === "list" 
             ? "flex flex-col gap-3" 
-            : "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3"
+            : "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
         )}>
           {models.map((model) => (
             <AppTileCard
@@ -316,9 +292,6 @@ const Apps = () => {
       <Sidebar />
 
       <main className="ml-[373px] min-h-screen p-6">
-        {/* Bouton LMarena en haut */}
-        <LMarenaButton />
-
         {/* Header with Session Timer */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
@@ -479,11 +452,11 @@ const Apps = () => {
                 </Badge>
               </div>
 
-              {/* Models Grid - 5 fenêtres par ligne, taille réduite de 20% */}
+              {/* Models Grid - Max 4 per row, horizontal cards */}
               <div className={cn(
                 viewMode === "list" 
                   ? "flex flex-col gap-3" 
-                  : "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3"
+                  : "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
               )}>
                 {filteredModels.map((model) => (
                   <AppTileCard

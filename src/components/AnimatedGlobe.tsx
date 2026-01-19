@@ -42,7 +42,7 @@ const funnyEmojis = [
   "🎪", "🎭", "🎨", "🔥", "❄️", "🍀", "🌸", "🦅"
 ];
 
-// Generate random satellites (classic orbiting around the planet) - EXPLOITER TOUT L'ESPACE
+// Generate random satellites (classic orbiting around the planet)
 const generateSatellites = (): Satellite[] => {
   const colors = [
     "hsl(174,100%,50%)",
@@ -51,71 +51,64 @@ const generateSatellites = (): Satellite[] => {
     "hsl(280,100%,65%)",
     "hsl(320,100%,60%)",
     "hsl(200,100%,60%)",
-    "hsl(25,100%,55%)",
-    "hsl(0,100%,60%)",
   ];
   
-  return Array.from({ length: 8 }, (_, i) => ({
+  return Array.from({ length: 6 }, (_, i) => ({
     id: i + 1,
-    // Orbites plus larges pour exploiter tout l'espace
-    orbitRadius: 0.75 + (i * 0.08),
-    orbitDuration: 3 + Math.random() * 5,
-    size: 5 + Math.random() * 5,
-    delay: i * 0.5,
+    orbitRadius: 0.55 + Math.random() * 0.3,
+    orbitDuration: 4 + Math.random() * 6,
+    size: 4 + Math.random() * 4,
+    delay: Math.random() * 3,
     color: colors[i % colors.length],
-    // Angles variés pour couvrir tout l'espace
-    orbitTilt: -80 + (i * 20),
-    direction: i % 2 === 0 ? 1 : -1,
+    orbitTilt: -60 + Math.random() * 120,
+    direction: Math.random() > 0.5 ? 1 : -1,
   }));
 };
 
-// Generate random traversing objects (crossing the galaxy from end to end) - TOUT L'ESPACE
+// Generate random traversing objects (crossing the galaxy from end to end)
 const generateTraversingObjects = (): TraversingObject[] => {
-  return Array.from({ length: 30 }, (_, i) => {
-    // Utiliser les 4 coins et les 4 bords pour maximiser la couverture
-    const startSide = i % 4;
+  return Array.from({ length: 25 }, (_, i) => {
+    // Random start and end positions (from edge to edge)
+    const startSide = Math.floor(Math.random() * 4); // 0=top, 1=right, 2=bottom, 3=left
     let startX = 0, startY = 0, endX = 0, endY = 0;
-    
-    // Distribuer sur tout l'espace avec des trajectoires variées
-    const offset = (i * 12) % 100;
     
     switch(startSide) {
       case 0: // Start from top
-        startX = offset;
-        startY = -5;
-        endX = (100 - offset);
-        endY = 105;
+        startX = Math.random() * 100;
+        startY = -10;
+        endX = Math.random() * 100;
+        endY = 110;
         break;
       case 1: // Start from right
-        startX = 105;
-        startY = offset;
-        endX = -5;
-        endY = (100 - offset);
+        startX = 110;
+        startY = Math.random() * 100;
+        endX = -10;
+        endY = Math.random() * 100;
         break;
       case 2: // Start from bottom
-        startX = (100 - offset);
-        startY = 105;
-        endX = offset;
-        endY = -5;
+        startX = Math.random() * 100;
+        startY = 110;
+        endX = Math.random() * 100;
+        endY = -10;
         break;
       case 3: // Start from left
-        startX = -5;
-        startY = (100 - offset);
-        endX = 105;
-        endY = offset;
+        startX = -10;
+        startY = Math.random() * 100;
+        endX = 110;
+        endY = Math.random() * 100;
         break;
     }
     
     return {
       id: i + 100,
-      emoji: funnyEmojis[i % funnyEmojis.length],
+      emoji: funnyEmojis[Math.floor(Math.random() * funnyEmojis.length)],
       startX,
       startY,
       endX,
       endY,
-      duration: 6 + (i % 10) * 2,
-      delay: i * 0.8,
-      size: 14 + (i % 5) * 3,
+      duration: 8 + Math.random() * 20,
+      delay: Math.random() * 15,
+      size: 12 + Math.random() * 10,
     };
   });
 };
@@ -284,7 +277,7 @@ export function AnimatedGlobe({ size = 80 }: { size?: number }) {
           }}
         />
         
-        {/* Rotating continents layer - STYLE ABSTRAIT */}
+        {/* Rotating continents layer */}
         <div 
           className="absolute inset-0"
           style={{ 
@@ -294,79 +287,45 @@ export function AnimatedGlobe({ size = 80 }: { size?: number }) {
           }}
         >
           <svg viewBox="0 0 100 100" className="w-full h-full">
-            {/* Amérique du Nord - forme abstraite */}
-            <path 
-              d={`M ${20 + Math.sin(rotation * Math.PI / 180) * 15} 20 
-                  Q ${35 + Math.sin(rotation * Math.PI / 180) * 12} 15 
-                    ${40 + Math.sin(rotation * Math.PI / 180) * 10} 30 
-                  L ${35 + Math.sin(rotation * Math.PI / 180) * 14} 45 
-                  Q ${25 + Math.sin(rotation * Math.PI / 180) * 16} 40 
-                    ${20 + Math.sin(rotation * Math.PI / 180) * 15} 20`}
-              fill="hsl(142,55%,38%)"
-              opacity={Math.cos(rotation * Math.PI / 180) > -0.3 ? 0.85 : 0.25}
+            <ellipse 
+              cx={25 + Math.sin(rotation * Math.PI / 180) * 20} 
+              cy="30" 
+              rx="15" 
+              ry="12" 
+              fill="hsl(142,50%,35%)"
+              opacity={Math.cos(rotation * Math.PI / 180) > -0.3 ? 0.9 : 0.3}
             />
-            
-            {/* Amérique du Sud - forme abstraite */}
-            <path 
-              d={`M ${28 + Math.sin(rotation * Math.PI / 180) * 14} 52 
-                  Q ${35 + Math.sin(rotation * Math.PI / 180) * 12} 55 
-                    ${32 + Math.sin(rotation * Math.PI / 180) * 13} 70 
-                  L ${25 + Math.sin(rotation * Math.PI / 180) * 15} 78 
-                  Q ${22 + Math.sin(rotation * Math.PI / 180) * 14} 65 
-                    ${28 + Math.sin(rotation * Math.PI / 180) * 14} 52`}
-              fill="hsl(120,50%,35%)"
-              opacity={Math.cos(rotation * Math.PI / 180) > -0.3 ? 0.85 : 0.25}
+            <ellipse 
+              cx={30 + Math.sin(rotation * Math.PI / 180) * 18} 
+              cy="60" 
+              rx="8" 
+              ry="14" 
+              fill="hsl(142,50%,40%)"
+              opacity={Math.cos(rotation * Math.PI / 180) > -0.3 ? 0.9 : 0.3}
             />
-            
-            {/* Europe/Afrique - forme abstraite */}
-            <path 
-              d={`M ${55 + Math.sin((rotation + 120) * Math.PI / 180) * 12} 25 
-                  Q ${62 + Math.sin((rotation + 120) * Math.PI / 180) * 10} 30 
-                    ${60 + Math.sin((rotation + 120) * Math.PI / 180) * 11} 50 
-                  L ${55 + Math.sin((rotation + 120) * Math.PI / 180) * 13} 72 
-                  Q ${48 + Math.sin((rotation + 120) * Math.PI / 180) * 14} 55 
-                    ${55 + Math.sin((rotation + 120) * Math.PI / 180) * 12} 25`}
-              fill="hsl(45,45%,42%)"
-              opacity={Math.cos((rotation + 120) * Math.PI / 180) > -0.3 ? 0.85 : 0.25}
+            <ellipse 
+              cx={55 + Math.sin((rotation + 120) * Math.PI / 180) * 15} 
+              cy="40" 
+              rx="10" 
+              ry="20" 
+              fill="hsl(45,40%,40%)"
+              opacity={Math.cos((rotation + 120) * Math.PI / 180) > -0.3 ? 0.9 : 0.3}
             />
-            
-            {/* Asie - forme abstraite */}
-            <path 
-              d={`M ${68 + Math.sin((rotation + 180) * Math.PI / 180) * 15} 22 
-                  Q ${85 + Math.sin((rotation + 180) * Math.PI / 180) * 12} 28 
-                    ${82 + Math.sin((rotation + 180) * Math.PI / 180) * 14} 45 
-                  L ${70 + Math.sin((rotation + 180) * Math.PI / 180) * 16} 50 
-                  Q ${65 + Math.sin((rotation + 180) * Math.PI / 180) * 15} 35 
-                    ${68 + Math.sin((rotation + 180) * Math.PI / 180) * 15} 22`}
-              fill="hsl(30,50%,45%)"
-              opacity={Math.cos((rotation + 180) * Math.PI / 180) > -0.3 ? 0.85 : 0.25}
+            <ellipse 
+              cx={70 + Math.sin((rotation + 180) * Math.PI / 180) * 20} 
+              cy="35" 
+              rx="18" 
+              ry="10" 
+              fill="hsl(25,50%,45%)"
+              opacity={Math.cos((rotation + 180) * Math.PI / 180) > -0.3 ? 0.9 : 0.3}
             />
-            
-            {/* Australie - forme abstraite */}
-            <path 
-              d={`M ${75 + Math.sin((rotation + 220) * Math.PI / 180) * 10} 60 
-                  Q ${85 + Math.sin((rotation + 220) * Math.PI / 180) * 8} 62 
-                    ${82 + Math.sin((rotation + 220) * Math.PI / 180) * 9} 72 
-                  L ${73 + Math.sin((rotation + 220) * Math.PI / 180) * 11} 70 
-                  Z`}
-              fill="hsl(25,55%,48%)"
-              opacity={Math.cos((rotation + 220) * Math.PI / 180) > -0.3 ? 0.85 : 0.25}
-            />
-            
-            {/* Îles supplémentaires pour plus de détails */}
-            <circle 
-              cx={45 + Math.sin((rotation + 90) * Math.PI / 180) * 8} 
-              cy="55" 
-              r="3" 
-              fill="hsl(100,45%,40%)"
-              opacity={Math.cos((rotation + 90) * Math.PI / 180) > -0.2 ? 0.7 : 0.2}
-            />
-            <circle 
-              cx={78 + Math.sin((rotation + 150) * Math.PI / 180) * 6} 
-              cy="48" 
-              r="2.5" 
-              fill="hsl(35,50%,45%)"
-              opacity={Math.cos((rotation + 150) * Math.PI / 180) > -0.2 ? 0.7 : 0.2}
+            <ellipse 
+              cx={80 + Math.sin((rotation + 220) * Math.PI / 180) * 12} 
+              cy="65" 
+              rx="8" 
+              ry="6" 
+              fill="hsl(25,60%,50%)"
+              opacity={Math.cos((rotation + 220) * Math.PI / 180) > -0.3 ? 0.9 : 0.3}
             />
           </svg>
         </div>

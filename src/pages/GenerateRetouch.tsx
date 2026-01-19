@@ -1,22 +1,18 @@
-import { useState, useMemo, useCallback, useRef, useEffect } from "react";
-import { Wand2, Sparkles, Upload, Maximize, Brush, Eraser, Palette, ImagePlus, Layers, Scissors, ZoomIn, Download } from "lucide-react";
+import { useState, useMemo, useCallback, useRef } from "react";
+import { Wand2, Sparkles, Upload, Maximize, Brush, Eraser, Palette, ImagePlus, Layers, Scissors, Type, Image, Video, File, Archive, Music, Download, ZoomIn, Paperclip } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { ModelSelector } from "@/components/ModelSelector";
-import { AppTileCard } from "@/components/AppTileCard";
+import { ModelGrid } from "@/components/ModelGrid";
 import { MediaResultPopup } from "@/components/MediaResultPopup";
-import { APIKeyModal } from "@/components/APIKeyModal";
 import { CreditsDisplay } from "@/components/CreditsDisplay";
-import { PromptEditorEnhanced } from "@/components/PromptEditorEnhanced";
-import { ViewModeToggle } from "@/components/ViewModeToggle";
-import { MediaHistoryPanel } from "@/components/MediaHistoryPanel";
-import { FloatingMediaPreview } from "@/components/FloatingMediaPreview";
-import { AppTileCardExpanded } from "@/components/AppTileCardExpanded";
-import { ModelSpecificOptions, useModelOptions } from "@/components/ModelSpecificOptions";
+import { GenerateButton } from "@/components/GenerateButton";
 import { AIModel, getModelsByCategory } from "@/data/aiModels";
 import { useAPIStatus } from "@/hooks/useAPIStatus";
 import { useCredits } from "@/hooks/useCredits";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { StatusLED } from "@/components/StatusLED";
 import { cn } from "@/lib/utils";
 
 interface RetouchTool {
@@ -27,14 +23,22 @@ interface RetouchTool {
 }
 
 const retouchTools: RetouchTool[] = [
-  { id: "outpainting", name: "Outpainting", icon: <ImagePlus className="h-5 w-5" />, description: "Étendre l'image" },
-  { id: "upscale", name: "Upscale 4K", icon: <Maximize className="h-5 w-5" />, description: "Résolution" },
-  { id: "denoise", name: "Débruitage", icon: <Brush className="h-5 w-5" />, description: "Nettoyer" },
-  { id: "remove-bg", name: "Fond", icon: <Eraser className="h-5 w-5" />, description: "Supprimer" },
-  { id: "enhance", name: "Améliorer", icon: <Sparkles className="h-5 w-5" />, description: "Auto" },
-  { id: "colorize", name: "Coloriser", icon: <Palette className="h-5 w-5" />, description: "N&B" },
-  { id: "restore", name: "Restaurer", icon: <Layers className="h-5 w-5" />, description: "Photos" },
-  { id: "inpainting", name: "Inpainting", icon: <Scissors className="h-5 w-5" />, description: "Modifier" },
+  { id: "outpainting", name: "Outpainting", icon: <ImagePlus className="h-5 w-5" />, description: "Étendre l'image au-delà de ses bords" },
+  { id: "upscale", name: "Upscale 4K/8K", icon: <Maximize className="h-5 w-5" />, description: "Augmenter la résolution" },
+  { id: "denoise", name: "Débruitage", icon: <Brush className="h-5 w-5" />, description: "Réduire le bruit" },
+  { id: "remove-bg", name: "Suppression de Fond", icon: <Eraser className="h-5 w-5" />, description: "Retirer l'arrière-plan" },
+  { id: "enhance", name: "Améliorer", icon: <Sparkles className="h-5 w-5" />, description: "Amélioration automatique" },
+  { id: "colorize", name: "Coloriser", icon: <Palette className="h-5 w-5" />, description: "Coloriser les images N&B" },
+  { id: "restore", name: "Restaurer", icon: <Layers className="h-5 w-5" />, description: "Restaurer les anciennes photos" },
+  { id: "inpainting", name: "Inpainting", icon: <Scissors className="h-5 w-5" />, description: "Modifier des zones spécifiques" },
+];
+
+const mediaTypes = [
+  { id: "image", label: "Image", icon: <Image className="h-5 w-5" />, accept: "image/*" },
+  { id: "video", label: "Vidéo", icon: <Video className="h-5 w-5" />, accept: "video/*" },
+  { id: "audio", label: "Audio", icon: <Music className="h-5 w-5" />, accept: "audio/*" },
+  { id: "document", label: "Document", icon: <File className="h-5 w-5" />, accept: ".pdf,.doc,.docx,.txt" },
+  { id: "archive", label: "Archive", icon: <Archive className="h-5 w-5" />, accept: ".zip,.rar,.7z" },
 ];
 
 const GenerateRetouch = () => {
@@ -42,32 +46,15 @@ const GenerateRetouch = () => {
   const { getCreditsForService, getTotalCreditsForService, canGenerate: hasCreditsForService, useCredit } = useCredits();
   const [selectedModel, setSelectedModel] = useState<AIModel | null>(null);
   const [prompt, setPrompt] = useState("");
-  const [negativePrompt, setNegativePrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [favorites, setFavorites] = useState<string[]>([]);
   const [selectedTool, setSelectedTool] = useState<string>("upscale");
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [resultImage, setResultImage] = useState<string | null>(null);
   const [showResultPopup, setShowResultPopup] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  const [apiKeyModalOpen, setApiKeyModalOpen] = useState(false);
-  const [selectedApiKeyName, setSelectedApiKeyName] = useState<string>("");
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [selectedMediaType, setSelectedMediaType] = useState("image");
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Nouveaux états
-  const [previewMedia, setPreviewMedia] = useState<{ url: string; type: "image" | "video" | "audio"; x: number; y: number } | null>(null);
-  const [expandedApp, setExpandedApp] = useState<{ model: AIModel; x: number; y: number } | null>(null);
-  const { options: modelOptions, setOptions: setModelOptions, hasSpecificOptions } = useModelOptions(selectedModel?.id);
-
-  // Scroll en haut (Point 9)
-  useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, []);
-
-  const handleOpenAPIKeyModal = (apiKeyName: string) => {
-    setSelectedApiKeyName(apiKeyName);
-    setApiKeyModalOpen(true);
-  };
 
   const models = useMemo(() => {
     const categoryModels = getModelsByCategory("retouch");
@@ -76,6 +63,7 @@ const GenerateRetouch = () => {
 
   const freeModelsCount = models.filter(m => m.isFree).length;
 
+  // Get credits for selected model
   const serviceName = selectedModel?.provider || "retouch";
   const credits = getCreditsForService(serviceName, "standard");
   const totalCredits = getTotalCreditsForService(serviceName, "standard");
@@ -85,6 +73,8 @@ const GenerateRetouch = () => {
     if (!selectedModel || !uploadedImage || !hasCredits) return;
     
     setIsGenerating(true);
+    
+    // Use credit
     await useCredit(serviceName, "standard");
     
     setTimeout(() => {
@@ -92,6 +82,14 @@ const GenerateRetouch = () => {
       setResultImage(uploadedImage);
       setShowResultPopup(true);
     }, 3000);
+  };
+
+  const toggleFavorite = (modelId: string) => {
+    setFavorites((prev) =>
+      prev.includes(modelId)
+        ? prev.filter((id) => id !== modelId)
+        : [...prev, modelId]
+    );
   };
 
   const handleDrop = useCallback((e: React.DragEvent) => {
@@ -103,7 +101,6 @@ const GenerateRetouch = () => {
       const reader = new FileReader();
       reader.onload = (event) => {
         setUploadedImage(event.target?.result as string);
-        setResultImage(null);
       };
       reader.readAsDataURL(files[0]);
     }
@@ -115,269 +112,290 @@ const GenerateRetouch = () => {
       const reader = new FileReader();
       reader.onload = (event) => {
         setUploadedImage(event.target?.result as string);
-        setResultImage(null);
       };
       reader.readAsDataURL(files[0]);
     }
   };
 
-  const handleAppHover = (model: AIModel, e: React.MouseEvent) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    setExpandedApp({ model, x: rect.right + 10, y: rect.top });
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
   };
 
   const canGenerateNow = Boolean(selectedModel) && Boolean(uploadedImage);
+
+  const currentMediaType = mediaTypes.find(m => m.id === selectedMediaType);
 
   return (
     <div className="min-h-screen bg-background">
       <Sidebar />
 
-      <main className="ml-[373px] min-h-screen p-4">
+      <main className="ml-[373px] min-h-screen p-6">
         {/* Header */}
-        <div className="flex items-center gap-3 mb-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[hsl(174,100%,50%)] to-[hsl(142,76%,50%)] glow-cyan">
-            <Wand2 className="h-5 w-5 text-white" />
-          </div>
-          <div>
-            <h1 className="font-display text-xl font-black gradient-text-cyan tracking-wider">
-              RETOUCHE PHOTO / VIDÉO
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              <span className="text-[hsl(var(--primary))] font-bold">{models.length}</span> outils • <span className="text-[hsl(142,76%,50%)]">{freeModelsCount} gratuits</span>
-            </p>
+        <div className="mb-8">
+          <div className="flex items-center gap-4 mb-2">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[hsl(174,100%,50%)] to-[hsl(142,76%,50%)] glow-cyan">
+              <Wand2 className="h-7 w-7 text-white" />
+            </div>
+            <div>
+              <h1 className="font-display text-3xl font-black gradient-text-cyan tracking-wider">
+                RETOUCHE PHOTO / VIDÉO
+              </h1>
+              <p className="text-lg text-muted-foreground tracking-wide">
+                Upscaling 4K/8K · Débruitage · Suppression fond · Restauration · <span className="text-[hsl(var(--primary))] font-bold">{models.length} outils</span>
+              </p>
+            </div>
           </div>
         </div>
 
         {/* Tools Bar */}
-        <div className="panel-3d p-3 mb-4">
+        <div className="panel-3d p-4 mb-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Wand2 className="h-5 w-5 text-[hsl(var(--primary))]" />
+            <span className="font-display text-lg font-bold">OUTILS</span>
+          </div>
           <div className="flex flex-wrap gap-2">
             {retouchTools.map((tool) => (
               <Button
                 key={tool.id}
                 variant={selectedTool === tool.id ? "default" : "outline"}
-                size="sm"
                 onClick={() => setSelectedTool(tool.id)}
                 className={cn(
-                  "gap-1 text-xs",
-                  selectedTool === tool.id ? "btn-3d-cyan" : "btn-3d"
+                  "gap-2 transition-all duration-300",
+                  selectedTool === tool.id ? "btn-3d-cyan scale-105" : "btn-3d hover:scale-102"
                 )}
               >
                 {tool.icon}
-                {tool.name}
+                <span className="font-display text-sm">{tool.name}</span>
               </Button>
             ))}
           </div>
         </div>
 
-        {/* LAYOUT: 2/3 + 1/3 */}
-        <div className="grid grid-cols-[1fr_280px] gap-4">
-          {/* Colonne principale */}
-          <div className="space-y-4">
-            {/* 1. FENÊTRE UNIQUE - Source + Résultat (Point 10: fusionner 2 fenêtres en 1) */}
+        {/* Main Layout - ORDER: Source -> Result -> Prompt -> Engine */}
+        <div className="flex flex-col gap-6 max-w-6xl mb-10">
+          
+          {/* 1. IMAGE SOURCE - En haut */}
+          <div className="panel-3d p-6">
+            <div className="flex items-center justify-between mb-4">
+              <span className="font-display text-xl font-bold text-foreground">IMAGE SOURCE</span>
+              {uploadedImage && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setUploadedImage(null)}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  Changer
+                </Button>
+              )}
+            </div>
+            
             <div
               className={cn(
-                "panel-3d p-4 aspect-video flex items-center justify-center transition-all duration-300 cursor-pointer relative",
+                "canvas-3d aspect-video flex items-center justify-center transition-all duration-300 cursor-pointer",
                 isDragging && "border-[hsl(var(--primary))] bg-[hsl(var(--primary))]/5"
               )}
               onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
               onDragLeave={() => setIsDragging(false)}
               onDrop={handleDrop}
-              onClick={() => !uploadedImage && fileInputRef.current?.click()}
+              onClick={() => document.getElementById('file-upload')?.click()}
             >
-              {isGenerating ? (
-                <div className="flex flex-col items-center gap-4">
-                  <div className="h-16 w-16 rounded-full border-4 border-[hsl(var(--primary))]/30 border-t-[hsl(var(--primary))] animate-spin" />
-                  <p className="font-display text-lg">Traitement en cours...</p>
-                </div>
-              ) : resultImage ? (
-                <div className="relative w-full h-full flex items-center justify-center">
-                  <img src={resultImage} alt="Result" className="max-w-full max-h-full object-contain rounded-lg" />
-                  <div className="absolute top-2 right-2 flex gap-2">
-                    <Button size="sm" variant="ghost" className="bg-black/50 hover:bg-black/70">
-                      <Download className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="bg-black/50 hover:bg-black/70"
-                      onClick={(e) => { e.stopPropagation(); setResultImage(null); }}
-                    >
-                      Refaire
-                    </Button>
-                  </div>
-                  {/* Comparaison avant/après */}
-                  <div className="absolute bottom-2 left-2 flex items-center gap-2 bg-black/60 px-2 py-1 rounded">
-                    <span className="text-[10px] font-display">RÉSULTAT</span>
-                    <Badge className="text-[8px]">{selectedTool.toUpperCase()}</Badge>
-                  </div>
-                </div>
-              ) : uploadedImage ? (
-                <div className="relative w-full h-full flex items-center justify-center">
-                  <img src={uploadedImage} alt="Source" className="max-w-full max-h-full object-contain rounded-lg" />
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="absolute top-2 right-2 bg-black/50 hover:bg-black/70"
-                    onClick={(e) => { e.stopPropagation(); setUploadedImage(null); fileInputRef.current?.click(); }}
-                  >
-                    Changer
-                  </Button>
-                  <div className="absolute bottom-2 left-2 bg-black/60 px-2 py-1 rounded">
-                    <span className="text-[10px] font-display">SOURCE</span>
-                  </div>
-                </div>
+              {uploadedImage ? (
+                <img src={uploadedImage} alt="Source" className="w-full h-full object-contain" />
               ) : (
-                <div className="flex flex-col items-center gap-3 text-center">
-                  <div className="h-16 w-16 rounded-full bg-gradient-to-br from-[hsl(174,100%,50%)]/20 to-[hsl(142,76%,50%)]/20 flex items-center justify-center">
-                    <Upload className="h-8 w-8 text-[hsl(174,100%,50%)]" />
+                <div className="flex flex-col items-center gap-4 text-center px-8">
+                  <div className="h-20 w-20 rounded-full bg-gradient-to-br from-[hsl(174,100%,50%)]/20 to-[hsl(142,76%,50%)]/20 flex items-center justify-center">
+                    <Upload className="h-10 w-10 text-[hsl(var(--primary))]" />
                   </div>
                   <div>
-                    <p className="font-display text-lg text-foreground">Glissez une image à retoucher</p>
-                    <p className="text-sm text-muted-foreground">ou cliquez pour sélectionner</p>
+                    <p className="font-display text-lg text-foreground mb-2">
+                      Glissez-déposez une image ici
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      ou cliquez pour sélectionner
+                    </p>
                   </div>
+                  <p className="text-xs text-muted-foreground">
+                    Formats acceptés : PNG, JPG, WEBP · Max 50MB · Jusqu'à 8192x8192
+                  </p>
                 </div>
               )}
               <input
-                ref={fileInputRef}
+                id="file-upload"
                 type="file"
-                accept="image/*,video/*"
+                accept="image/*"
                 className="hidden"
                 onChange={handleFileSelect}
               />
             </div>
+          </div>
 
-            {/* 2. FENÊTRE DU PROMPT */}
-            <PromptEditorEnhanced
-              prompt={prompt}
-              onPromptChange={setPrompt}
-              negativePrompt={negativePrompt}
-              onNegativePromptChange={setNegativePrompt}
-              onGenerate={handleGenerate}
-              isGenerating={isGenerating}
-              canGenerate={canGenerateNow}
-              hasCredits={hasCredits}
-              placeholder={`Instructions pour ${retouchTools.find(t => t.id === selectedTool)?.name}...`}
-              category="retouch"
-            />
-
-            {/* 3. FENÊTRE DES MODÈLES AI */}
-            <div className="panel-3d p-4 space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-[hsl(var(--secondary))]" />
-                  <span className="font-display text-sm font-bold">MODÈLES AI</span>
-                  <Badge variant="outline" className="text-xs">{models.length}</Badge>
-                </div>
-                <ViewModeToggle viewMode={viewMode} onViewModeChange={setViewMode} />
-              </div>
-
-              <ModelSelector
-                models={models}
-                selectedModel={selectedModel}
-                onSelectModel={setSelectedModel}
-                category="retouch"
-                className="w-full"
-              />
-
-              {hasSpecificOptions && (
-                <ModelSpecificOptions
-                  model={selectedModel}
-                  options={modelOptions}
-                  onOptionsChange={setModelOptions}
-                />
+          {/* 2. RÉSULTAT - En dessous */}
+          <div className="panel-3d p-6">
+            <div className="flex items-center justify-between mb-4">
+              <span className="font-display text-xl font-bold text-foreground">RÉSULTAT</span>
+              {resultImage && (
+                <Button variant="ghost" size="sm" className="gap-2">
+                  <Download className="h-4 w-4" />
+                  Télécharger
+                </Button>
               )}
-
-              <CreditsDisplay 
-                credits={credits} 
-                totalCredits={totalCredits} 
-                serviceName={selectedModel?.name}
-                compact
-              />
-
-              {/* Grille des modèles */}
-              <div className={cn(
-                viewMode === "list" 
-                  ? "flex flex-col gap-2" 
-                  : "grid grid-cols-2 lg:grid-cols-3 gap-3"
-              )}>
-                {models.map((model) => (
-                  <div
-                    key={model.id}
-                    onMouseEnter={(e) => handleAppHover(model, e)}
-                    onMouseLeave={() => setExpandedApp(null)}
-                  >
-                    <AppTileCard
-                      model={model}
-                      viewMode={viewMode}
-                      horizontal
-                      onOpenAPIKeyModal={handleOpenAPIKeyModal}
-                      onClick={() => setSelectedModel(model)}
-                    />
+            </div>
+            
+            <div className="canvas-3d aspect-video flex items-center justify-center">
+              {isGenerating ? (
+                <div className="flex flex-col items-center gap-4">
+                  <div className="h-16 w-16 rounded-full border-4 border-[hsl(var(--primary))]/30 border-t-[hsl(var(--primary))] animate-spin" />
+                  <p className="font-display text-lg text-muted-foreground animate-pulse">
+                    Traitement en cours...
+                  </p>
+                </div>
+              ) : resultImage ? (
+                <img src={resultImage} alt="Result" className="w-full h-full object-contain" />
+              ) : (
+                <div className="flex flex-col items-center gap-4 text-center px-8">
+                  <div className="h-20 w-20 rounded-full bg-muted/50 flex items-center justify-center">
+                    <ZoomIn className="h-10 w-10 text-muted-foreground" />
                   </div>
-                ))}
-              </div>
+                  <p className="font-display text-lg text-muted-foreground">
+                    Le résultat apparaîtra ici
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Sélectionnez un outil et lancez la retouche
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Colonne droite - Historique */}
-          <MediaHistoryPanel
+          {/* 3. ÉDITEUR DE PROMPT - Compact */}
+          <div className="panel-3d p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Type className="h-4 w-4 text-[hsl(var(--primary))]" />
+              <span className="font-display text-sm font-bold">PROMPT</span>
+            </div>
+            
+            <Textarea
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              placeholder={`Instructions pour ${retouchTools.find(t => t.id === selectedTool)?.name}...`}
+              className="input-3d min-h-[60px] text-base resize-none mb-3"
+            />
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Button variant="ghost" size="icon" className="h-10 w-10">
+                  <Paperclip className="h-5 w-5 text-muted-foreground" />
+                </Button>
+                <CreditsDisplay credits={credits} totalCredits={totalCredits} compact />
+              </div>
+              
+              <GenerateButton
+                onClick={handleGenerate}
+                isGenerating={isGenerating}
+                canGenerate={canGenerateNow}
+                hasCredits={hasCredits}
+              />
+            </div>
+          </div>
+
+          {/* 4. MOTEUR DE GÉNÉRATION & OPTIONS - Compact */}
+          <div className="panel-3d p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Sparkles className="h-4 w-4 text-[hsl(var(--secondary))]" />
+              <span className="font-display text-sm font-bold">MOTEUR & OPTIONS</span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              {/* Sélecteur de modèle */}
+              <div>
+                <label className="font-display text-xs text-muted-foreground mb-2 block">MOTEUR AI</label>
+                <ModelSelector
+                  models={models}
+                  selectedModel={selectedModel}
+                  onSelectModel={setSelectedModel}
+                  category="retouch"
+                  className="w-full"
+                />
+                <div className="mt-2 flex items-center gap-2 text-xs">
+                  <StatusLED isActive={!!selectedModel} />
+                  <span className="text-muted-foreground truncate">
+                    {selectedModel ? selectedModel.name : "Aucun modèle"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Import média compact */}
+              <div>
+                <label className="font-display text-xs text-muted-foreground mb-2 block">MÉDIA</label>
+                <div className="flex flex-wrap gap-1 mb-2">
+                  {mediaTypes.slice(0, 3).map((type) => (
+                    <Button
+                      key={type.id}
+                      size="sm"
+                      variant={selectedMediaType === type.id ? "default" : "outline"}
+                      onClick={() => setSelectedMediaType(type.id)}
+                      className={cn("p-2", selectedMediaType === type.id ? "btn-3d-cyan" : "btn-3d")}
+                    >
+                      {type.icon}
+                    </Button>
+                  ))}
+                </div>
+                <Button
+                  onClick={handleImportClick}
+                  size="sm"
+                  className="w-full btn-3d-purple gap-2"
+                >
+                  <Upload className="h-4 w-4" />
+                  IMPORTER
+                </Button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept={currentMediaType?.accept}
+                  className="hidden"
+                  onChange={handleFileSelect}
+                />
+              </div>
+            </div>
+
+            {/* Infos compactes */}
+            <div className="mt-3 pt-3 border-t border-border/50 grid grid-cols-3 gap-2 text-xs">
+              <div className="text-center">
+                <span className="text-muted-foreground block">Max</span>
+                <span className="font-bold text-foreground">8K</span>
+              </div>
+              <div className="text-center">
+                <span className="text-muted-foreground block">Formats</span>
+                <span className="font-bold text-foreground">PNG/JPG</span>
+              </div>
+              <div className="text-center">
+                <span className="text-muted-foreground block">Quota</span>
+                <span className="font-bold text-[hsl(142,76%,50%)]">50</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Models Grid */}
+        <div className="mb-6">
+          <div className="flex items-center gap-3 mb-6">
+            <Wand2 className="h-6 w-6 text-[hsl(var(--primary))]" />
+            <h2 className="font-display text-2xl font-bold">TOUS LES OUTILS DE RETOUCHE</h2>
+            <Badge variant="outline" className="text-base px-3">
+              {models.length}
+            </Badge>
+          </div>
+
+          <ModelGrid
+            models={models}
             category="retouch"
-            currentMedia={uploadedImage}
-            onSelectMedia={(media) => {
-              if (media.url) {
-                setUploadedImage(media.url);
-                setResultImage(null);
-              }
-            }}
-            onPreviewMedia={(media) => {
-              if (media.url) {
-                setPreviewMedia({
-                  url: media.url,
-                  type: "image",
-                  x: window.innerWidth / 4,
-                  y: window.innerHeight / 4
-                });
-              }
-            }}
+            favorites={favorites}
+            onToggleFavorite={toggleFavorite}
+            onSelectModel={setSelectedModel}
           />
         </div>
       </main>
-
-      {/* Modals */}
-      <MediaResultPopup
-        isOpen={showResultPopup}
-        onClose={() => setShowResultPopup(false)}
-        mediaUrl={resultImage}
-        mediaType="image"
-      />
-
-      <APIKeyModal
-        isOpen={apiKeyModalOpen}
-        onClose={() => setApiKeyModalOpen(false)}
-        apiKeyName={selectedApiKeyName}
-      />
-
-      <FloatingMediaPreview
-        isOpen={!!previewMedia}
-        mediaUrl={previewMedia?.url}
-        mediaType={previewMedia?.type}
-        position={previewMedia ? { x: previewMedia.x, y: previewMedia.y } : undefined}
-        onClose={() => setPreviewMedia(null)}
-      />
-
-      {expandedApp && (
-        <AppTileCardExpanded
-          model={expandedApp.model}
-          isOpen={true}
-          position={{ x: expandedApp.x, y: expandedApp.y }}
-          onClose={() => setExpandedApp(null)}
-          onOpenAPIKeyModal={handleOpenAPIKeyModal}
-          onClick={() => {
-            setSelectedModel(expandedApp.model);
-            setExpandedApp(null);
-          }}
-        />
-      )}
     </div>
   );
 };

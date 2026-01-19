@@ -1,11 +1,10 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { SessionProvider, useSession } from "@/contexts/SessionContext";
-import { LanguageProvider } from "@/contexts/LanguageContext";
 import { UsernameModal } from "@/components/UsernameModal";
 import Index from "./pages/Index";
 import LLMs from "./pages/LLMs";
@@ -19,49 +18,24 @@ import APIKeys from "./pages/APIKeys";
 import Account from "./pages/Account";
 import Tutorials from "./pages/Tutorials";
 import Coding from "./pages/Coding";
-import CGU from "./pages/CGU";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
 function AppContent() {
-  const { session, isLoading, isAuthenticated, login, updateActivity } = useSession();
+  const { session, isLoading, isAuthenticated, login } = useSession();
   const [showUsernameModal, setShowUsernameModal] = useState(false);
 
-  // Ouvrir le modal au démarrage si non authentifié
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       setShowUsernameModal(true);
     }
   }, [isLoading, isAuthenticated]);
 
-  // Update activity on user interaction
-  useEffect(() => {
-    if (!isAuthenticated) return;
-
-    const handleActivity = () => updateActivity();
-    const events = ["mousedown", "keydown", "scroll"];
-
-    events.forEach((event) => {
-      window.addEventListener(event, handleActivity, { passive: true });
-    });
-
-    return () => {
-      events.forEach((event) => {
-        window.removeEventListener(event, handleActivity);
-      });
-    };
-  }, [isAuthenticated, updateActivity]);
-
   const handleLoginSuccess = (sessionId: string, username: string) => {
     login(sessionId, username);
     setShowUsernameModal(false);
   };
-
-  // Close modal handler - Permet de fermer le pop-up pour visualiser le site
-  const handleCloseModal = useCallback(() => {
-    setShowUsernameModal(false);
-  }, []);
 
   if (isLoading) {
     return (
@@ -76,8 +50,12 @@ function AppContent() {
 
   return (
     <>
-      <UsernameModal isOpen={showUsernameModal} onClose={handleCloseModal} onSuccess={handleLoginSuccess} />
-
+      <UsernameModal
+        isOpen={showUsernameModal}
+        onClose={() => {}}
+        onSuccess={handleLoginSuccess}
+      />
+      
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
@@ -94,7 +72,6 @@ function AppContent() {
           <Route path="/account" element={<Account />} />
           <Route path="/tutorials" element={<Tutorials />} />
           <Route path="/coding" element={<Coding />} />
-          <Route path="/cgu" element={<CGU />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
@@ -106,13 +83,11 @@ function AppContent() {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <SessionProvider>
-      <LanguageProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <AppContent />
-        </TooltipProvider>
-      </LanguageProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <AppContent />
+      </TooltipProvider>
     </SessionProvider>
   </QueryClientProvider>
 );

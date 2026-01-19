@@ -1,146 +1,124 @@
 import { useState, useMemo } from "react";
+import { Link } from "react-router-dom";
+import { 
+  Image, Video, MessageSquare, Music, Wand2, Box, 
+  Zap, ArrowRight, Star
+} from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { aiModels } from "@/data/aiModels";
-import { useAPIStatus } from "@/hooks/useAPIStatus";
-import { AppTileCard } from "@/components/AppTileCard";
-import { APIKeyModal } from "@/components/APIKeyModal";
-import { PromoBanner } from "@/components/PromptBanner";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
-import { Video, Image, Wand2, Flame, Music, MessageSquare, Box, Check } from "lucide-react";
 
-const categoryConfigs = [
-  {
-    id: "activated",
-    label: "APPLIS ACTIVÉES",
-    icon: <Check className="h-5 w-5" />,
-    color: "text-green-500",
-    borderColor: "border-green-500/20",
-  },
-  {
-    id: "videos",
-    label: "VIDÉOS",
-    icon: <Video className="h-5 w-5" />,
-    color: "text-purple-500",
-    borderColor: "border-purple-500/20",
-  },
-  {
-    id: "images",
-    label: "IMAGES",
-    icon: <Image className="h-5 w-5" />,
-    color: "text-pink-500",
-    borderColor: "border-pink-500/20",
-  },
-  {
-    id: "retouch",
-    label: "RETOUCHES",
-    icon: <Wand2 className="h-5 w-5" />,
-    color: "text-cyan-500",
-    borderColor: "border-cyan-500/20",
-  },
-  {
-    id: "adult",
-    label: "CONTENU ADULTE",
-    icon: <Flame className="h-5 w-5" />,
-    color: "text-red-500",
-    borderColor: "border-red-500/20",
-  },
-  {
-    id: "audio",
-    label: "MUSIQUE",
-    icon: <Music className="h-5 w-5" />,
-    color: "text-yellow-500",
-    borderColor: "border-yellow-500/20",
-  },
-  {
-    id: "llms",
-    label: "CHAT IA",
-    icon: <MessageSquare className="h-5 w-5" />,
-    color: "text-blue-500",
-    borderColor: "border-blue-500/20",
-  },
+const categories = [
+  { id: "llms", label: "LLMS", icon: MessageSquare, path: "/llms", color: "btn-3d-pink" },
+  { id: "images", label: "IMAGES", icon: Image, path: "/images", color: "btn-3d-pink" },
+  { id: "videos", label: "VIDÉOS", icon: Video, path: "/videos", color: "btn-3d-purple" },
+  { id: "audio", label: "AUDIO", icon: Music, path: "/audio", color: "btn-3d-yellow" },
+  { id: "retouch", label: "RETOUCH", icon: Wand2, path: "/retouch", color: "btn-3d-cyan" },
+  { id: "3d", label: "3D", icon: Box, path: "/3d", color: "btn-3d-green" },
 ];
 
 const Index = () => {
-  const { getModelsWithStatus } = useAPIStatus();
-  const [apiKeyModalOpen, setApiKeyModalOpen] = useState(false);
-  const [selectedApiKeyName, setSelectedApiKeyName] = useState("");
+  const stats = useMemo(() => {
+    const total = aiModels.length;
+    const free = aiModels.filter((m) => m.isFree).length;
+    const categoriesSet = new Set(aiModels.map((m) => m.category));
+    return { total, free, categories: categoriesSet.size };
+  }, []);
 
-  const allModels = useMemo(() => getModelsWithStatus(aiModels), [getModelsWithStatus]);
-
-  const stats = useMemo(
-    () => ({
-      total: allModels.length,
-      free: allModels.filter((m) => m.isFree).length,
-      catCount: new Set(allModels.map((m) => m.category)).size,
-    }),
-    [allModels],
-  );
+  const freeModels = useMemo(() => 
+    aiModels.filter((m) => m.isFree).slice(0, 8), 
+  []);
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background">
       <Sidebar />
-      <main className="ml-[300px] p-8">
-        {/* HERO ORIGINAL RESTAURE */}
-        <header className="text-center mb-12">
-          <h1 className="font-display text-6xl font-black gradient-text-pink text-glow-pink mb-2 uppercase">AIONE</h1>
-          <p className="font-display text-sm text-cyan-500 tracking-[0.5em] mb-8">AI GATEWAY</p>
 
-          <div className="flex justify-center gap-12 border-y border-white/5 py-6">
+      <main className="ml-[373px] min-h-screen p-6">
+        {/* Hero Section */}
+        <div className="text-center mb-10">
+          <h1 className="font-display text-4xl font-black gradient-text-pink text-glow-pink mb-3">
+            AIONE
+          </h1>
+          <p className="font-display text-sm text-[hsl(174,100%,50%)] tracking-[0.3em] mb-6">
+            AI GATEWAY
+          </p>
+          
+          {/* Stats */}
+          <div className="flex justify-center gap-8 mb-8">
             <div className="text-center">
-              <p className="text-3xl font-black">{stats.total}</p>
-              <p className="text-[10px] text-muted-foreground uppercase">Modèles</p>
+              <p className="font-display text-3xl font-bold text-foreground">{stats.total}</p>
+              <p className="font-display text-[10px] text-muted-foreground">MODÈLES</p>
             </div>
             <div className="text-center">
-              <p className="text-3xl font-black text-green-500">{stats.free}</p>
-              <p className="text-[10px] text-muted-foreground uppercase">Gratuits</p>
+              <p className="font-display text-3xl font-bold text-[hsl(142,76%,50%)]">{stats.free}</p>
+              <p className="font-display text-[10px] text-muted-foreground">GRATUITS</p>
             </div>
             <div className="text-center">
-              <p className="text-3xl font-black text-pink-500">{stats.catCount}</p>
-              <p className="text-[10px] text-muted-foreground uppercase">Catégories</p>
+              <p className="font-display text-3xl font-bold text-[hsl(320,100%,60%)]">{stats.categories}</p>
+              <p className="font-display text-[10px] text-muted-foreground">CATÉGORIES</p>
             </div>
           </div>
-        </header>
-
-        <PromoBanner />
-
-        {/* GRID DYNAMIQUE AVEC TAILLE DE CARTE ORIGINALE */}
-        <div className="space-y-12">
-          {categoryConfigs.map((cat) => {
-            const models = allModels.filter((m) =>
-              cat.id === "activated" ? m.apiStatus === "active" || m.isFree : m.category === cat.id,
-            );
-            if (models.length === 0) return null;
-
-            return (
-              <section key={cat.id} className={cn("p-6 rounded-3xl border-2 bg-white/[0.02]", cat.borderColor)}>
-                <div className="flex items-center gap-3 mb-6">
-                  <span className={cat.color}>{cat.icon}</span>
-                  <h2 className={cn("font-display text-xl font-black uppercase tracking-tighter", cat.color)}>
-                    {cat.label}
-                  </h2>
-                  <Badge variant="outline" className={cn("font-black border-white/10", cat.color)}>
-                    {models.length}
-                  </Badge>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {models.map((model) => (
-                    <AppTileCard
-                      key={model.id}
-                      model={model}
-                      onOpenAPIKeyModal={(name: string) => {
-                        setSelectedApiKeyName(name);
-                        setApiKeyModalOpen(true);
-                      }}
-                    />
-                  ))}
-                </div>
-              </section>
-            );
-          })}
         </div>
+
+        {/* Category Buttons */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-10">
+          {categories.map((cat) => (
+            <Link
+              key={cat.id}
+              to={cat.path}
+              className={`${cat.color} flex flex-col items-center gap-2 p-4 rounded-xl text-white transition-transform hover:scale-105`}
+            >
+              <cat.icon className="h-6 w-6" />
+              <span className="font-display text-xs font-bold">{cat.label}</span>
+            </Link>
+          ))}
+        </div>
+
+        {/* Free Models Section */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <Zap className="h-5 w-5 text-[hsl(142,76%,50%)]" />
+            <h2 className="font-display text-lg text-foreground">MODÈLES GRATUITS</h2>
+            <span className="font-display text-xs text-muted-foreground">
+              ({stats.free})
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+            {freeModels.map((model) => (
+              <div
+                key={model.id}
+                className="panel-3d p-4 space-y-2 hover:scale-[1.02] transition-transform"
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h3 className="font-display text-xs text-foreground">{model.name}</h3>
+                    <p className="text-[10px] text-muted-foreground">{model.provider}</p>
+                  </div>
+                  <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[8px] font-bold bg-[hsl(142,76%,50%)/0.2] text-[hsl(142,76%,50%)]">
+                    <Zap className="h-2.5 w-2.5" />
+                    FREE
+                  </span>
+                </div>
+                <p className="text-[10px] text-muted-foreground line-clamp-2">
+                  {model.description}
+                </p>
+                <div className="flex items-center gap-1">
+                  <span className="px-1.5 py-0.5 rounded text-[8px] bg-[hsl(220,15%,18%)] text-muted-foreground uppercase">
+                    {model.category}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <footer className="mt-12 pt-6 border-t border-[hsl(220,15%,20%)] text-center">
+          <p className="font-display text-xs text-muted-foreground">
+            <span className="gradient-text-pink">AIONE</span> - AI Gateway • © 2025
+          </p>
+        </footer>
       </main>
-      <APIKeyModal isOpen={apiKeyModalOpen} onClose={() => setApiKeyModalOpen(false)} apiKeyName={selectedApiKeyName} />
     </div>
   );
 };

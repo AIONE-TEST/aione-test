@@ -1,6 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
+import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { createAuthenticatedClient } from "@/lib/supabaseWithSession";
 
 interface SessionData {
   id: string;
@@ -8,26 +7,18 @@ interface SessionData {
   ip_address?: string;
   save_history?: boolean;
   settings?: Record<string, any>;
-  stay_connected?: boolean;
-  isAdmin?: boolean;
 }
 
 interface SessionContextType {
   session: SessionData | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  isAdmin: boolean;
   login: (sessionId: string, username: string) => void;
   logout: () => void;
   updateSettings: (settings: Partial<SessionData>) => Promise<void>;
-  updateActivity: () => void;
-  deleteHistory: () => Promise<void>;
 }
 
 const SessionContext = createContext<SessionContextType | undefined>(undefined);
-
-// TÂCHE 1.8: Timeout d'inactivité de 30 minutes
-const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutes
 
 export function useSession() {
   const context = useContext(SessionContext);
@@ -44,9 +35,6 @@ interface SessionProviderProps {
 export function SessionProvider({ children }: SessionProviderProps) {
   const [session, setSession] = useState<SessionData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [lastActivity, setLastActivity] = useState<number>(Date.now());
-  const [isInactive, setIsInactive] = useState(false);
 
   // Check for existing session on mount
   useEffect(() => {
@@ -56,36 +44,19 @@ export function SessionProvider({ children }: SessionProviderProps) {
     if (storedSessionId && storedUsername) {
       // Verify session still exists in DB
       supabase
-        .from("user_sessions_public")
+        .from("user_sessions")
         .select("*")
         .eq("id", storedSessionId)
         .single()
-        .then(async ({ data: rawData, error }) => {
-          const data = rawData as any;
+        .then(({ data, error }) => {
           if (data && !error) {
-            // Check if admin - TÂCHE 15
-            const { data: adminCheck } = await supabase
-              .rpc("is_admin", { _username: data.username });
-            
-            const adminStatus = adminCheck === true;
-            setIsAdmin(adminStatus);
-            
             setSession({
               id: data.id,
               username: data.username,
               ip_address: data.ip_address,
               save_history: data.save_history,
               settings: data.settings as Record<string, any>,
-              stay_connected: data.stay_connected || false,
-              isAdmin: adminStatus
             });
-            
-            // Update last activity - use authenticated client
-            const authClient = createAuthenticatedClient();
-            authClient
-              .from("user_sessions")
-              .update({ last_activity: new Date().toISOString() })
-              .eq("id", data.id);
           } else {
             // Clear invalid session
             localStorage.removeItem("aione_session_id");
@@ -98,98 +69,32 @@ export function SessionProvider({ children }: SessionProviderProps) {
     }
   }, []);
 
-  // TÂCHE 1.8: Activity tracking and timeout
-  useEffect(() => {
-    if (!session || session.stay_connected) return;
-
-    const checkInactivity = () => {
-      const now = Date.now();
-      if (now - lastActivity > INACTIVITY_TIMEOUT) {
-        setIsInactive(true);
-        // Rediriger vers la page d'accueil
-        window.location.href = '/';
-        logout();
-      }
-    };
-
-    const interval = setInterval(checkInactivity, 60000); // Check every minute
-    return () => clearInterval(interval);
-  }, [session, lastActivity]);
-
-  // Track user activity
-  useEffect(() => {
-    if (!session) return;
-
-    const updateActivityTimestamp = () => {
-      setLastActivity(Date.now());
-      setIsInactive(false);
-    };
-
-    const events = ['mousedown', 'keydown', 'scroll', 'touchstart'];
-    events.forEach(event => {
-      window.addEventListener(event, updateActivityTimestamp);
-    });
-
-    return () => {
-      events.forEach(event => {
-        window.removeEventListener(event, updateActivityTimestamp);
-      });
-    };
-  }, [session]);
-
-  const updateActivity = useCallback(() => {
-    if (!session) return;
-    setLastActivity(Date.now());
-    
-    // Update in DB periodically (every 5 min) - use authenticated client
-    const authClient = createAuthenticatedClient();
-    authClient
-      .from("user_sessions")
-      .update({ last_activity: new Date().toISOString() })
-      .eq("id", session.id);
-  }, [session]);
-
-  const login = async (sessionId: string, username: string) => {
+  const login = (sessionId: string, username: string) => {
     localStorage.setItem("aione_session_id", sessionId);
     localStorage.setItem("aione_username", username);
-    
-    // Check if admin - TÂCHE 15
-    const { data: adminCheck } = await supabase
-      .rpc("is_admin", { _username: username });
-    
-    const adminStatus = adminCheck === true;
-    setIsAdmin(adminStatus);
-    
-    setSession({ id: sessionId, username, isAdmin: adminStatus });
-    setLastActivity(Date.now());
-    setIsInactive(false);
+    setSession({ id: sessionId, username });
   };
 
   const logout = async () => {
     if (session) {
-      // Log logout - use authenticated client
-      const authClient = createAuthenticatedClient();
-      await authClient.from("activity_logs").insert({
+      // Log logout
+      await supabase.from("activity_logs").insert({
         session_id: session.id,
         username: session.username,
         action: "logout",
-        details: { reason: isInactive ? "inactivity_timeout" : "manual" }
+        details: {}
       });
     }
     
     localStorage.removeItem("aione_session_id");
     localStorage.removeItem("aione_username");
     setSession(null);
-    setIsAdmin(false);
-    setIsInactive(false);
   };
 
   const updateSettings = async (newSettings: Partial<SessionData>) => {
     if (!session) return;
 
-    // Use authenticated client for updates
-    const authClient = createAuthenticatedClient();
-    const { error } = await authClient
+    const { error } = await supabase
       .from("user_sessions")
       .update(newSettings)
       .eq("id", session.id);
@@ -199,85 +104,17 @@ export function SessionProvider({ children }: SessionProviderProps) {
     }
   };
 
-  // TÂCHE 1.14: Delete all user history
-  const deleteHistory = async () => {
-    if (!session) return;
-
-    // Use authenticated client for all delete operations
-    const authClient = createAuthenticatedClient();
-
-    try {
-      // Delete generation history
-      await authClient
-        .from("generation_history")
-        .delete()
-        .eq("session_id", session.id);
-
-      // Delete activity logs
-      await authClient
-        .from("activity_logs")
-        .delete()
-        .eq("session_id", session.id);
-
-      // Delete chat conversations and messages
-      const { data: conversations } = await authClient
-        .from("chat_conversations")
-        .select("id")
-        .eq("session_id", session.id);
-
-      if (conversations) {
-        for (const conv of conversations) {
-          await authClient
-            .from("chat_messages")
-            .delete()
-            .eq("conversation_id", conv.id);
-        }
-        
-        await authClient
-          .from("chat_conversations")
-          .delete()
-          .eq("session_id", session.id);
-      }
-
-      // Clear user notes
-      await authClient
-        .from("user_notes")
-        .update({ content: "" })
-        .eq("session_id", session.id);
-
-    } catch (error) {
-      console.error("Error deleting history:", error);
-      throw error;
-    }
-  };
-
   return (
     <SessionContext.Provider
       value={{
         session,
         isLoading,
         isAuthenticated: !!session,
-        isAdmin,
         login,
         logout,
         updateSettings,
-        updateActivity,
-        deleteHistory,
       }}
     >
-      {/* TÂCHE 1.8: Overlay when inactive - message plus visible */}
-      {isInactive && (
-        <div className="fixed inset-0 bg-black/70 z-[100] flex items-center justify-center backdrop-blur-sm">
-          <div className="text-center bg-background/90 p-8 rounded-2xl border border-primary/50 shadow-2xl">
-            <p className="text-2xl font-display font-bold text-primary mb-4">
-              Session en veille
-            </p>
-            <p className="text-lg text-muted-foreground">
-              Réidentification requise
-            </p>
-          </div>
-        </div>
-      )}
       {children}
     </SessionContext.Provider>
   );

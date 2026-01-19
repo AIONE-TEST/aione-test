@@ -15,7 +15,6 @@ import {
 import { cn } from "@/lib/utils";
 import { AnimatedGlobe } from "./AnimatedGlobe";
 import { SessionTimer } from "./SessionTimer";
-import { ActiveUsersCounter } from "./ActiveUsersCounter";
 
 interface NavItem {
   id: string;
@@ -143,54 +142,27 @@ export function Sidebar() {
               key={item.id}
               to={item.path}
               className={cn(
-                "flex items-center justify-center gap-4 px-3 py-2 rounded-lg font-display text-2xl font-black tracking-wider transition-all duration-300 transform group",
+                "flex items-center justify-center gap-4 px-3 py-2 rounded-lg font-display text-2xl font-black tracking-wider transition-all duration-300 transform",
                 isActive 
                   ? cn(item.btn3dClass, "text-white scale-102", item.glowClass) 
-                  : "btn-3d text-[hsl(215,20%,65%)]"
+                  : "btn-3d text-[hsl(215,20%,65%)] hover:text-white hover:scale-101"
               )}
-              style={{
-                "--hover-glow": item.colorClass.replace("text-", ""),
-              } as React.CSSProperties}
             >
               <span className={cn(
                 "transition-all duration-300",
-                isActive ? "text-white drop-shadow-lg" : item.colorClass,
-                !isActive && "group-hover:drop-shadow-[0_0_15px_currentColor] group-hover:scale-115"
+                isActive ? "text-white drop-shadow-lg" : item.colorClass
               )}>
                 {React.cloneElement(item.icon as React.ReactElement, { className: "h-8 w-8" })}
               </span>
-              <span className={cn(
-                "flex-1 text-center text-2xl font-black transition-all duration-300",
-                !isActive && cn(
-                  "group-hover:text-white",
-                  "group-hover:drop-shadow-[0_0_12px_currentColor]",
-                  item.colorClass.replace("text-", "group-hover:text-")
-                )
-              )}>
-                {item.label}
-              </span>
-              
-              {/* Effet lumineux indépendant au survol */}
-              <div className={cn(
-                "absolute inset-0 rounded-lg opacity-0 transition-opacity duration-300 pointer-events-none",
-                "group-hover:opacity-100",
-                !isActive && "group-hover:bg-gradient-to-r group-hover:from-transparent group-hover:via-current/10 group-hover:to-transparent"
-              )} 
-              style={{
-                boxShadow: `inset 0 0 20px ${item.colorClass.includes("hsl") ? item.colorClass.replace("text-[", "").replace("]", "") : "currentColor"}20`
-              }}
-              />
+              <span className="flex-1 text-center text-2xl font-black">{item.label}</span>
             </Link>
           );
         })}
       </nav>
 
-      {/* Footer - TÂCHE 3.1: ActiveUsersCounter ajouté */}
+      {/* Footer */}
       <div className="border-t-2 border-[hsl(220,15%,25%)] p-4">
-        <div className="flex flex-col items-center gap-3">
-          {/* TÂCHE 1.13 & 3.1: Compteur d'utilisateurs actifs */}
-          <ActiveUsersCounter />
-          
+        <div className="flex flex-col items-center gap-2">
           <div className="flex items-center gap-2">
             <Flame className="h-8 w-8 text-[hsl(25,100%,55%)] animate-pulse" />
             <span className="font-display text-base text-[hsl(25,100%,55%)] tracking-wider font-bold">

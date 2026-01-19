@@ -11,7 +11,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-import { getEdgeFunctionHeaders } from "@/lib/supabaseWithSession";
 import { toast } from "@/hooks/use-toast";
 import { APIKeyModal } from "@/components/APIKeyModal";
 
@@ -162,8 +161,7 @@ const LLMs = () => {
       ];
 
       const { data, error } = await supabase.functions.invoke(functionName, {
-        body: { messages: apiMessages },
-        headers: getEdgeFunctionHeaders()
+        body: { messages: apiMessages }
       });
 
       if (error) {

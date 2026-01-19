@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { User, Image, Video, Music, History, Settings, Save, Camera, FileText, Download, Trash2, LogOut, Shield, AlertTriangle } from "lucide-react";
+import { User, Image, Video, Music, History, Settings, Save, Camera, FileText, Download, Trash2, LogOut, Shield } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,13 +8,10 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useSession } from "@/contexts/SessionContext";
-import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { APIKeyManager } from "@/components/APIKeyManager";
 
 interface GenerationHistoryItem {
   id: string;
@@ -34,8 +31,7 @@ interface UserNote {
 }
 
 const Account = () => {
-  const { session, logout, updateSettings, deleteHistory } = useSession();
-  const { t } = useLanguage();
+  const { session, logout, updateSettings } = useSession();
   const [displayName, setDisplayName] = useState("");
   const [saveHistory, setSaveHistory] = useState(false);
   const [history, setHistory] = useState<GenerationHistoryItem[]>([]);
@@ -43,7 +39,6 @@ const Account = () => {
   const [noteContent, setNoteContent] = useState("");
   const [noteFormat, setNoteFormat] = useState("txt");
   const [isSavingNote, setIsSavingNote] = useState(false);
-  const [isDeletingAll, setIsDeletingAll] = useState(false);
 
   // Load user data
   useEffect(() => {
@@ -125,31 +120,6 @@ const Account = () => {
     toast({ title: "Historique effacé" });
   };
 
-  // TÂCHE 1.14: Supprimer TOUTES les données utilisateur
-  const handleDeleteAllData = async () => {
-    if (!session?.id) return;
-    
-    setIsDeletingAll(true);
-    try {
-      await deleteHistory();
-      setHistory([]);
-      setNoteContent("");
-      toast({ 
-        title: t.dataDeleted,
-        description: t.noCookiesMessage
-      });
-    } catch (error) {
-      console.error("Error deleting all data:", error);
-      toast({ 
-        title: "Erreur", 
-        description: "Impossible de supprimer les données.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsDeletingAll(false);
-    }
-  };
-
   const handleToggleSaveHistory = async (value: boolean) => {
     setSaveHistory(value);
     await updateSettings({ save_history: value });
@@ -189,7 +159,7 @@ const Account = () => {
           </div>
           <Button onClick={handleLogout} variant="outline" className="gap-2 btn-3d">
             <LogOut className="h-4 w-4" />
-            {t.logout}
+            DÉCONNEXION
           </Button>
         </div>
 
@@ -237,13 +207,6 @@ const Account = () => {
                   <Badge className="bg-[hsl(142,76%,50%)]/20 text-[hsl(142,76%,50%)]">ACTIF</Badge>
                 </div>
               </div>
-
-              {/* TÂCHE 1.14: Message de confidentialité */}
-              <div className="mt-4 p-3 bg-[hsl(142,76%,50%)]/10 border border-[hsl(142,76%,50%)]/30 rounded-lg">
-                <p className="text-xs text-[hsl(142,76%,50%)]">
-                  🛡️ {t.noCookiesMessage}
-                </p>
-              </div>
             </Card>
 
             {/* Stats */}
@@ -267,50 +230,10 @@ const Account = () => {
 
             {/* Actions */}
             <div className="space-y-2">
-              <Button onClick={handleClearHistory} variant="outline" className="w-full btn-3d gap-2 text-orange-400 hover:text-orange-300">
+              <Button onClick={handleClearHistory} variant="outline" className="w-full btn-3d gap-2 text-red-400 hover:text-red-300">
                 <Trash2 className="h-4 w-4" />
                 EFFACER L'HISTORIQUE
               </Button>
-
-              {/* TÂCHE 1.14: Bouton suppression TOUTES les données */}
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    className="w-full btn-3d gap-2 text-red-500 hover:text-red-400 border-red-500/50 hover:border-red-400/50"
-                    disabled={isDeletingAll}
-                  >
-                    <AlertTriangle className="h-4 w-4" />
-                    {t.deleteAllData}
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent className="panel-3d">
-                  <AlertDialogHeader>
-                    <AlertDialogTitle className="flex items-center gap-2 text-red-500">
-                      <AlertTriangle className="h-5 w-5" />
-                      {t.deleteConfirmation}
-                    </AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Cette action est irréversible. Toutes vos données seront définitivement supprimées :
-                      <ul className="mt-2 list-disc list-inside text-sm">
-                        <li>Historique des générations</li>
-                        <li>Logs d'activité</li>
-                        <li>Conversations</li>
-                        <li>Notes personnelles</li>
-                      </ul>
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>{t.cancel}</AlertDialogCancel>
-                    <AlertDialogAction 
-                      onClick={handleDeleteAllData}
-                      className="bg-red-500 hover:bg-red-600"
-                    >
-                      {t.confirm}
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
             </div>
           </div>
 
@@ -389,9 +312,6 @@ const Account = () => {
             )}
           </Card>
         </div>
-
-        {/* TASK-004: Gestionnaire de clés API */}
-        <APIKeyManager />
 
         {/* Notes section */}
         <Card className="panel-3d p-5">
