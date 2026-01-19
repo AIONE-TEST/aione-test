@@ -2,10 +2,34 @@ import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { 
   Image, Video, MessageSquare, Music, Wand2, Box, 
-  Zap, ArrowRight, Star, Infinity, Clock
+  Zap, ArrowRight, Star, Infinity, Clock, Code
 } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { aiModels, AICategory, categoryLabels, getModelsByCategory, getUnlimitedFreeModels, getLimitedFreeModels } from "@/data/aiModels";
+
+// Fonction pour afficher les icônes de capacités selon la catégorie
+const getCategoryIcon = (category: AICategory) => {
+  switch (category) {
+    case "images":
+      return <Image className="h-3 w-3" />;
+    case "videos":
+      return <Video className="h-3 w-3" />;
+    case "llms":
+      return <MessageSquare className="h-3 w-3" />;
+    case "audio":
+      return <Music className="h-3 w-3" />;
+    case "retouch":
+      return <Wand2 className="h-3 w-3" />;
+    case "3d":
+      return <Box className="h-3 w-3" />;
+    case "code":
+      return <Code className="h-3 w-3" />;
+    case "adult":
+      return <Image className="h-3 w-3" />;
+    default:
+      return null;
+  }
+};
 
 const categories = [
   { id: "llms", label: "LLMS", icon: MessageSquare, path: "/llms", color: "btn-3d-pink" },
@@ -124,16 +148,16 @@ const Index = () => {
                     <h3 className="font-display text-xs text-foreground">{model.name}</h3>
                     <p className="text-[10px] text-muted-foreground">{model.provider}</p>
                   </div>
-                  <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[8px] font-bold bg-[hsl(142,76%,50%)/0.2] text-[hsl(142,76%,50%)]">
-                    <Infinity className="h-2.5 w-2.5" />
-                    ILLIMITÉ
+                  <span className="font-display text-sm font-black text-[hsl(142,76%,50%)] tracking-wide">
+                    UNLIMITED
                   </span>
                 </div>
                 <p className="text-[10px] text-muted-foreground line-clamp-2">
                   {model.description}
                 </p>
-                <div className="flex items-center gap-1">
-                  <span className="px-1.5 py-0.5 rounded text-[8px] bg-[hsl(220,15%,18%)] text-muted-foreground uppercase">
+                <div className="flex items-center gap-2">
+                  <span className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[8px] bg-[hsl(220,15%,18%)] text-muted-foreground uppercase">
+                    {getCategoryIcon(model.category)}
                     {model.category}
                   </span>
                 </div>
@@ -163,16 +187,16 @@ const Index = () => {
                     <h3 className="font-display text-xs text-foreground">{model.name}</h3>
                     <p className="text-[10px] text-muted-foreground">{model.provider}</p>
                   </div>
-                  <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[8px] font-bold bg-[hsl(45,100%,50%)/0.2] text-[hsl(45,100%,50%)]">
-                    <Zap className="h-2.5 w-2.5" />
-                    FREE TIER
+                  <span className="font-display text-sm font-black text-[hsl(142,76%,50%)] tracking-wide">
+                    FREE
                   </span>
                 </div>
                 <p className="text-[10px] text-muted-foreground line-clamp-2">
                   {model.description}
                 </p>
-                <div className="flex items-center gap-1">
-                  <span className="px-1.5 py-0.5 rounded text-[8px] bg-[hsl(220,15%,18%)] text-muted-foreground uppercase">
+                <div className="flex items-center gap-2">
+                  <span className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[8px] bg-[hsl(220,15%,18%)] text-muted-foreground uppercase">
+                    {getCategoryIcon(model.category)}
                     {model.category}
                   </span>
                 </div>
@@ -209,9 +233,12 @@ const Index = () => {
                         <h3 className="font-display text-xs text-foreground">{model.name}</h3>
                         <p className="text-[10px] text-muted-foreground">{model.provider}</p>
                       </div>
-                      {model.isFree ? (
-                        <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[8px] font-bold bg-[hsl(142,76%,50%)/0.2] text-[hsl(142,76%,50%)]">
-                          <Zap className="h-2.5 w-2.5" />
+                      {model.freeType === "unlimited" ? (
+                        <span className="font-display text-sm font-black text-[hsl(142,76%,50%)] tracking-wide">
+                          UNLIMITED
+                        </span>
+                      ) : model.isFree ? (
+                        <span className="font-display text-sm font-black text-[hsl(142,76%,50%)] tracking-wide">
                           FREE
                         </span>
                       ) : (
@@ -223,8 +250,12 @@ const Index = () => {
                     <p className="text-[10px] text-muted-foreground line-clamp-2">
                       {model.description}
                     </p>
-                    <div className="flex items-center gap-1 flex-wrap">
-                      {model.badges.slice(0, 3).map((badge, i) => (
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[8px] bg-[hsl(220,15%,18%)] text-muted-foreground uppercase">
+                        {getCategoryIcon(model.category)}
+                        {model.category}
+                      </span>
+                      {model.badges.slice(0, 2).map((badge, i) => (
                         <span key={i} className={`px-1.5 py-0.5 rounded text-[8px] ${colors.badge} ${colors.text}`}>
                           {badge}
                         </span>
