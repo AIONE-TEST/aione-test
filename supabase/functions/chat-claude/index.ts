@@ -1,32 +1,39 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { getCorsHeaders, handleCorsPreFlight } from "../_shared/cors.ts";
+import { validateChatInput } from "../_shared/validation.ts";
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+  // Handle CORS preflight
+  const corsResponse = handleCorsPreFlight(req);
+  if (corsResponse) return corsResponse;
+
+  const origin = req.headers.get('origin');
+  const corsHeaders = getCorsHeaders(origin);
 
   try {
-    const { messages, model = 'claude-sonnet-4-20250514', stream = false } = await req.json();
+    const body = await req.json();
+    const { messages, model = 'claude-sonnet-4-20250514', stream = false } = body;
+    
+    // Validate input
+    const validation = validateChatInput(messages, model, 'anthropic');
+    if (!validation.valid) {
+      return new Response(
+        JSON.stringify({ error: 'Validation failed', details: validation.errors }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
 
     if (!ANTHROPIC_API_KEY) {
       throw new Error('ANTHROPIC_API_KEY is not configured');
     }
 
-    if (!messages || !Array.isArray(messages)) {
-      throw new Error('Messages array is required');
-    }
-
-    console.log('Sending request to Claude API with model:', model);
+    console.log('Sending request to Claude API with model:', validation.sanitizedModel || model);
 
     // Extract system message if present
-    const systemMessage = messages.find(m => m.role === 'system')?.content || '';
-    const userMessages = messages.filter(m => m.role !== 'system');
+    const systemMessage = validation.sanitizedMessages!.find(m => m.role === 'system')?.content || '';
+    const userMessages = validation.sanitizedMessages!.filter(m => m.role !== 'system');
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -36,7 +43,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model,
+        model: validation.sanitizedModel || model,
         max_tokens: 4096,
         system: systemMessage,
         messages: userMessages,
