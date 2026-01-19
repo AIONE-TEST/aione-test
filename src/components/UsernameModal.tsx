@@ -197,14 +197,16 @@ export function UsernameModal({ isOpen, onClose, onSuccess }: UsernameModalProps
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={() => {}}>
-      <DialogContent className="sm:max-w-md panel-3d border-2 border-[hsl(var(--primary))]/50" onPointerDownOutside={(e) => e.preventDefault()}>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-md panel-3d border-2 border-[hsl(var(--primary))]/50">
         <DialogHeader>
           <DialogTitle className="font-display text-2xl font-black gradient-text-cyan tracking-wider text-center">
             BIENVENUE SUR AIONE
           </DialogTitle>
           <DialogDescription className="text-center text-muted-foreground">
             Entrez votre pseudo pour accéder à votre espace de travail personnel
+            <br />
+            <span className="text-xs text-[hsl(var(--primary))]">(Optionnel pendant le développement)</span>
           </DialogDescription>
         </DialogHeader>
 
