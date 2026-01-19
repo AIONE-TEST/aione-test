@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useSession } from "@/contexts/SessionContext";
 
 interface QuotaInfo {
   id: string;
@@ -12,7 +11,6 @@ interface QuotaInfo {
 }
 
 export function useCredits() {
-  const { session } = useSession();
   const [quotas, setQuotas] = useState<QuotaInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
