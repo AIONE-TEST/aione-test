@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { User, Image, Video, Music, History, Settings, Save, Camera, FileText, Download, Trash2, LogOut, Shield, Eye, EyeOff, Key } from "lucide-react";
+import { User, Image, Video, Music, History, Settings, Save, Camera, FileText, Download, Trash2, LogOut, Shield, Eye, EyeOff, Key, Code, FileJson } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,25 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { GenerationGallery } from "@/components/GenerationGallery";
+
+// Récupère le flag de mode développement depuis localStorage
+const getDevModeEnabled = () => {
+  try {
+    return localStorage.getItem("AIONE_DEV_MODE") === "true";
+  } catch {
+    return false;
+  }
+};
+
+const setDevModeEnabled = (enabled: boolean) => {
+  try {
+    localStorage.setItem("AIONE_DEV_MODE", enabled ? "true" : "false");
+    // Dispatch custom event pour notifier App.tsx
+    window.dispatchEvent(new CustomEvent("devModeChanged", { detail: enabled }));
+  } catch {
+    // ignore
+  }
+};
 
 interface GenerationHistoryItem {
   id: string;
@@ -41,6 +60,70 @@ const Account = () => {
   const [noteContent, setNoteContent] = useState("");
   const [noteFormat, setNoteFormat] = useState("txt");
   const [isSavingNote, setIsSavingNote] = useState(false);
+  const [devModeEnabled, setDevMode] = useState(getDevModeEnabled());
+
+  // Export historique en CSV ou JSON
+  const handleExportHistory = (format: "csv" | "json") => {
+    if (history.length === 0) {
+      toast({ title: "Aucun historique à exporter" });
+      return;
+    }
+
+    let content: string;
+    let filename: string;
+    let mimeType: string;
+
+    if (format === "json") {
+      const exportData = history.map(item => ({
+        type: item.type,
+        prompt: item.prompt,
+        model: item.model_name,
+        date: item.created_at,
+        url: item.result_url,
+        thumbnail: item.thumbnail_url,
+        aspect_ratio: item.aspect_ratio
+      }));
+      content = JSON.stringify(exportData, null, 2);
+      filename = `aione-history-${new Date().toISOString().split('T')[0]}.json`;
+      mimeType = "application/json";
+    } else {
+      // CSV
+      const headers = ["Type", "Prompt", "Modèle", "Date", "URL", "Thumbnail", "Aspect Ratio"];
+      const rows = history.map(item => [
+        item.type,
+        `"${(item.prompt || "").replace(/"/g, '""')}"`,
+        item.model_name || "",
+        item.created_at,
+        item.result_url || "",
+        item.thumbnail_url || "",
+        item.aspect_ratio || ""
+      ]);
+      content = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+      filename = `aione-history-${new Date().toISOString().split('T')[0]}.csv`;
+      mimeType = "text/csv";
+    }
+
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast({ title: `Historique exporté en ${format.toUpperCase()}` });
+  };
+
+  // Toggle mode développement
+  const handleToggleDevMode = (enabled: boolean) => {
+    setDevMode(enabled);
+    setDevModeEnabled(enabled);
+    toast({
+      title: enabled ? "Mode développement activé" : "Mode développement désactivé",
+      description: enabled 
+        ? "Le pop-up d'identification sera affiché au prochain chargement" 
+        : "Le pop-up d'identification restera masqué"
+    });
+  };
 
   // Load user data
   useEffect(() => {
@@ -214,6 +297,18 @@ const Account = () => {
                   </div>
                   <Badge className="bg-[hsl(142,76%,50%)]/20 text-[hsl(142,76%,50%)]">ACTIF</Badge>
                 </div>
+
+                {/* Mode développement toggle */}
+                <div className="flex items-center justify-between pt-2 border-t border-border/50">
+                  <div className="flex items-center gap-2">
+                    <Code className="h-4 w-4 text-[hsl(25,100%,55%)]" />
+                    <span className="text-sm">Mode développement</span>
+                  </div>
+                  <Switch checked={devModeEnabled} onCheckedChange={handleToggleDevMode} />
+                </div>
+                <p className="text-[10px] text-muted-foreground">
+                  Active/désactive le pop-up d'identification sans toucher au code
+                </p>
               </div>
             </Card>
 
@@ -238,6 +333,17 @@ const Account = () => {
 
             {/* Actions */}
             <div className="space-y-2">
+              {/* Export historique */}
+              <div className="flex gap-2">
+                <Button onClick={() => handleExportHistory("csv")} variant="outline" className="flex-1 btn-3d gap-2">
+                  <Download className="h-4 w-4" />
+                  EXPORT CSV
+                </Button>
+                <Button onClick={() => handleExportHistory("json")} variant="outline" className="flex-1 btn-3d gap-2">
+                  <FileJson className="h-4 w-4" />
+                  EXPORT JSON
+                </Button>
+              </div>
               <Button onClick={handleClearHistory} variant="outline" className="w-full btn-3d gap-2 text-red-400 hover:text-red-300">
                 <Trash2 className="h-4 w-4" />
                 EFFACER L'HISTORIQUE
