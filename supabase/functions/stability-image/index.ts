@@ -1,28 +1,56 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { getCorsHeaders, handleCorsPreFlight } from "../_shared/cors.ts";
+import { validateImageInput, validateNumericRange } from "../_shared/validation.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+// Allowed dimensions for Stability AI
+const MIN_DIMENSION = 512;
+const MAX_DIMENSION = 2048;
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+  // Handle CORS preflight
+  const corsResponse = handleCorsPreFlight(req);
+  if (corsResponse) return corsResponse;
+
+  const origin = req.headers.get('origin');
+  const corsHeaders = getCorsHeaders(origin);
 
   try {
-    const { prompt, width = 1024, height = 1024 } = await req.json();
+    const body = await req.json();
+    const { prompt, width = 1024, height = 1024 } = body;
+    
+    // Validate prompt
+    const promptValidation = validateImageInput(prompt);
+    if (!promptValidation.valid) {
+      return new Response(
+        JSON.stringify({ error: promptValidation.error }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate dimensions
+    const widthValidation = validateNumericRange(width, MIN_DIMENSION, MAX_DIMENSION, 'width');
+    if (!widthValidation.valid) {
+      return new Response(
+        JSON.stringify({ error: widthValidation.error }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const heightValidation = validateNumericRange(height, MIN_DIMENSION, MAX_DIMENSION, 'height');
+    if (!heightValidation.valid) {
+      return new Response(
+        JSON.stringify({ error: heightValidation.error }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const STABILITY_API_KEY = Deno.env.get('STABILITY_API_KEY');
 
     if (!STABILITY_API_KEY) {
       throw new Error('STABILITY_API_KEY is not configured');
     }
 
-    if (!prompt) {
-      throw new Error('Prompt is required');
-    }
-
-    console.log('Generating image with Stability AI:', prompt.substring(0, 50) + '...');
+    console.log('Generating image with Stability AI:', promptValidation.sanitizedPrompt!.substring(0, 50) + '...');
 
     const response = await fetch(
       'https://api.stability.ai/v1/generation/stable-diffusion-xl-1024-v1-0/text-to-image',
@@ -34,10 +62,10 @@ serve(async (req) => {
           'Accept': 'application/json',
         },
         body: JSON.stringify({
-          text_prompts: [{ text: prompt, weight: 1 }],
+          text_prompts: [{ text: promptValidation.sanitizedPrompt, weight: 1 }],
           cfg_scale: 7,
-          height,
-          width,
+          height: heightValidation.sanitizedValue || 1024,
+          width: widthValidation.sanitizedValue || 1024,
           samples: 1,
           steps: 30,
         }),

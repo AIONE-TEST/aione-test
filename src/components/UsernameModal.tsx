@@ -14,9 +14,6 @@ interface UsernameModalProps {
   onSuccess: (sessionId: string, username: string) => void;
 }
 
-// Admin username with full access
-const ADMIN_USERNAME = "mik";
-
 export function UsernameModal({ isOpen, onClose, onSuccess }: UsernameModalProps) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -44,9 +41,6 @@ export function UsernameModal({ isOpen, onClose, onSuccess }: UsernameModalProps
       return;
     }
 
-    // Check for admin bypass
-    const isAdmin = username.toLowerCase().trim() === ADMIN_USERNAME;
-
     setIsLoading(true);
 
     try {
@@ -58,95 +52,52 @@ export function UsernameModal({ isOpen, onClose, onSuccess }: UsernameModalProps
         .maybeSingle();
 
       if (existingUser) {
-        // Admin bypass - check password for admin
-        if (isAdmin) {
-          // Admin "Mik" requires password "1971"
-          if (password !== "1971") {
-            setError("Mot de passe administrateur requis");
-            setShowPassword(true);
-            setIsLoading(false);
-            return;
+        // User exists - use server-side verification
+        const { data: verifyResult, error: verifyError } = await supabase.functions.invoke(
+          'verify-session-password',
+          {
+            body: {
+              username: username.toLowerCase().trim(),
+              password: password || null
+            }
           }
-          
-          // Update last login and IP
-          await supabase
-            .from("user_sessions")
-            .update({ 
-              last_login: new Date().toISOString(),
-              ip_address: userIP,
-              last_activity: new Date().toISOString()
-            })
-            .eq("id", existingUser.id);
+        );
 
-          // Store session in localStorage immediately for RLS
-          localStorage.setItem("aione_session_id", existingUser.id!);
-          localStorage.setItem("aione_username", existingUser.username!);
-
-          toast({
-            title: "Bienvenue Administrateur !",
-            description: "Accès total accordé.",
-          });
-
-          onSuccess(existingUser.id!, existingUser.username!);
-          return;
-        }
-
-        // Check if user has a password set using RPC function
-        const { data: hasPassword } = await supabase
-          .rpc("session_has_password", { session_username: existingUser.username! });
-
-        // User has password - need to verify
-        if (hasPassword && !password) {
-          setError("Ce compte est protégé par un mot de passe");
+        if (verifyError) {
+          console.error('Verification error:', verifyError);
+          setError("Erreur de vérification. Réessayez.");
           setIsLoading(false);
-          setShowPassword(true);
           return;
         }
 
-        if (hasPassword) {
-          // Verify password using RPC function
-          const { data: passwordValid } = await supabase
-            .rpc("verify_session_password", { 
-              session_username: existingUser.username!,
-              input_password: password 
-            });
+        // Handle password requirement
+        if (verifyResult.requiresPassword) {
+          setError("Ce compte est protégé par un mot de passe");
+          setShowPassword(true);
+          setIsLoading(false);
+          return;
+        }
 
-          if (!passwordValid) {
-            setError("Mot de passe incorrect");
-            setIsLoading(false);
-            return;
-          }
+        // Handle invalid password
+        if (!verifyResult.valid) {
+          setError(verifyResult.error || "Mot de passe incorrect");
+          setShowPassword(true);
+          setIsLoading(false);
+          return;
         }
 
         // Store session in localStorage immediately for RLS
-        localStorage.setItem("aione_session_id", existingUser.id!);
-        localStorage.setItem("aione_username", existingUser.username!);
-
-        // Update last login and IP
-        await supabase
-          .from("user_sessions")
-          .update({ 
-            last_login: new Date().toISOString(),
-            ip_address: userIP,
-            last_activity: new Date().toISOString()
-          })
-          .eq("id", existingUser.id);
-
-        // Log activity
-        await supabase.from("activity_logs").insert({
-          session_id: existingUser.id,
-          username: existingUser.username,
-          ip_address: userIP,
-          action: "login",
-          details: { source: "username_modal" }
-        });
+        localStorage.setItem("aione_session_id", verifyResult.sessionId);
+        localStorage.setItem("aione_username", verifyResult.username);
 
         toast({
-          title: "Bienvenue !",
-          description: `Ravi de vous revoir, ${existingUser.username} !`,
+          title: verifyResult.isAdmin ? "Bienvenue Administrateur !" : "Bienvenue !",
+          description: verifyResult.isAdmin 
+            ? "Accès total accordé." 
+            : `Ravi de vous revoir, ${verifyResult.username} !`,
         });
 
-        onSuccess(existingUser.id!, existingUser.username!);
+        onSuccess(verifyResult.sessionId, verifyResult.username);
       } else {
         // Create new user
         const { data: newUser, error: createError } = await supabase

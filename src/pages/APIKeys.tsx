@@ -48,8 +48,7 @@ const APIKeys = () => {
   const [sessionExpiry, setSessionExpiry] = useState<number | null>(null);
   const [remainingTime, setRemainingTime] = useState<string>("");
 
-  // Master password - 4 characters
-  const MASTER_PASSWORD = "0000";
+  // Password verification handled server-side via edge function
 
   // Effet pour gérer l'expiration de la session
   useEffect(() => {
@@ -168,8 +167,27 @@ const APIKeys = () => {
     );
   }, [configuredServices, searchQuery]);
 
-  const handlePasswordSubmit = useCallback(() => {
-    if (passwordInput === MASTER_PASSWORD) {
+  const handlePasswordSubmit = useCallback(async () => {
+    // Verify password server-side
+    const username = localStorage.getItem("aione_username");
+    if (!username) {
+      toast.error("Veuillez vous connecter d'abord");
+      setShowPasswordModal(false);
+      return;
+    }
+
+    try {
+      const { data: verifyResult, error } = await supabase.functions.invoke(
+        'verify-admin-password',
+        { body: { username, password: passwordInput } }
+      );
+
+      if (error || !verifyResult?.valid) {
+        toast.error(verifyResult?.error || "Mot de passe incorrect");
+        setPasswordInput("");
+        return;
+      }
+
       setIsUnlocked(true);
       setSessionExpiry(Date.now() + SESSION_DURATION);
       setShowPasswordModal(false);
@@ -195,8 +213,9 @@ const APIKeys = () => {
         }
       }
       setPendingAction(null);
-    } else {
-      toast.error("Mot de passe incorrect");
+    } catch (err) {
+      console.error("Password verification error:", err);
+      toast.error("Erreur de vérification");
       setPasswordInput("");
     }
   }, [passwordInput, pendingAction, configuredServices]);

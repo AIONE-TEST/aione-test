@@ -1,28 +1,35 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { getCorsHeaders, handleCorsPreFlight } from "../_shared/cors.ts";
+import { validateChatInput } from "../_shared/validation.ts";
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+  // Handle CORS preflight
+  const corsResponse = handleCorsPreFlight(req);
+  if (corsResponse) return corsResponse;
+
+  const origin = req.headers.get('origin');
+  const corsHeaders = getCorsHeaders(origin);
 
   try {
-    const { messages, model = 'llama-3.3-70b-versatile', stream = false } = await req.json();
+    const body = await req.json();
+    const { messages, model = 'llama-3.3-70b-versatile', stream = false } = body;
+    
+    // Validate input
+    const validation = validateChatInput(messages, model, 'groq');
+    if (!validation.valid) {
+      return new Response(
+        JSON.stringify({ error: 'Validation failed', details: validation.errors }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const GROQ_API_KEY = Deno.env.get('GROQ_API_KEY');
 
     if (!GROQ_API_KEY) {
       throw new Error('GROQ_API_KEY is not configured');
     }
 
-    if (!messages || !Array.isArray(messages)) {
-      throw new Error('Messages array is required');
-    }
-
-    console.log('Sending request to Groq API with model:', model);
+    console.log('Sending request to Groq API with model:', validation.sanitizedModel || model);
 
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
@@ -31,8 +38,8 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model,
-        messages,
+        model: validation.sanitizedModel || model,
+        messages: validation.sanitizedMessages,
         stream,
       }),
     });

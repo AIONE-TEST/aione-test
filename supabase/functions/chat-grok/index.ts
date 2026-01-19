@@ -1,25 +1,32 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { getCorsHeaders, handleCorsPreFlight } from "../_shared/cors.ts";
+import { validateChatInput } from "../_shared/validation.ts";
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+  // Handle CORS preflight
+  const corsResponse = handleCorsPreFlight(req);
+  if (corsResponse) return corsResponse;
+
+  const origin = req.headers.get('origin');
+  const corsHeaders = getCorsHeaders(origin);
 
   try {
-    const { messages, stream = false } = await req.json();
+    const body = await req.json();
+    const { messages, model = 'grok-beta', stream = false } = body;
+    
+    // Validate input
+    const validation = validateChatInput(messages, model, 'grok');
+    if (!validation.valid) {
+      return new Response(
+        JSON.stringify({ error: 'Validation failed', details: validation.errors }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const GROK_API_KEY = Deno.env.get('GROK_API_KEY');
 
     if (!GROK_API_KEY) {
       throw new Error('GROK_API_KEY is not configured');
-    }
-
-    if (!messages || !Array.isArray(messages)) {
-      throw new Error('Messages array is required');
     }
 
     console.log('Sending request to Grok API...');
@@ -31,8 +38,8 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'grok-beta',
-        messages,
+        model: validation.sanitizedModel || model,
+        messages: validation.sanitizedMessages,
         stream,
       }),
     });
