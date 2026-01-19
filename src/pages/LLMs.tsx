@@ -253,8 +253,8 @@ const LLMs = () => {
           </div>
         </div>
 
-        {/* Chat pleine largeur - +25% de taille */}
-        <div className="panel-3d flex flex-col overflow-hidden max-w-6xl min-h-[562px]" style={{ aspectRatio: "16/9" }}>
+        {/* Chat pleine largeur - +50% hauteur verticale */}
+        <div className="panel-3d flex flex-col overflow-hidden max-w-6xl min-h-[843px]">
           {/* Model Selector compact */}
           <div className="p-3 border-b border-border/50 flex items-center gap-3">
             <Sparkles className="h-4 w-4 text-[hsl(45,100%,55%)]" />
@@ -327,14 +327,14 @@ const LLMs = () => {
           {/* Input avec icône upload */}
           <div className="p-3 border-t border-border/50">
             <div className="flex gap-2 items-end">
-              {/* Icône Upload à gauche */}
+              {/* Icône Upload à gauche - Taille x3 */}
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-10 w-10 shrink-0 text-muted-foreground hover:text-[hsl(45,100%,55%)] hover:bg-[hsl(45,100%,55%)]/10"
+                className="h-16 w-16 shrink-0 text-muted-foreground hover:text-[hsl(45,100%,55%)] hover:bg-[hsl(45,100%,55%)]/10"
                 onClick={() => toast({ title: "Upload", description: "Fonction d'upload de fichiers bientôt disponible" })}
               >
-                <Paperclip className="h-5 w-5" />
+                <Paperclip className="h-12 w-12" />
               </Button>
               <Textarea
                 value={input}
