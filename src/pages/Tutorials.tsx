@@ -23,7 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-
+import { Link } from "react-router-dom";
 interface Tutorial {
   id: string;
   title: string;
@@ -45,7 +45,7 @@ const tutorials: Tutorial[] = [
     icon: <Rocket className="h-8 w-8" />,
     difficulty: "Débutant",
     duration: "5 min",
-    youtubeUrl: "https://youtube.com/watch?v=example1",
+    youtubeUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
     steps: [
       "Explorez la sidebar pour naviguer entre les catégories",
       "Découvrez la section APPLIS IA pour voir tous les modèles",
@@ -62,7 +62,7 @@ const tutorials: Tutorial[] = [
     icon: <Key className="h-8 w-8" />,
     difficulty: "Débutant",
     duration: "3 min",
-    youtubeUrl: "https://youtube.com/watch?v=example2",
+    youtubeUrl: "https://www.youtube.com/watch?v=2EaE0bYH6d0",
     steps: [
       "Allez dans la section API KEYS",
       "Cliquez sur le service que vous souhaitez activer",
@@ -79,7 +79,7 @@ const tutorials: Tutorial[] = [
     icon: <Image className="h-8 w-8" />,
     difficulty: "Débutant",
     duration: "10 min",
-    youtubeUrl: "https://youtube.com/watch?v=example3",
+    youtubeUrl: "https://www.youtube.com/watch?v=HK6y8DAPN_0",
     steps: [
       "Sélectionnez la section IMAGE dans la sidebar",
       "Choisissez un modèle (FLUX.1 Schnell est gratuit)",
@@ -97,7 +97,7 @@ const tutorials: Tutorial[] = [
     icon: <Video className="h-8 w-8" />,
     difficulty: "Intermédiaire",
     duration: "15 min",
-    youtubeUrl: "https://youtube.com/watch?v=example4",
+    youtubeUrl: "https://www.youtube.com/watch?v=3n3RhyFCs6k",
     steps: [
       "Naviguez vers la section VIDÉO",
       "Choisissez entre texte-vers-vidéo ou image-vers-vidéo",
@@ -116,7 +116,7 @@ const tutorials: Tutorial[] = [
     icon: <Music className="h-8 w-8" />,
     difficulty: "Intermédiaire",
     duration: "12 min",
-    youtubeUrl: "https://youtube.com/watch?v=example5",
+    youtubeUrl: "https://www.youtube.com/watch?v=TfF-wCBbYk8",
     steps: [
       "Accédez à la section AUDIO",
       "Sélectionnez Suno AI comme modèle",
@@ -135,7 +135,7 @@ const tutorials: Tutorial[] = [
     icon: <Mic className="h-8 w-8" />,
     difficulty: "Avancé",
     duration: "20 min",
-    youtubeUrl: "https://youtube.com/watch?v=example6",
+    youtubeUrl: "https://www.youtube.com/watch?v=8RvYwSJKRiQ",
     steps: [
       "Configurez votre clé API ElevenLabs",
       "Uploadez un échantillon audio de la voix à cloner (minimum 1 minute)",
@@ -154,7 +154,7 @@ const tutorials: Tutorial[] = [
     icon: <Box className="h-8 w-8" />,
     difficulty: "Avancé",
     duration: "25 min",
-    youtubeUrl: "https://youtube.com/watch?v=example7",
+    youtubeUrl: "https://www.youtube.com/watch?v=x60s1xw2zIE",
     steps: [
       "Rendez-vous dans la section 3D",
       "Choisissez entre génération depuis texte ou image",
@@ -173,7 +173,7 @@ const tutorials: Tutorial[] = [
     icon: <Wand2 className="h-8 w-8" />,
     difficulty: "Intermédiaire",
     duration: "15 min",
-    youtubeUrl: "https://youtube.com/watch?v=example8",
+    youtubeUrl: "https://www.youtube.com/watch?v=5fB5v3XGzCo",
     steps: [
       "Accédez à la section RETOUCHE",
       "Uploadez l'image à modifier",
@@ -192,7 +192,7 @@ const tutorials: Tutorial[] = [
     icon: <MessageSquare className="h-8 w-8" />,
     difficulty: "Débutant",
     duration: "8 min",
-    youtubeUrl: "https://youtube.com/watch?v=example9",
+    youtubeUrl: "https://www.youtube.com/watch?v=E4g2HksxRxY",
     steps: [
       "Naviguez vers la section LLMS",
       "Comparez les différents modèles (GPT-4, Claude, Gemini...)",
@@ -210,7 +210,7 @@ const tutorials: Tutorial[] = [
     icon: <Sparkles className="h-8 w-8" />,
     difficulty: "Avancé",
     duration: "20 min",
-    youtubeUrl: "https://youtube.com/watch?v=example10",
+    youtubeUrl: "https://www.youtube.com/watch?v=T9aRN5JkmL8",
     steps: [
       "Apprenez la structure d'un prompt efficace",
       "Utilisez des modificateurs de style (cinématique, photoréaliste...)",
@@ -357,39 +357,33 @@ const Tutorials = () => {
 
                   {/* Actions */}
                   <div className="flex gap-3">
-                    <Button 
-                      className={cn("flex-1 gap-2 font-display transition-all duration-200 hover:scale-105", 
-                        tutorial.id === "getting-started" ? "btn-3d-purple" :
-                        tutorial.id === "add-api-key" ? "btn-3d-yellow" :
-                        tutorial.id === "generate-image" ? "btn-3d-pink" :
-                        tutorial.id === "create-video" ? "btn-3d-purple" :
-                        tutorial.id === "generate-music" ? "btn-3d-yellow" :
-                        tutorial.id === "clone-voice" ? "btn-3d-cyan" :
-                        tutorial.id === "create-3d" ? "btn-3d-green" :
-                        tutorial.id === "retouch-images" ? "btn-3d-cyan" :
-                        tutorial.id === "use-llms" ? "btn-3d-pink" :
-                        "btn-3d-orange"
-                      )}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        // Navigate to the relevant section
-                      }}
+                    <Link 
+                      to={`/tutorials/${tutorial.id}`}
+                      className="flex-1"
+                      onClick={(e) => e.stopPropagation()}
                     >
-                      <Play className="h-4 w-4" />
-                      COMMENCER
-                    </Button>
-                    {tutorial.youtubeUrl && (
                       <Button 
-                        variant="outline"
-                        className="gap-2 btn-3d font-display transition-all duration-200 hover:scale-105"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          window.open(tutorial.youtubeUrl, '_blank');
-                        }}
+                        className="w-full gap-2 font-display transition-all duration-200 hover:scale-105 btn-3d-green"
                       >
-                        <Youtube className="h-4 w-4 text-[hsl(0,85%,60%)]" />
-                        VIDÉO
+                        <Play className="h-4 w-4" />
+                        COMMENCER
                       </Button>
+                    </Link>
+                    {tutorial.youtubeUrl && (
+                      <a 
+                        href={tutorial.youtubeUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Button 
+                          variant="outline"
+                          className="gap-2 btn-3d font-display transition-all duration-200 hover:scale-105"
+                        >
+                          <Youtube className="h-4 w-4 text-[hsl(0,85%,60%)]" />
+                          VIDÉO
+                        </Button>
+                      </a>
                     )}
                   </div>
                 </div>
