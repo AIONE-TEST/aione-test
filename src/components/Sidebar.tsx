@@ -122,7 +122,7 @@ export function Sidebar() {
         className="flex flex-col items-center gap-2 py-4 px-4 border-b-2 border-[hsl(220,15%,25%)] hover:bg-[hsl(220,15%,15%)] transition-all duration-300 group"
       >
         <div className="transform group-hover:scale-110 transition-transform duration-300">
-          <AnimatedGlobe size={100} />
+          <AnimatedGlobe size={150} />
         </div>
         <span className="font-display text-5xl font-black gradient-text-pink text-glow-pink tracking-widest">
           AIONE

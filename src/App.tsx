@@ -19,6 +19,16 @@ import APIKeys from "./pages/APIKeys";
 import Account from "./pages/Account";
 import Tutorials from "./pages/Tutorials";
 import Coding from "./pages/Coding";
+import GettingStarted from "./pages/tutorials/GettingStarted";
+import AddApiKey from "./pages/tutorials/AddApiKey";
+import GenerateImageTutorial from "./pages/tutorials/GenerateImage";
+import CreateVideoTutorial from "./pages/tutorials/CreateVideo";
+import GenerateMusicTutorial from "./pages/tutorials/GenerateMusic";
+import CloneVoiceTutorial from "./pages/tutorials/CloneVoice";
+import Create3DTutorial from "./pages/tutorials/Create3D";
+import RetouchImagesTutorial from "./pages/tutorials/RetouchImages";
+import UseLLMsTutorial from "./pages/tutorials/UseLLMs";
+import PromptingTechniquesTutorial from "./pages/tutorials/PromptingTechniques";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -88,6 +98,16 @@ function AppContent() {
           <Route path="/apis" element={<APIKeys />} />
           <Route path="/account" element={<Account />} />
           <Route path="/tutorials" element={<Tutorials />} />
+          <Route path="/tutorials/getting-started" element={<GettingStarted />} />
+          <Route path="/tutorials/add-api-key" element={<AddApiKey />} />
+          <Route path="/tutorials/generate-image" element={<GenerateImageTutorial />} />
+          <Route path="/tutorials/create-video" element={<CreateVideoTutorial />} />
+          <Route path="/tutorials/generate-music" element={<GenerateMusicTutorial />} />
+          <Route path="/tutorials/clone-voice" element={<CloneVoiceTutorial />} />
+          <Route path="/tutorials/create-3d" element={<Create3DTutorial />} />
+          <Route path="/tutorials/retouch-images" element={<RetouchImagesTutorial />} />
+          <Route path="/tutorials/use-llms" element={<UseLLMsTutorial />} />
+          <Route path="/tutorials/prompting-techniques" element={<PromptingTechniquesTutorial />} />
           <Route path="/coding" element={<Coding />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
